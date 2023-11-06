@@ -141,7 +141,7 @@ int main(void)
 		circles2.draw();
 		
 		glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-		circles3.createCircles(fourier.insidePoints);
+		circles3.createCircles(fourier.intersectionPoints);
 		circles3.draw();
 
 		//text.draw();
