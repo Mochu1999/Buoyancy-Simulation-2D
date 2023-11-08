@@ -154,7 +154,7 @@ struct Polygons {
 		//cout << "Centroid: (" << Cx << ", " << Cy << ")" << endl;	//hacer assert si area=0?
 	}
 
-
+	
 	int createPolygonsLines() { //int feature is not being used?
 
 		if (positions[0] == positions[positions.size() - 2] && positions.back() == positions[1] && positions.size() > 4) {	//if the polygon lines are closed (and not a point)

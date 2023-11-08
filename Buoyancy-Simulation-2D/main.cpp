@@ -74,13 +74,18 @@ int main(void)
 	
 	fourier.show();
 
-	SimpleCircles circles(4); //polygon
+	SimpleCircles circles(2); //polygon
 	circles.createCircles(polygon.positions);
 
 	SimpleCircles circles2(3); //fourier positions
 	
 
 	SimpleCircles circles3(5); //insidepoints
+
+
+	Polygons wettedSurface;
+	
+
 
 	//Text text("A");
 
@@ -108,7 +113,7 @@ int main(void)
 
 	while (!glfwWindowShouldClose(window))
 	{
-		system("cls");
+		//system("cls");
 		
 		if (flagChangeMode) {
 
@@ -138,14 +143,21 @@ int main(void)
 
 		glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
 		circles2.createCircles(fourier.positions);					//memory leak
-		circles2.draw();
+		//circles2.draw();
 		
 		glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-		circles3.createCircles(fourier.intersectionPoints);
-		circles3.draw();
+		circles3.createCircles(fourier.insidePoints);
+		//circles3.draw();
 
 		//text.draw();
 
+		if (fourier.insidePoints.size()) {
+			wettedSurface.positions = fourier.insidePoints;
+			wettedSurface.createPolygonsLines();
+			wettedSurface.createClosedPolygon();
+			wettedSurface.linesDraw();
+			wettedSurface.closedDraw();
+		}
 
 
 		if (currentState == visualState) {

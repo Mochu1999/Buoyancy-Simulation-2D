@@ -85,13 +85,13 @@ struct FourierMesh {
 	vector <unsigned int> indices;
 
 
-	int xn = 2;
+	int xn = 50;
 	int segments = xn - 1;
 	double endXPosition = 1000;
 
-	float period = 2000;
+	float period = 500;
 	float frecuency = 2 * PI / period;
-	float amplitude = 0;
+	float amplitude = 350;
 	float offset = 500;
 	float phase = 2 * PI + PI / 2;		//Esto no deja de crecer
 	float phaseSpeed = 0.020;
@@ -114,11 +114,9 @@ struct FourierMesh {
 
 
 	vector<vector<float>> allInsidePoints; vector<float>insidePoints;
-	vector<unsigned int> polygonInmediatePositions;
 	vector<float> intersectionPoints;
-	vector<float> insideWavePoints;
 
-	std::map<int, std::vector<float>> mapIntersectionPoints;
+	/*std::map<int, std::vector<float>>*/std::vector<std::pair<int, std::vector<float>>> mapIntersectionPoints;
 
 	vector <int>intersectionsJ;
 
@@ -134,50 +132,46 @@ struct FourierMesh {
 	void createWettedPositions() {
 
 
-		polygonInmediatePositions.clear(); allInsidePoints.clear(); insideWavePoints.clear();
-		intersectionsJ.clear();
+		allInsidePoints.clear(); 
 		intersectionPoints.clear();
 		mapIntersectionPoints.clear();
 
+		insidePoints.clear();
+
 		if (calculateFirstIntersection()) {
+
 			calculateIntersections();
 			mergeWettedPositions();
 		}
+		else {
+			float biggestY = std::numeric_limits<float>::min();
+			int biggestj = 0;
 
+			for (int j = 0; j < polygonIndices.size(); j+=2) {
 
-
-
-
-
-
-
-
-		for (const auto& entry : mapIntersectionPoints) {
-			std::cout << "Key: " << entry.first << ",   Values: ";
-			for (float value : entry.second) {
-				std::cout << value << " ";
+				if (polygonPositions[j+1] > biggestY) {
+					biggestY = polygonPositions[j+1];
+					biggestj = j;
+				}
 			}
-			std::cout << std::endl;
-		}std::cout << std::endl;
 
+			int biggesti = 0;
 
-		for (const auto& entry : mapIntersectionPoints) {
-			std::move(entry.second.begin(), entry.second.begin() + 2, std::back_inserter(intersectionPoints));
-			intersectionPoints.insert(intersectionPoints.end(), { polygonPositions[entry.second[2]], polygonPositions[entry.second[2] + 1] });
+			for (int i = 0; i < positions.size(); i += 2) {
+
+				if (positions[i] < polygonPositions[biggestj]) {
+					biggesti = i;
+				}
+				else break;
+			}
+			if (isRightOfLine(positions[biggesti], positions[biggesti + 1], positions[biggesti + 2], positions[biggesti + 3], polygonPositions[polygonIndices[biggestj] * 2], polygonPositions[polygonIndices[biggestj] * 2 + 1]) <= 0) {
+				insidePoints = polygonPositions;
+
+			}
 
 		}
 
-		for (int i = 0; i < intersectionPoints.size(); i += 2) {
-			cout << intersectionPoints[i] << " " << intersectionPoints[i + 1] << endl;
-		}
 
-		/*for (const auto& entry : possibleFirstIntersection) {
-		std::cout << "Key: " << entry.first << ",   Values: ";
-		for (float value : entry.second) {
-			std::cout << value << " ";
-		}
-		std::cout << std::endl;
-	}std::cout << std::endl;*/
 
 
 
@@ -188,25 +182,32 @@ struct FourierMesh {
 	void ValidatePoint(int& i, int& j) {
 		float Px, Py;
 
-		std::map<int, std::vector<float>> possibleIntersection;
-		bool intersectionCandidate = 0;
+		/*std::map<int, std::vector<float>> possibleIntersection;*/
+		std::vector<std::pair<int, std::vector<float>>> possibleFirstIntersection;
 
+		bool intersectionCandidate = 0;
+		//cout << "j: " << j/2 << endl;
 		if (calculateIntersectionPoints(positions[i - 2], positions[i - 1], positions[i], positions[i + 1], polygonPositions[polygonIndices[j] * 2],
 			polygonPositions[polygonIndices[j] * 2 + 1], polygonPositions[(polygonIndices[j] + 1) * 2], polygonPositions[(polygonIndices[j] + 1) * 2 + 1], Px, Py)) {
 
-			possibleIntersection.clear();
+			possibleFirstIntersection.clear();
 
-			possibleIntersection.emplace(j, vector<float>{Px, Py, float(j)});
+			possibleFirstIntersection.push_back({ j, {Px, Py, float(j)} });
 
 			intersectionCandidate = true;
-			cout << "aquí" << endl;
+			//cout << "aquí! j=" << j/2 <<" j values: "<< polygonPositions[j]<<" "<< polygonPositions[j+1] << endl;
 		}
 
 		if (intersectionCandidate) {
 			intersectionCandidate = false;
 			float crossProductWP = isRightOfLine(positions[i - 2], positions[i - 1], positions[i], positions[i + 1], polygonPositions[polygonIndices[j] * 2], polygonPositions[polygonIndices[j] * 2 + 1]);
-			cout << "j" << " " << j << ", crosProdructWP " << crossProductWP << endl;
+			//cout << "j" << " " << j << ", crosProdructWP " << crossProductWP << endl;
 			if (crossProductWP == 0) {	//if it is in the point we are checking j+1 and j-1, if any of them is at the right they will be the inmediates, if both are or are not, none
+
+
+
+				//cout << "aqui " << endl;
+
 				int indexMinus, indexPlus;
 				if (j == 0) {
 					indexMinus = polygonIndices[polygonIndices.size() - 2];
@@ -224,18 +225,24 @@ struct FourierMesh {
 
 				float crossProductInmMinus = isRightOfLine(positions[i - 2], positions[i - 1], positions[i], positions[i + 1], polygonPositions[indexMinus * 2], polygonPositions[indexMinus * 2 + 1]);
 				float crossProductInmPlus = isRightOfLine(positions[i - 2], positions[i - 1], positions[i], positions[i + 1], polygonPositions[indexPlus * 2], polygonPositions[indexPlus * 2 + 1]);
-
+				//cout << crossProductInmMinus<<" "<< crossProductInmPlus << endl;
 
 				if (crossProductInmPlus < 0 && crossProductInmMinus >= 0) {
-					mapIntersectionPoints.emplace(j, std::move(possibleIntersection[j]));
-					mapIntersectionPoints[j][2] += 2;
+
+					possibleFirstIntersection[0].second[2] = indexPlus * 2;
+					mapIntersectionPoints.push_back({ std::move(possibleFirstIntersection[0]) });
+					/*mapIntersectionPoints.emplace(j, std::move(possibleIntersection[j]));
+					mapIntersectionPoints[j][2] += 2;*/
 
 				}
 
 
-				if (0 < 0 && crossProductInmPlus >= 0) {
-					mapIntersectionPoints.emplace(j, std::move(possibleIntersection[j]));	//Comprobar que este caso se pueda dar siquiera e inmediatos
-					mapIntersectionPoints[j][2] -= 2;
+				if (crossProductInmMinus < 0 && crossProductInmPlus >= 0) {
+					//cout << "hola" << endl;
+					possibleFirstIntersection[0].second[2] = indexMinus * 2;
+					mapIntersectionPoints.push_back({ std::move(possibleFirstIntersection[0]) });
+					//mapIntersectionPoints.emplace(j, std::move(possibleIntersection[j]));	//Comprobar que este caso se pueda dar siquiera e inmediatos
+					//mapIntersectionPoints[j][2] = indexMinus*2;
 
 				}
 
@@ -245,12 +252,16 @@ struct FourierMesh {
 			}
 
 			else if (crossProductWP > 0) {
-				mapIntersectionPoints.emplace(j, std::move(possibleIntersection[j]));
-				mapIntersectionPoints[j][2] += 2;
+				possibleFirstIntersection[0].second[2] += 2;
+				mapIntersectionPoints.push_back({ std::move(possibleFirstIntersection[0]) });
+				/*mapIntersectionPoints.emplace(j, std::move(possibleIntersection[j]));
+				mapIntersectionPoints[j][2] += 2;*/
 
 			}
 			else if (crossProductWP < 0) {		//este caso nunca va a darse para el punto inicial?
-				mapIntersectionPoints.emplace(j, std::move(possibleIntersection[j]));
+
+				mapIntersectionPoints.push_back({ std::move(possibleFirstIntersection[0]) });
+				/*mapIntersectionPoints.emplace(j, std::move(possibleIntersection[j]));*/
 
 
 			}
@@ -263,9 +274,6 @@ struct FourierMesh {
 	void calculateIntersections() {
 
 
-		std::map<int, std::vector<float>> possibleIntersection;
-		bool intersectionCandidate = 0;
-
 
 		for (int j = mapIntersectionPoints.begin()->first + 2; j < polygonIndices.size(); j += 2) {		//this does not work for multiple intersections in one j
 			for (int i = 2; i < positions.size(); i += 2) {
@@ -275,32 +283,30 @@ struct FourierMesh {
 		}
 		for (int j = 0; j < mapIntersectionPoints.begin()->first; j += 2) {
 			for (int i = 2; i < positions.size(); i += 2) {
-
 				ValidatePoint(i, j);
 			}
 		}
 	}
+
 
 	bool calculateFirstIntersection() {
 		float Px, Py;
 
 		bool firstIntersectionFound = false;
 
-		std::map<int, std::vector<float>> possibleFirstIntersection;
+		/*std::map<int, std::vector<float>>*/std::vector<std::pair<int, std::vector<float>>> possibleFirstIntersection;
 
-
-
-		for (int i = 2; i < positions.size(); i += 2) {
-
+		for (int i = 0; i < positions.size() - 2; i += 2) {
 			if (!firstIntersectionFound) {
 				for (int j = 0; j < polygonIndices.size(); j += 2) {	//detects all the intersections in an only wave		//j values will be twice as big because indices has repeated layout
 
-					if (calculateIntersectionPoints(positions[i - 2], positions[i - 1], positions[i], positions[i + 1], polygonPositions[polygonIndices[j] * 2],
+
+					if (calculateIntersectionPoints(positions[i], positions[i + 1], positions[i + 2], positions[i + 3], polygonPositions[polygonIndices[j] * 2],
 						polygonPositions[polygonIndices[j] * 2 + 1], polygonPositions[(polygonIndices[j] + 1) * 2], polygonPositions[(polygonIndices[j] + 1) * 2 + 1], Px, Py)) {
 
 						firstIntersectionFound = true;
 
-						possibleFirstIntersection.emplace(j, vector<float>{Px, Py, float(j)});	//it should take an array, not a vector
+						possibleFirstIntersection.push_back({ j, {Px, Py, float(j)} });
 
 					}
 				}
@@ -308,27 +314,42 @@ struct FourierMesh {
 
 
 				if (firstIntersectionFound) {
-					while (mapIntersectionPoints.empty()) {	//you are going out of here once a valid intersection is found or all the invalid ones discarded
+					while (!possibleFirstIntersection.empty()) {	//you are going out of here once a valid intersection is found or all the invalid ones discarded
 
-						int firstKey = -1;	//-1 won't be a entry in this case
+						//maybe this should be a case where possibleIntersection is bigger than, 1, it will most likely be one and I could make it shorter if it were the case
+
+
+						/*cout << "possibleFirstIntersection:" << endl;
+						for (const auto& entry : possibleFirstIntersection) {
+							std::cout << "{ " << entry.first << ", { ";
+							for (float value : entry.second) {
+								std::cout << value << " ";
+							}
+							std::cout << "}}" << std::endl;
+						}std::cout << std::endl;*/
+
+
+						int indexInPossibleFirstIntersection = 0;
+						int firstKey = possibleFirstIntersection[0].first;
 						float smallestPx = std::numeric_limits<float>::max();	//standard way of calling the maximum value of a float
 
 
-						for (const auto& entry : possibleFirstIntersection) {
-							if (!entry.second.empty() && entry.second[0] < smallestPx) {
 
-								smallestPx = entry.second[0];
-								firstKey = entry.first;
+						for (int k = 0; k < possibleFirstIntersection.size(); k++) {
+							if (possibleFirstIntersection[k].second[0] < smallestPx) {
+
+								smallestPx = possibleFirstIntersection[k].second[0];
+								firstKey = possibleFirstIntersection[k].first;
+								indexInPossibleFirstIntersection = k;
 							}
 						}
 
-
-						if (firstKey == -1) { return false; }
-
+						//cout << "firstKey " << firstKey << endl;
 
 
+						//mapIntersectionPoints.emplace_back(std::move(possibleFirstIntersection.front())); //esto es más eficiente para mover cosas
 
-						float crossProductWP = isRightOfLine(positions[i - 2], positions[i - 1], positions[i], positions[i + 1], polygonPositions[polygonIndices[firstKey] * 2], polygonPositions[polygonIndices[firstKey] * 2 + 1]);
+						float crossProductWP = isRightOfLine(positions[i], positions[i + 1], positions[i + 2], positions[i + 3], polygonPositions[polygonIndices[firstKey] * 2], polygonPositions[polygonIndices[firstKey] * 2 + 1]);
 
 						if (crossProductWP == 0) {	//if it is in the point we are checking j+1 and j-1, if any of them is at the right they will be the inmediates, if both are or are not, none
 							int indexMinus, indexPlus;
@@ -346,20 +367,25 @@ struct FourierMesh {
 							}
 
 
-							float crossProductInmMinus = isRightOfLine(positions[i - 2], positions[i - 1], positions[i], positions[i + 1], polygonPositions[indexMinus * 2], polygonPositions[indexMinus * 2 + 1]);
-							float crossProductInmPlus = isRightOfLine(positions[i - 2], positions[i - 1], positions[i], positions[i + 1], polygonPositions[indexPlus * 2], polygonPositions[indexPlus * 2 + 1]);
+							float crossProductInmMinus = isRightOfLine(positions[i], positions[i + 1], positions[i + 2], positions[i + 3], polygonPositions[indexMinus * 2], polygonPositions[indexMinus * 2 + 1]);
+							float crossProductInmPlus = isRightOfLine(positions[i], positions[i + 1], positions[i + 2], positions[i + 3], polygonPositions[indexPlus * 2], polygonPositions[indexPlus * 2 + 1]);		//y todo este x2 tú?
 
 
 							if (crossProductInmPlus < 0 && crossProductInmMinus >= 0) {
-								mapIntersectionPoints.emplace(firstKey, std::move(possibleFirstIntersection[firstKey]));
-								mapIntersectionPoints[firstKey][2] += 2;
+								possibleFirstIntersection[indexInPossibleFirstIntersection].second[2] = indexPlus * 2;
+								mapIntersectionPoints.push_back({ std::move(possibleFirstIntersection[indexInPossibleFirstIntersection]) });
+
+								/*mapIntersectionPoints.emplace(firstKey, std::move(possibleFirstIntersection[firstKey]));
+								mapIntersectionPoints[firstKey][2] += 2;*/
 								return true;
 							}
 
 
-							if (0 < 0 && crossProductInmPlus >= 0) {
-								mapIntersectionPoints.emplace(firstKey, std::move(possibleFirstIntersection[firstKey]));	//Comprobar que este caso se pueda dar siquiera e inmediatos
-								mapIntersectionPoints[firstKey][2] -= 2;
+							if (crossProductInmMinus < 0 && crossProductInmPlus >= 0) {																				//Este y el de arriba comparten misma push_back, lo mismo es simplificable
+								possibleFirstIntersection[indexInPossibleFirstIntersection].second[2] = indexMinus * 2;
+								mapIntersectionPoints.push_back({ std::move(possibleFirstIntersection[indexInPossibleFirstIntersection]) });
+								/*mapIntersectionPoints.emplace(firstKey, std::move(possibleFirstIntersection[firstKey]));
+								mapIntersectionPoints[firstKey][2] -= 2;*/
 								return true;
 							}
 
@@ -367,94 +393,158 @@ struct FourierMesh {
 							//if none it will end in erase
 
 						}
-						else if (crossProductWP > 0) {
-							mapIntersectionPoints.emplace(firstKey, std::move(possibleFirstIntersection[firstKey]));
-							mapIntersectionPoints[firstKey][2] += 2;
+						else if (crossProductWP > 0) {				//nesting else if?
+
+
+							possibleFirstIntersection[indexInPossibleFirstIntersection].second[2] += 2;
+							mapIntersectionPoints.push_back({ std::move(possibleFirstIntersection[indexInPossibleFirstIntersection]) });
+
+
+
+							/*mapIntersectionPoints.emplace(firstKey, std::move(possibleFirstIntersection[firstKey]));
+							mapIntersectionPoints[firstKey][2] += 2;*/
 							return true;
 						}
 						else if (crossProductWP < 0) {		//este caso nunca va a darse para el punto inicial?
-							mapIntersectionPoints.emplace(firstKey, std::move(possibleFirstIntersection[firstKey]));
+							mapIntersectionPoints.push_back({ std::move(possibleFirstIntersection[indexInPossibleFirstIntersection]) });
+							/*mapIntersectionPoints.emplace(firstKey, std::move(possibleFirstIntersection[firstKey]));*/
 
 							return true;
 						}
 
+						possibleFirstIntersection.clear();
+						//possibleFirstIntersection.erase(firstKey);//if it gets to here, it is not a valid intersection
 
-						possibleFirstIntersection.erase(firstKey);//if it gets to here, it is not a valid intersection
 
 					}
-
-				}
-				else return false;
-
-			}
-
-		}
-
-	}
-
-	void getInsideWavePoints(vector<float> polygonPositions, vector<unsigned int> polygonIndices, vector<unsigned int> triangleIndices) {//no unsa indices
-		int a, b, c;
-		vector<int> intermediate;
-		for (int i = 0; i < positions.size(); i += 2) { //iterating through water points
-			for (int j = 0; j < triangleIndices.size(); j += 3) { //checking through each polygon line
-				a = triangleIndices[j], b = triangleIndices[j + 1], c = triangleIndices[j + 2];
-				if (checkBarycentric(positions[i], positions[i + 1], polygonPositions[a * 2], polygonPositions[a * 2 + 1], polygonPositions[b * 2], polygonPositions[b * 2 + 1], polygonPositions[c * 2], polygonPositions[c * 2 + 1])) {
-					insideWavePoints.insert(insideWavePoints.end(), { positions[i], positions[i + 1] });
-					intermediate.push_back(i / 2);
-					break;
 				}
 
+
 			}
+
 		}
+		return false;
 
+	}
 
+	void getWavePoints(float& wav1,float& wav2) {
+		int minWav = std::min(wav1, wav2);
+		int maxWav = std::max(wav1, wav2);
+
+		for (int i = positions.size() - 2; i >= 0; i -= 2) {
+
+			if (positions[i] > minWav && positions[i] < maxWav) {
+				insidePoints.insert(insidePoints.end(), { positions[i],positions[i + 1] });
+			}
+
+		}
 
 	}
 
 
-	void NOTgetInmediates(vector<float> polygonPositions, vector<unsigned int> polygonIndices, int i) {
-		if (polygonInmediatePositions[i] == polygonInmediatePositions[i + 1]) {
-			insidePoints.insert(insidePoints.end(), { polygonPositions[polygonInmediatePositions[i] * 2],polygonPositions[polygonInmediatePositions[i] * 2 + 1] });
-		}
-		else if (polygonInmediatePositions[i + 1] > polygonInmediatePositions[i]) {
-			for (int j = polygonInmediatePositions[i]; j <= polygonInmediatePositions[i + 1]; j++) {
-				insidePoints.insert(insidePoints.end(), { polygonPositions[j * 2],polygonPositions[j * 2 + 1] });
-			}
-		}
-		else {
-			for (int j = polygonInmediatePositions[i]; j < polygonIndices.size() / 2; j++) {
-				insidePoints.insert(insidePoints.end(), { polygonPositions[j * 2],polygonPositions[j * 2 + 1] });
-			}
 
-			for (int j = 0; j <= polygonInmediatePositions[i + 1]; j++) {
-				insidePoints.insert(insidePoints.end(), { polygonPositions[j * 2],polygonPositions[j * 2 + 1] });
+	void getImmediates(int key1, int key2) {
+		//cout << "Immediates" << endl;
+		//cout << key1 << " " << key2 << endl << endl;
+
+		if (key1 < key2) {
+
+
+			for (int i = key1; i <= key2; i += 2) {
+
+				//cout << i<<": "<<polygonPositions[i * 2] << ", " << polygonPositions[i * 2 + 1] << endl;
+				insidePoints.insert(insidePoints.end(), { polygonPositions[i], polygonPositions[i + 1] });
 			}
 		}
-		polygonInmediatePositions.erase(polygonInmediatePositions.begin() + i, polygonInmediatePositions.begin() + i + 2);
-	}
-
-	void getImmediates(int& key1,int& key2) {
-		if (polygonPositions[key1] == polygonPositions[key2]) {
-			//insidePoints.insert(insidePoints.end(), { polygonPositions[polygonInmediatePositions[i] * 2],polygonPositions[polygonInmediatePositions[i] * 2 + 1] });
+		if (key2 < key1) {
+			for (int i = key1; i < polygonIndices.size(); i += 2) {
+				insidePoints.insert(insidePoints.end(), { polygonPositions[i],polygonPositions[i + 1] });
+			}
+			for (int i = 0; i <= key2 / 2; i++) {
+				insidePoints.insert(insidePoints.end(), { polygonPositions[i],polygonPositions[i + 1] });
+			}
 		}
+		if (key1 == key2) {
+			insidePoints.insert(insidePoints.end(), { polygonPositions[key1],polygonPositions[key1 + 1] });
+		}
+		//case multiple intersections in one line
 	}
 
 	void mergeWettedPositions() {
-		
+		/*cout << "mapIntersectionPoints" << endl;
+		for (const auto& entry : mapIntersectionPoints) {
+			std::cout << "Key: " << entry.first << ",   Values: ";
+			for (float value : entry.second) {
+				std::cout << value << " ";
+			}
+			std::cout << std::endl;
+		}std::cout << std::endl;*/
 
 		auto it = mapIntersectionPoints.begin();
 
 		while (it != mapIntersectionPoints.end()) {
-			auto key1 = it->first;
-			auto key2 = (++it)->first;
-			getImmediates(key1, key2);
-			++it; 
+			auto wav1 = it->second[0];
+			auto imm1 = it->second[2];
+			std::move(it->second.begin(), it->second.begin() + 2, std::back_inserter(insidePoints));
+
+			++it;
+			auto wav2 = it->second[0];
+			auto imm2 = it->second[2];
+			getImmediates(imm1, imm2);
+			std::move(it->second.begin(), it->second.begin() + 2, std::back_inserter(insidePoints));
+			getWavePoints(wav1, wav2);
+			insidePoints.insert(insidePoints.end(), { insidePoints[0],insidePoints[1] });
+			++it;
 		}
 
 
 
+		/*for (const auto& entry : mapIntersectionPoints) {
+			std::move(entry.second.begin(), entry.second.begin() + 2, std::back_inserter(insidePoints));
+			insidePoints.insert(insidePoints.end(), { polygonPositions[entry.second[2]], polygonPositions[entry.second[2] + 1] });
+
+		}*/
+
+		/*for (int i = 0; i < insidePoints.size(); i += 2) {
+			cout << insidePoints[i] << " " << insidePoints[i + 1] << endl;
+		}*/
+
+
 
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	//void MALmergeWettedPositions(vector<float> polygonPositions, vector<unsigned int> polygonIndices) {	//anti clock-wise
 	//	float min, max;
@@ -473,7 +563,7 @@ struct FourierMesh {
 
 
 
-	//	for (int i = 0; i < 12; i += 4) {//tienes que hacer aquí un predict de cuantos loops hay
+	//	for (int i = 0; i < 12; i += 4) {//tienes que hacer  un predict de cuantos loops hay
 	//		insidePoints.clear();
 
 	//		//{
