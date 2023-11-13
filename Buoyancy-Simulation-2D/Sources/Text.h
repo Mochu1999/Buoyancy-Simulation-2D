@@ -23,7 +23,7 @@ struct Text {
 	FT_Face face;
 	string glyphPath = R"(C:\dev\C++ libs\Helvetica\Helvetica.otf)";
 
-	string allGlyphs = "A";
+	string allGlyphs = "C";
 
 
 	int startX, startY;
@@ -37,34 +37,56 @@ struct Text {
 	};
 	std::map<char, GlyphMetrics> glyphMetricsMap;
 
+
+
 	Text(string textToDraw_, int startX_, int startY_) :textToDraw(textToDraw_), startX(startX_), startY(startY_) {
 		initializeFreeType(glyphPath);
 		processGlyphs();
-		createTextureAtlas();
 		renderGlyph();
 
 		initializeBuffer();
 		initializeIBO();
 		textBind();
 	}
-
+	float widthAtlas = 0;
+	float heightAtlas = 0;
 	void processGlyphs() {
 
+		glBindTexture(GL_TEXTURE_2D, textID);
 
 		int i = 0;
-		float widthAtlas = 0;
+		float currentX = 0;
+		float xOffset = 0;
 		for (char& c : allGlyphs) {
 
 			widthAtlas += storeGlyph(c);
-
+			if (glyphMetricsMap[c].height > heightAtlas) {
+				heightAtlas = glyphMetricsMap[c].height;
+			}
 		}
-		float currentX = 0;
-		cout << "widthAtlas: " << widthAtlas << endl;
+		createTextureAtlas();
 		for (char& c : allGlyphs) {
-			cout << c << ":" << endl;
-			cout << "currentX: " << currentX << endl;
-			cout << "widthAtlas: " << widthAtlas << endl;
-			cout << "currentX/widthAtlas: " << currentX / widthAtlas << endl;
+			glBindTexture(GL_TEXTURE_2D, textID);
+			if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
+				std::cerr << "Failed to load glyph" << std::endl;
+				continue;
+			}
+
+			FT_Bitmap& bitmap = face->glyph->bitmap;
+
+			glTexSubImage2D(
+				GL_TEXTURE_2D,
+				0,
+				xOffset,
+				0,
+				bitmap.width,
+				bitmap.rows,
+				GL_RED,
+				GL_UNSIGNED_BYTE,
+				bitmap.buffer
+			);
+
+			xOffset += bitmap.width;
 
 			glyphMetricsMap[c].texCoordX0 = currentX / widthAtlas;
 			glyphMetricsMap[c].texCoordY0 = 0;
@@ -86,8 +108,8 @@ struct Text {
 			cout << "glyphMetricsMap[i].texCoordY0: " << glyphMetricsMap[i].texCoordY0 << endl;
 			cout << "glyphMetricsMap[i].texCoordX1: " << glyphMetricsMap[i].texCoordX1 << endl;
 			cout << "glyphMetricsMap[i].texCoordY1: " << glyphMetricsMap[i].texCoordY1 << endl << endl;
-		}
-
+		}//cout
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 
@@ -176,7 +198,7 @@ struct Text {
 		// Set the unpack alignment to 1 byte to handle bitmaps that are not aligned to 4 bytes
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-		glTexImage2D(
+		/*glTexImage2D(
 			GL_TEXTURE_2D,
 			0,
 			GL_RED,
@@ -186,6 +208,17 @@ struct Text {
 			GL_RED,
 			GL_UNSIGNED_BYTE,
 			face->glyph->bitmap.buffer
+		);*/
+		glTexImage2D(
+			GL_TEXTURE_2D,
+			0,
+			GL_RED,
+			widthAtlas,     // Total width of the atlas
+			heightAtlas,    // Height to fit the tallest glyph
+			0,
+			GL_RED,
+			GL_UNSIGNED_BYTE,
+			nullptr         // No data yet
 		);
 		/*glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);*/ //smoother, but somewhat blurry 
@@ -214,9 +247,6 @@ struct Text {
 		}
 
 		FT_Set_Pixel_Sizes(face, 0, 48); // Set font size
-
-
-
 	}
 
 
