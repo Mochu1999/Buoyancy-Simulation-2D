@@ -23,37 +23,77 @@ struct Text {
 	FT_Face face;
 	string glyphPath = R"(C:\dev\C++ libs\Helvetica\Helvetica.otf)";
 
-	string allGlyphs = "1";
+	string allGlyphs = "A";
 
 
+	int startX, startY;
 
 	struct GlyphMetrics {
-		float width, height; // The width and height of the glyph
-		float bearingX, bearingY; // The left bearing and top bearing of the glyph
-		float advance; // The advance width for the glyph
-		float texCoordX0, texCoordY0; // The bottom-left texture coordinates of the glyph in the atlas
-		float texCoordX1, texCoordY1; // The top-right texture coordinates of the glyph in the atlas
+		float width, height;
+		float bearingX, bearingY;
+		float advance;
+		float texCoordX0 = 0, texCoordY0 = 0;
+		float texCoordX1 = 1, texCoordY1 = 1;
 	};
-
 	std::map<char, GlyphMetrics> glyphMetricsMap;
+
+	Text(string textToDraw_, int startX_, int startY_) :textToDraw(textToDraw_), startX(startX_), startY(startY_) {
+		initializeFreeType(glyphPath);
+		processGlyphs();
+		createTextureAtlas();
+		renderGlyph();
+
+		initializeBuffer();
+		initializeIBO();
+		textBind();
+	}
 
 	void processGlyphs() {
 
 
+		int i = 0;
+		float widthAtlas = 0;
+		for (char& c : allGlyphs) {
 
-		for (char c : allGlyphs) {
+			widthAtlas += storeGlyph(c);
 
-			storeGlyph(c, 0, 0);
+		}
+		float currentX = 0;
+		cout << "widthAtlas: " << widthAtlas << endl;
+		for (char& c : allGlyphs) {
+			cout << c << ":" << endl;
+			cout << "currentX: " << currentX << endl;
+			cout << "widthAtlas: " << widthAtlas << endl;
+			cout << "currentX/widthAtlas: " << currentX / widthAtlas << endl;
 
-			//pushIndices(i);
+			glyphMetricsMap[c].texCoordX0 = currentX / widthAtlas;
+			glyphMetricsMap[c].texCoordY0 = 0;
+			glyphMetricsMap[c].texCoordX1 = (currentX + glyphMetricsMap[c].width) / widthAtlas;
+			glyphMetricsMap[c].texCoordY1 = 1;
+
+			currentX += glyphMetricsMap[c].advance;
+		}
+		for (auto& pair : glyphMetricsMap) {
+			cout << endl << endl;
+			char i = pair.first;
+			cout << "Glyph: " << i << endl;
+			//cout << "glyphMetricsMap[i].width: " << glyphMetricsMap[i].width << endl;
+			//cout << "glyphMetricsMap[i].height: " << glyphMetricsMap[i].height << endl;
+			//cout << "glyphMetricsMap[i].bearingX: " << glyphMetricsMap[i].bearingX << endl;
+			//cout << "glyphMetricsMap[i].bearingY: " << glyphMetricsMap[i].bearingY << endl;
+			//cout << "glyphMetricsMap[i].advance: " << glyphMetricsMap[i].advance << endl;
+			cout << "glyphMetricsMap[i].texCoordX0: " << glyphMetricsMap[i].texCoordX0 << endl;
+			cout << "glyphMetricsMap[i].texCoordY0: " << glyphMetricsMap[i].texCoordY0 << endl;
+			cout << "glyphMetricsMap[i].texCoordX1: " << glyphMetricsMap[i].texCoordX1 << endl;
+			cout << "glyphMetricsMap[i].texCoordY1: " << glyphMetricsMap[i].texCoordY1 << endl << endl;
 		}
 
 	}
 
-	
 
-	void storeGlyph(char character, float x, float y) {
-		// Load the character glyph into the face
+
+	int storeGlyph(char character) {		//Stores metrics inside a map //change to allow multiple glyphs
+
 		if (FT_Load_Char(face, character, FT_LOAD_RENDER)) {
 			std::cerr << "Failed to load glyph" << std::endl;
 
@@ -61,14 +101,10 @@ struct Text {
 
 
 
-
-		// Get the glyph metrics
 		FT_Bitmap& bitmap = face->glyph->bitmap;
+
 		float bearingX = face->glyph->bitmap_left;
 		float bearingY = face->glyph->bitmap_top;
-
-
-		// Calculate the quad positions based on the glyph metrics
 		float w = bitmap.width;
 		float h = bitmap.rows;
 		/*float offsetX = bearingX;
@@ -76,34 +112,31 @@ struct Text {
 		float advance = face->glyph->advance.x >> 6;
 
 
-		/*positions.insert(positions.end(), {
-			x + offsetX,     y + offsetY	,   0.0f, 1.0f,
-			x + offsetX + w, y + offsetY	, 	1.0f, 1.0f,
-			x + offsetX + w, y + offsetY + h, 	1.0f, 0.0f,
-			x + offsetX,     y + offsetY + h,   0.0f, 0.0f});*/
 
 
-		glyphMetricsMap.emplace(character, GlyphMetrics{w, h, bearingX, bearingY, advance,
-																							0.0f, 0.0f, // texCoordX0, texCoordY0 (bottom-left)
-																							1.0f, 1.0f  // texCoordX1, texCoordY1 (top-right)
-																									});
+
+		glyphMetricsMap.emplace(character, GlyphMetrics{ w, h, bearingX, bearingY, advance });
+		return advance;
 	}
 
 	void pushIndices(size_t i) {
 		unsigned int aux = i * 4;
 		indices.insert(indices.end(), { aux,aux + 1,aux + 2,aux,aux + 2,aux + 3 });
 	}
+
 	void renderGlyph() {
-		float x = 100,y=100;//input en constructor
+		int x = startX;
+		int y = startY;
 
 		for (size_t i = 0; i < textToDraw.length(); ++i) {
 			char c = textToDraw[i];
+
 
 			GlyphMetrics metrics = glyphMetricsMap[c];
 
 			// Calculate the vertex positions based on the glyph metrics
 			float x0 = x + metrics.bearingX;
-			float y0 = y - (metrics.height - metrics.bearingY); // Y is down in OpenGL so subtract the difference
+			float y0 = y - (metrics.height - metrics.bearingY);
 			float x1 = x0 + metrics.width;
 			float y1 = y0 + metrics.height;
 
@@ -115,20 +148,26 @@ struct Text {
 
 			// Insert positions and texture coordinates into the positions vector
 			positions.insert(positions.end(), {
-				x0, y0, s0, t1, // Bottom-left
-				x1, y0, s1, t1, // Bottom-right
-				x1, y1, s1, t0, // Top-right
-				x0, y1, s0, t0  // Top-left
+				x0, y0, s0, t1,
+				x1, y0, s1, t1,
+				x1, y1, s1, t0,
+				x0, y1, s0, t0
 				});
-			
+			/*positions.insert(positions.end(), {
+				x0, y0, 0, 0,
+				x1, y0, 1, 0,
+				x1, y1, 1, 1,
+				x0, y1, 0, 1
+				});*/
+
+
+			x += metrics.advance;
+
 			pushIndices(i);
 		}
-		//cout << endl;
-		//cout << "advanceSum " << advanceSum << endl;
-		//cout << "positions.size() " << positions.size() << endl;
-		//printMatrix(positions, "positions", 4, 12);
+
 	}
-	
+
 
 	void createTextureAtlas() {
 		glGenTextures(1, &textID);
@@ -160,15 +199,7 @@ struct Text {
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 	}
 
-	Text(string textToDraw_) :textToDraw(textToDraw_) {
-		initializeFreeType(glyphPath);
-		processGlyphs();
-		createTextureAtlas();
-		renderGlyph();
-		initializeBuffer();
-		initializeIBO();
-		textBind();
-	}
+
 
 
 	void initializeFreeType(const std::string& fontPath) {

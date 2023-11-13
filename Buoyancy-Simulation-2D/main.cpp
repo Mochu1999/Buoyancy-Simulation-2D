@@ -21,7 +21,7 @@
 #include "simple_circles.h"
 
 #include "Text.h"
-
+#include "wetted_surface.h"
 
 //Preincremented for loops?
 //GPT told me something about cleaning up buffers after using them
@@ -69,7 +69,7 @@ int main(void)
 	polygon.createClosedPolygon();
 	//polygon.show();
 	
-	FourierMesh fourier(polygon.positions,polygon.indices,polygon.triangleIndices);
+	FourierMesh fourier;
 	fourier.FourierMeshCreation();
 	
 	fourier.show();
@@ -83,12 +83,13 @@ int main(void)
 	SimpleCircles circles3(5); //insidepoints
 
 
-	Polygons wettedSurface;
+	WettedSurface wettedSurface(polygon.positions,polygon.indices,fourier.positions);
 	
 
 
-	//Text text("A");
 
+	Text text("AAAAAA",100,100);
+	
 	
 
 	
@@ -99,13 +100,19 @@ int main(void)
 
 	Shader shader("resources/shaders/shader1.shader");
 	shader.Bind();
+
+	//shader.SetUniform4f("u_Color", 0.8f, 0.3f, 0.8f, 1.0f);
+
+
 	glm::mat4 proj = glm::ortho(0.0f, windowHeight, 0.0f, windowWidth, -1.0f, 1.0f);
 	shader.SetUniformMat4f("u_MVP", proj);
 
 	int colorLocation = glGetUniformLocation(shader.m_RendererID, "u_Color");
 
-	GLint textureUniformLocation = glGetUniformLocation(shader.m_RendererID, "u_Texture");
-	glUniform1i(textureUniformLocation, 1);
+
+	
+
+
 
 
 
@@ -123,52 +130,49 @@ int main(void)
 
 
 
-		//glClear(GL_COLOR_BUFFER_BIT);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0.5);
-		background.closedDraw();
+		//background.closedDraw();
 
-		glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
-		//polygon.linesDraw();
-		polygon.closedDraw();
-		
-		glUniform4f(colorLocation, 1.0f, 0.5f, 1.0f, 1.0f);
-		fourier.createWavePositions();
-		fourier.createWettedPositions();
-		fourier.draw();
+		//glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
+		////polygon.linesDraw();
+		//polygon.closedDraw();
+		//
+		//
+		//fourier.createWavePositions();
+		//
 
-		glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
-		circles.draw();
+		//glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
+		//circles.draw();
 
-		glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-		circles2.createCircles(fourier.positions);					//memory leak
+		//glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
+		//circles2.createCircles(fourier.positions);					//memory leak
 		//circles2.draw();
-		
-		glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-		circles3.createCircles(fourier.insidePoints);
+		//
+		//
+
+		//
+
+		//glUniform4f(colorLocation, 1.0f, 0.5f, 1.0f, 1.0f);
+		//fourier.draw();
+
+		//glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+		//wettedSurface.createWettedPositions();
+		//if (wettedSurface.positions.size()) {
+		//	wettedSurface.createPolygonsLines();
+		//	wettedSurface.createClosedPolygon();
+		//	wettedSurface.linesDraw();
+		//	wettedSurface.closedDraw();
+		//}
+
+		//glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
+		//circles3.createCircles(wettedSurface.positions);
 		//circles3.draw();
 
-		//text.draw();
+		//glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
 
-		if (fourier.insidePoints.size()) {
-			wettedSurface.positions = fourier.insidePoints;
-			wettedSurface.createPolygonsLines();
-			wettedSurface.createClosedPolygon();
-			wettedSurface.linesDraw();
-			wettedSurface.closedDraw();
-		}
-
-
-		if (currentState == visualState) {
-
-			
-
-			
-			
-		}
-
-		
+		text.draw();
 
 
 

@@ -290,6 +290,7 @@
     <ClInclude Include="Sources\Text.h" />
     <ClInclude Include="Sources\utilities.h" />
     <ClInclude Include="Sources\vector_operations.h" />
+    <ClInclude Include="Sources\wetted_surface.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
