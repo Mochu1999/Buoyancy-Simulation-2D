@@ -21,8 +21,8 @@ struct Text {
 
 	FT_Library ft;
 	FT_Face face;
-	string glyphPath = R"(C:\dev\C++ libs\Helvetica\Helvetica.otf)";
-
+	//string glyphPath = R"(C:\dev\C++ libs\Helvetica\Helvetica.otf)";
+	string glyphPath = R"(C:\dev\C++ libs\fonts\Roboto-Light.ttf)";
 	string allGlyphs = "C";
 
 
@@ -48,6 +48,7 @@ struct Text {
 		initializeIBO();
 		textBind();
 	}
+
 	float widthAtlas = 0;
 	float heightAtlas = 0;
 	void processGlyphs() {
@@ -99,11 +100,11 @@ struct Text {
 			cout << endl << endl;
 			char i = pair.first;
 			cout << "Glyph: " << i << endl;
-			//cout << "glyphMetricsMap[i].width: " << glyphMetricsMap[i].width << endl;
-			//cout << "glyphMetricsMap[i].height: " << glyphMetricsMap[i].height << endl;
-			//cout << "glyphMetricsMap[i].bearingX: " << glyphMetricsMap[i].bearingX << endl;
-			//cout << "glyphMetricsMap[i].bearingY: " << glyphMetricsMap[i].bearingY << endl;
-			//cout << "glyphMetricsMap[i].advance: " << glyphMetricsMap[i].advance << endl;
+			cout << "glyphMetricsMap[i].width: " << glyphMetricsMap[i].width << endl;
+			cout << "glyphMetricsMap[i].height: " << glyphMetricsMap[i].height << endl;
+			cout << "glyphMetricsMap[i].bearingX: " << glyphMetricsMap[i].bearingX << endl;
+			cout << "glyphMetricsMap[i].bearingY: " << glyphMetricsMap[i].bearingY << endl;
+			cout << "glyphMetricsMap[i].advance: " << glyphMetricsMap[i].advance << endl;
 			cout << "glyphMetricsMap[i].texCoordX0: " << glyphMetricsMap[i].texCoordX0 << endl;
 			cout << "glyphMetricsMap[i].texCoordY0: " << glyphMetricsMap[i].texCoordY0 << endl;
 			cout << "glyphMetricsMap[i].texCoordX1: " << glyphMetricsMap[i].texCoordX1 << endl;
@@ -157,9 +158,9 @@ struct Text {
 			GlyphMetrics metrics = glyphMetricsMap[c];
 
 			// Calculate the vertex positions based on the glyph metrics
-			float x0 = x + metrics.bearingX;
-			float y0 = y - (metrics.height - metrics.bearingY);
-			float x1 = x0 + metrics.width;
+			float x0 = x;// +metrics.bearingX;
+			float y0 = y;///*- (metrics.height - metrics.bearingY);*/
+			float x1 = x0 + metrics.advance;// metrics.width;
 			float y1 = y0 + metrics.height;
 
 			// The texture coordinates are taken directly from the glyph metrics
@@ -169,18 +170,24 @@ struct Text {
 			float t1 = metrics.texCoordY1;
 
 			// Insert positions and texture coordinates into the positions vector
-			positions.insert(positions.end(), {
+			/*positions.insert(positions.end(), {
 				x0, y0, s0, t1,
 				x1, y0, s1, t1,
 				x1, y1, s1, t0,
 				x0, y1, s0, t0
-				});
-			/*positions.insert(positions.end(), {
-				x0, y0, 0, 0,
-				x1, y0, 1, 0,
-				x1, y1, 1, 1,
-				x0, y1, 0, 1
 				});*/
+			/*positions.insert(positions.end(), {
+				x0, y0, 0, 1,
+				x1, y0, 1, 1,
+				x1, y1, 1, 0,
+				x0, y1, 0, 0
+				});*/
+			positions.insert(positions.end(), {
+				100, 100, 0, 1,
+				200, 100, 1, 1,
+				200, 200, 1, 0,
+				100, 200, 0, 0
+				});
 
 
 			x += metrics.advance;

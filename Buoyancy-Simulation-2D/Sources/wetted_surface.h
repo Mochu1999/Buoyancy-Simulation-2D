@@ -245,32 +245,33 @@ struct WettedSurface {
 
 	}
 
-	void getImmediates(int key1, int key2) {
-
+	vector<float> getImmediates(int key1, int key2) {
+		vector<float> inmediatesVector;
 
 		if (key1 < key2) {
 
 
 			for (int i = key1; i <= key2; i += 2) {
 
-				positions.insert(positions.end(), { polygonPositions[i], polygonPositions[i + 1] });
+				inmediatesVector.insert(inmediatesVector.end(), { polygonPositions[i], polygonPositions[i + 1] });
 			}
 		}
 		if (key2 < key1) {
 			for (int i = key1; i < polygonIndices.size(); i += 2) {
-				positions.insert(positions.end(), { polygonPositions[i],polygonPositions[i + 1] });
+				inmediatesVector.insert(inmediatesVector.end(), { polygonPositions[i],polygonPositions[i + 1] });
 			}
 			for (int i = 0; i <= key2; i += 2) {
-				positions.insert(positions.end(), { polygonPositions[i],polygonPositions[i + 1] });
+				inmediatesVector.insert(inmediatesVector.end(), { polygonPositions[i],polygonPositions[i + 1] });
 			}
 		}
 		if (key1 == key2) {
 
-			positions.insert(positions.end(), { polygonPositions[key1],polygonPositions[key1 + 1] });
+			inmediatesVector.insert(inmediatesVector.end(), { polygonPositions[key1],polygonPositions[key1 + 1] });
 		}
-		//case multiple intersections in one line
+		return inmediatesVector;
 	}
 
+	int lastIndex = 0;
 
 	void mergeWettedPositions() {
 		/*cout << "mapIntersectionPoints" << endl;
@@ -283,78 +284,94 @@ struct WettedSurface {
 		}std::cout << std::endl;*/
 
 
+		triangleIndices.clear();
+		indices.clear();
+		lastIndex = 0;
 
-		////////////////////////////////////////////////////////////////////////////
-				//Hacer closedPolygon para cada iteración del while//
-		////////////////////////////////////////////////////////////////////////////
-
-
-
-		int countIndices = 0;
 
 		auto it = mapIntersectionPoints.begin();
 
 		while (it != mapIntersectionPoints.end()) {
+			vector<float> intermPositions;
 
 
 			auto wav1 = it->second[0];
 			auto imm1 = it->second[2];
-			std::move(it->second.begin(), it->second.begin() + 2, std::back_inserter(positions));
-
+			std::move(it->second.begin(), it->second.begin() + 2, std::back_inserter(intermPositions));
 
 			float firstInters[2];
 			std::move(it->second.begin(), it->second.begin() + 2, firstInters);
 
+
 			++it;
 			auto wav2 = it->second[0];
 			auto imm2 = it->second[2];
-			getImmediates(imm1, imm2);
-			std::move(it->second.begin(), it->second.begin() + 2, std::back_inserter(positions));
+
+			vector<float> inmediatesVector = getImmediates(imm1, imm2);
+
+			intermPositions.insert(intermPositions.end(), inmediatesVector.begin(), inmediatesVector.end());
+			std::move(it->second.begin(), it->second.begin() + 2, std::back_inserter(intermPositions));
 			getWavePoints(wav1, wav2);
 
 
 
-			//cout << "positions.back(): " << positions[positions.size() - 4] << " " << positions[positions.size() - 3] << endl;
-			positions.insert(positions.end(), std::begin(firstInters), std::end(firstInters));
-			//cout << "imm1: " << imm1 << " imm2:" << imm2 << endl;
+			intermPositions.insert(intermPositions.end(), std::begin(firstInters), std::end(firstInters));
 
-			createIndices();
+			createIndices(intermPositions);
+
+			positions.insert(positions.end(), std::begin(intermPositions), std::end(intermPositions));
 
 
 			++it;
 		}
-
-
-
-		/*for (const auto& entry : mapIntersectionPoints) {
-			std::move(entry.second.begin(), entry.second.begin() + 2, std::back_inserter(positions));
-
-
-		}*/
-
-		for (int i = 0; i < positions.size(); i += 2) {
-			cout << positions[i] << " " << positions[i + 1] << endl;
-		}
-
-
-
-	}
-
-	void createIndices() {
-		indices.clear();
-		/*for (unsigned int i = 0; i < positions.size() / 2 - 1; i++) {
-			indices.insert(indices.end(), { i,i + 1 });
-		}*/
-		
-		//indices.insert(indices.end(), { 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5 ,6 ,6, 7 ,7, 8, 8 ,9, 9, 10, 10, 11 });
-		indices.insert(indices.end(), { 0, 1, 1, 2, 2, 3, 3, 4, 4, 5,/* 5 ,6 ,*/6, 7 ,7, 8, 8 ,9, 9, 10, 10, 11});//Tendría que poder cerrar esto, 
 
 		cout << "indices" << endl;
 		for (unsigned int i = 0; i < indices.size(); i++) {
 			cout << indices[i] << " ";
 		}cout << endl;
+		
+
+		/*cout << "positions: " << endl;
+		for (int i = 0; i < positions.size(); i += 2) {
+			cout << positions[i] << " " << positions[i + 1] << endl;
+		}cout << endl;*/
+
+
+		cout << "triangleIndices:" << endl;
+		for (int i = 0; i < triangleIndices.size(); i += 3) {
+			cout << triangleIndices[i] << " ";
+			cout << triangleIndices[i + 1] << " ";
+			cout << triangleIndices[i + 2] << endl;
+		}
+		cout << endl;
+
+
+
 	}
-	
+
+	void createIndices(vector<float>& intermPositions) {
+
+		for (unsigned int i = 0; i < intermPositions.size() / 2 - 1; i++) {
+			indices.insert(indices.end(), { i + lastIndex,i + 1 + lastIndex });
+		}
+		
+
+		indicesAll.clear(); indicesRemaining.clear();
+
+		for (unsigned int i = 0; i < intermPositions.size() / 2 - 1; i++) {
+			indicesAll.insert(indicesAll.end(), { i });
+
+		}
+		indicesRemaining = indicesAll;
+
+		
+		generateTriangleIndices(intermPositions);
+		
+
+		
+		lastIndex = indices.back() + 1;
+	}
+
 
 
 
@@ -368,7 +385,7 @@ struct WettedSurface {
 
 	unsigned int VBPolygonLines;
 	unsigned int VAPolygonLines;
-	//ordenar, meter doubles, limPIar y poner en xournal funciones aux
+
 	unsigned int VBPolygonClosed;
 	unsigned int VAPolygonClosed;
 
@@ -377,31 +394,22 @@ struct WettedSurface {
 	float force;
 
 
-	int createPolygonsLines() { //int feature is not being used?
+	void createPolygonsLines() { 
 
-		if (positions[0] == positions[positions.size() - 2] && positions.back() == positions[1] && positions.size() > 4) {	//if the polygon lines are closed (and not a point)
-			areaCalculation();
-			if (area < 0) {
-				for (int i = 0; i < positions.size() / 2; i += 2) {
-					std::swap(positions[i], positions[positions.size() - 2 - i]);
-					std::swap(positions[i + 1], positions[positions.size() - 1 - i]);
-				}
-				areaCalculation();
+		areaCalculation();
+		if (area < 0) {
+			for (int i = 0; i < positions.size() / 2; i += 2) {
+				std::swap(positions[i], positions[positions.size() - 2 - i]);
+				std::swap(positions[i + 1], positions[positions.size() - 1 - i]);
 			}
-			centroidCalculation();
-			PolygonsLinesBuffer();
-			CreatePolygonLinesIBO();
+			areaCalculation();
+		}
+		centroidCalculation();
+		PolygonsLinesBuffer();
+		CreatePolygonLinesIBO();
 
-			glBindVertexArray(0);
-			return 1;
-		}
-		else {
-			positions.insert(positions.end(), { 0,0 });
-			PolygonsLinesBuffer();
-			CreatePolygonLinesIBO();
-			glBindVertexArray(0);
-			return 0;
-		}
+		glBindVertexArray(0);
+
 	}
 
 	void PolygonsLinesBuffer() {
@@ -419,13 +427,7 @@ struct WettedSurface {
 
 	void CreatePolygonLinesIBO()
 	{
-		 indicesAll.clear(); indicesRemaining.clear();
 		
-		for (unsigned int i = 0; i < positions.size() / 2 - 1; i++) {
-			indicesAll.insert(indicesAll.end(), { i });
-
-		}
-		indicesRemaining = indicesAll;
 
 		unsigned int ibo;
 		glGenBuffers(1, &ibo);
@@ -436,19 +438,6 @@ struct WettedSurface {
 
 
 	void show() {
-		cout << "Positions size: " << positions.size() / 2 << endl;
-		cout << "Positions:" << endl;
-		for (int i = 0; i < positions.size(); i += 2) {
-			cout << positions[i] << " ";
-			cout << positions[i + 1] << endl;
-		}
-		cout << endl;
-
-		cout << "Indices:" << endl;
-		for (int i = 0; i < indices.size(); i++) {
-			cout << indices[i] << " ";
-		}
-		cout << endl;
 
 		cout << "indicesRemaining:" << endl;
 		for (int i = 0; i < indicesRemaining.size(); i++) {
@@ -479,16 +468,7 @@ struct WettedSurface {
 		triangleIndices.clear();
 	}
 
-	void hop(float& xpos, float& ypos) {
 
-		if (abs(xpos - positions[0]) <= 20 && abs(ypos - positions[1]) <= 20) {
-			xpos = positions[0];
-			ypos = positions[1];
-		}
-		positions[positions.size() - 2] = xpos;
-		positions.back() = ypos;
-
-	}
 
 	void linesDraw() {
 
@@ -504,15 +484,15 @@ struct WettedSurface {
 
 
 
-	void generateTriangleIndices() {	//grouping indices
-		triangleIndices.clear();
+	void generateTriangleIndices(vector<float>& intermPositions) {	//grouping indices
+		
 		while (!indicesRemaining.empty()) {
 
 			for (int i = 0; i < indicesRemaining.size(); i++) {
 
 				if (indicesRemaining.size() == 3) {		//ends while loop, closes polygon
 
-					triangleIndices.insert(triangleIndices.end(), { indicesRemaining[0],indicesRemaining[1],indicesRemaining[2] });
+					triangleIndices.insert(triangleIndices.end(), { indicesRemaining[0]+ lastIndex,indicesRemaining[1]+ lastIndex,indicesRemaining[2]+ lastIndex });
 					indicesRemaining.clear();
 					break;
 				}
@@ -543,7 +523,7 @@ struct WettedSurface {
 					bool barycentricFlag = 0;
 					for (int k = 0; k < indicesAll.size(); k++) {	//are there points inside abc
 						if (k != a && k != b && k != c) {
-							if (checkBarycentric(positions[k * 2], positions[k * 2 + 1], positions[a * 2], positions[a * 2 + 1], positions[b * 2], positions[b * 2 + 1], positions[c * 2], positions[c * 2 + 1])) {
+							if (checkBarycentric(intermPositions[k * 2], intermPositions[k * 2 + 1], intermPositions[a * 2], intermPositions[a * 2 + 1], intermPositions[b * 2], intermPositions[b * 2 + 1], intermPositions[c * 2], intermPositions[c * 2 + 1])) {
 								//cout << k << endl;
 								barycentricFlag = 1;
 								break;
@@ -554,11 +534,11 @@ struct WettedSurface {
 					cout <<"isConcave: "<< isConcave(absoluteAngle(positions[b * 2] - positions[a * 2], positions[b * 2 + 1] - positions[a * 2 + 1]),
 						absoluteAngle(positions[c * 2] - positions[b * 2], positions[c * 2 + 1] - positions[b * 2 + 1])) << endl;*/
 					if (!barycentricFlag) {
-						if (isConcave(absoluteAngle(positions[b * 2] - positions[a * 2], positions[b * 2 + 1] - positions[a * 2 + 1]),
-							absoluteAngle(positions[c * 2] - positions[b * 2], positions[c * 2 + 1] - positions[b * 2 + 1]))) {				//is concave
+						if (isConcave(absoluteAngle(intermPositions[b * 2] - intermPositions[a * 2], intermPositions[b * 2 + 1] - intermPositions[a * 2 + 1]),
+							absoluteAngle(intermPositions[c * 2] - intermPositions[b * 2], intermPositions[c * 2 + 1] - intermPositions[b * 2 + 1]))) {				//is concave
 
 							indicesRemaining.erase(indicesRemaining.begin() + i);		//errasing b and adding triangle
-							triangleIndices.insert(triangleIndices.end(), { a,b,c });
+							triangleIndices.insert(triangleIndices.end(), { a+ lastIndex,b+ lastIndex,c+ lastIndex });
 							break;
 						}
 					}
@@ -570,7 +550,7 @@ struct WettedSurface {
 	}
 
 	void createClosedPolygon() {
-		generateTriangleIndices();
+		
 		PolygonsClosedBuffer();
 		CreatePolygonClosedIBO();
 		glBindVertexArray(0);

@@ -37,19 +37,31 @@ bool isConcave(float angle1, float angle2) {
 }
 
 bool checkBarycentric(float x, float y, float x1, float y1, float x2, float y2, float x3, float y3) {
-	bool check;
-	float alpha = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / ((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3));
+
+	float alpha = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / ((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3)); //meassures the influence of x1,k1, if it were 1 and the rest  0 x,y would be on x1,y1
 	float beta = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / ((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3));
 	float gamma = 1 - alpha - beta;
-	if (alpha >= 0 && alpha <= 1 && beta >= 0 && beta <= 1 && gamma >= 0 && gamma <= 1)
-		check = 1;	//it is inside
-	//if (alpha > 0 && alpha < 1 && beta > 0 && beta < 1 && gamma > 0 && gamma < 1)
-	//	check = true;	//it is strictly inside, not on the border
+	if (alpha >= 0 && alpha <= 1 && beta >= 0 && beta <= 1 && gamma >= 0 && gamma <= 1) //if any of them is greater than 1 or less than 1 they won't be inside the triangle
+		return true;	//it is inside
+	//if (alpha > 0 && alpha < 1 && beta > 0 && beta < 1 && gamma > 0 && gamma < 1)	//it is strictly inside, not on the border
+	//	check = true;	
 	else
-		check = 0;
-	return check;
-}
+		return false;
 
+}
+//bool checkBarycentric(float x, float y, float x1, float y1, float x2, float y2, float x3, float y3) {		//suposed to be faster but not checked
+//	// Inline cross product calculation and check for each edge
+//	// Edge 1 (v0: x1->x2, y1->y2)
+//	float c1 = (x2 - x1) * (y - y1) - (y2 - y1) * (x - x1);
+//	// Edge 2 (v1: x1->x3, y1->y3)
+//	float c2 = (x3 - x1) * (y - y1) - (y3 - y1) * (x - x1);
+//	// If c1 and c2 are not on the same side, return false early
+//	if ((c1 < 0 || c2 < 0) && (c1 > 0 || c2 > 0)) return false;
+//	// Edge 3 (v2: x3->x2, y3->y2)
+//	float c3 = (x2 - x3) * (y - y3) - (y2 - y3) * (x - x3);
+//	// Final check
+//	return (c1 >= 0 && c2 >= 0 && c3 >= 0) || (c1 <= 0 && c2 <= 0 && c3 <= 0);
+//}
 struct Polygons {
 
 
@@ -59,7 +71,7 @@ struct Polygons {
 	//vector<float> positions{ 400, 600, 350, 600, 350, 350, 650, 350, 650, 750, 600, 700, 600, 400, 400, 400, 400, 600 };
 	//vector<float> positions{ 100,700,100,400,300,400,350,350,400,400,400,600,600,600,600,400,650,350,700,400,700,700,360,700,360,450,340,450,340,700,330,700,330,440,370,440,370,520,380,520,380,430,320,430,320,700,300,700,300,450,200,450,200,700,175,700,175,480,125,480,125,700,100,700 };
 
-	vector<float> positions = { 600,400 ,600,600,500,800 ,400,600,400,400,500,200,600,400 };
+	vector<float> positions = { 600,400 ,600,600 ,400,600,400,400,600,400 };
 	//vector<float> positions = { 200,200,300,400,300,600		,700,600,700,400,800,200,900,400,900,600,800,800		,200,800,100,600,100,400,200,200 };
 
 

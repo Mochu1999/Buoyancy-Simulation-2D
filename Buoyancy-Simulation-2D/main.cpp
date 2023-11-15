@@ -132,7 +132,7 @@ int main(void)
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0.5);
+		//glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0.5);
 		//background.closedDraw();
 
 		//glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
@@ -157,9 +157,12 @@ int main(void)
 		//glUniform4f(colorLocation, 1.0f, 0.5f, 1.0f, 1.0f);
 		//fourier.draw();
 
+
 		//glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
 		//wettedSurface.createWettedPositions();
+
 		//if (wettedSurface.positions.size()) {
+
 		//	wettedSurface.createPolygonsLines();
 		//	wettedSurface.createClosedPolygon();
 		//	wettedSurface.linesDraw();
