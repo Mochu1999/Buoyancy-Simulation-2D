@@ -38,7 +38,7 @@ bool calculateIntersectionPoints(float Ax, float Ay, float Bx, float By, float C
 }
 
 
-float isRightOfLine(float& Ax, float& Ay, float& Bx, float& By, float& Px, float& Py) {		 //is P to the right of AB?
+inline float isRightOfLine(float& Ax, float& Ay, float& Bx, float& By, float& Px, float& Py) {		 //is P to the right of AB?
 	float AB[2] = { Bx - Ax,  By - Ay };
 	float AP[2] = { Px - Ax, Py - Ay };
 

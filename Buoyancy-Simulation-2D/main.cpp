@@ -88,7 +88,7 @@ int main(void)
 
 
 
-	Text text("C",100,100);
+	Text text("CCA",100,100);
 	
 	
 

@@ -21,9 +21,9 @@ struct Text {
 
 	FT_Library ft;
 	FT_Face face;
-	//string glyphPath = R"(C:\dev\C++ libs\Helvetica\Helvetica.otf)";
-	string glyphPath = R"(C:\dev\C++ libs\fonts\Roboto-Light.ttf)";
-	string allGlyphs = "C";
+	string glyphPath = R"(C:\dev\C++ libs\Helvetica\Helvetica.otf)";
+	//string glyphPath = R"(C:\dev\C++ libs\fonts\Roboto-Light.ttf)";
+	string allGlyphs = "CA";
 
 
 	int startX, startY;
@@ -75,17 +75,38 @@ struct Text {
 
 			FT_Bitmap& bitmap = face->glyph->bitmap;
 
+
+
+
+
+			glBindTexture(GL_TEXTURE_2D, textID);
+
+			// Set the unpack alignment to 1 byte to handle bitmaps that are not aligned to 4 bytes
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+
+			cout << "widthAtlas: " << widthAtlas << " heightAtlas: " << heightAtlas << endl;
+			cout << "face->glyph->bitmap.width: " << face->glyph->bitmap.width << " face->glyph->bitmap.rows: " << face->glyph->bitmap.rows << endl;
+
+
 			glTexSubImage2D(
 				GL_TEXTURE_2D,
 				0,
-				xOffset,
-				0,
-				bitmap.width,
-				bitmap.rows,
+				0, // xoffset is 0 because this is the first glyph.
+				0, // yoffset is 0, assuming we start at the top of the texture atlas.
+				face->glyph->bitmap.width, // The width of the glyph's bitmap.
+				face->glyph->bitmap.rows, // The height of the glyph's bitmap.
 				GL_RED,
 				GL_UNSIGNED_BYTE,
-				bitmap.buffer
+				face->glyph->bitmap.buffer // The actual bitmap data for the glyph.
 			);
+
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+
+
+
+
 
 			xOffset += bitmap.width;
 
@@ -158,9 +179,9 @@ struct Text {
 			GlyphMetrics metrics = glyphMetricsMap[c];
 
 			// Calculate the vertex positions based on the glyph metrics
-			float x0 = x;// +metrics.bearingX;
-			float y0 = y;///*- (metrics.height - metrics.bearingY);*/
-			float x1 = x0 + metrics.advance;// metrics.width;
+			float x0 = x + metrics.bearingX;
+			float y0 = y - (metrics.height - metrics.bearingY);
+			float x1 = x0 + metrics.width;
 			float y1 = y0 + metrics.height;
 
 			// The texture coordinates are taken directly from the glyph metrics
@@ -170,24 +191,20 @@ struct Text {
 			float t1 = metrics.texCoordY1;
 
 			// Insert positions and texture coordinates into the positions vector
-			/*positions.insert(positions.end(), {
+			positions.insert(positions.end(), {
 				x0, y0, s0, t1,
 				x1, y0, s1, t1,
 				x1, y1, s1, t0,
 				x0, y1, s0, t0
-				});*/
-			/*positions.insert(positions.end(), {
-				x0, y0, 0, 1,
-				x1, y0, 1, 1,
-				x1, y1, 1, 0,
-				x0, y1, 0, 0
-				});*/
-			positions.insert(positions.end(), {
-				100, 100, 0, 1,
-				200, 100, 1, 1,
-				200, 200, 1, 0,
-				100, 200, 0, 0
 				});
+
+
+			/*positions.insert(positions.end(), {
+				x0, y0, 0, 0,
+				x1, y0, 1, 0,
+				x1, y1, 1, 1,
+				x0, y1, 0, 1
+			});*/
 
 
 			x += metrics.advance;
@@ -196,7 +213,6 @@ struct Text {
 		}
 
 	}
-
 
 	void createTextureAtlas() {
 		glGenTextures(1, &textID);
@@ -216,16 +232,19 @@ struct Text {
 			GL_UNSIGNED_BYTE,
 			face->glyph->bitmap.buffer
 		);*/
+				cout << "widthAtlas: " << widthAtlas << " heightAtlas: " << heightAtlas << endl;
+		cout << "face->glyph->bitmap.width: " << face->glyph->bitmap.width << " face->glyph->bitmap.rows: " << face->glyph->bitmap.rows << endl;
+
 		glTexImage2D(
 			GL_TEXTURE_2D,
 			0,
 			GL_RED,
-			widthAtlas,     // Total width of the atlas
-			heightAtlas,    // Height to fit the tallest glyph
+			widthAtlas, // This is the width of the entire texture atlas.
+			heightAtlas, // This is the height of the tallest glyph in the atlas, used as the atlas height.
 			0,
 			GL_RED,
 			GL_UNSIGNED_BYTE,
-			nullptr         // No data yet
+			nullptr // Initialize with null since we're defining the texture data later.
 		);
 		/*glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);*/ //smoother, but somewhat blurry 
