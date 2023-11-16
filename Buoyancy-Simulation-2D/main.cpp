@@ -120,7 +120,7 @@ int main(void)
 
 	while (!glfwWindowShouldClose(window))
 	{
-		//system("cls");
+		system("cls");
 		
 		if (flagChangeMode) {
 
@@ -163,10 +163,10 @@ int main(void)
 
 		//if (wettedSurface.positions.size()) {
 
-		//	wettedSurface.createPolygonsLines();
-		//	wettedSurface.createClosedPolygon();
-		//	wettedSurface.linesDraw();
-		//	wettedSurface.closedDraw();
+		//	//wettedSurface.createPolygonsLines();
+		//	//wettedSurface.createClosedPolygon();
+		//	//wettedSurface.linesDraw();
+		//	//wettedSurface.closedDraw();
 		//}
 
 		//glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);

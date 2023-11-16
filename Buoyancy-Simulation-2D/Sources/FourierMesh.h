@@ -51,7 +51,7 @@ struct FourierMesh {
 	float period = 2000;
 	float frecuency = 2 * PI / period;
 	float amplitude = 0;
-	float offset = 150;
+	float offset = 600;
 	float phase = 2 * PI + PI / 2;		//Esto no deja de crecer
 	float phaseSpeed = 0.020;
 
@@ -66,7 +66,7 @@ struct FourierMesh {
 			positions.emplace_back(amplitude * sin(frecuency * interm + phase) + offset);
 		}
 		phase += phaseSpeed;
-		offset++;
+		//offset++;
 	}
 
 

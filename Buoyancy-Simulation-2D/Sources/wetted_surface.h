@@ -170,7 +170,7 @@ struct WettedSurface {
 							return a.second[0] < b.second[0];
 							}
 						);
-
+						
 					}
 
 					for (int k = 0; k < possibleIntersections.size(); k++) {
@@ -181,6 +181,8 @@ struct WettedSurface {
 						float crossProductWP = isRightOfLine(positionsFourier[i], positionsFourier[i + 1], positionsFourier[i + 2], positionsFourier[i + 3], polygonPositions[polygonIndices[firstKey] * 2], polygonPositions[polygonIndices[firstKey] * 2 + 1]);
 
 						if (crossProductWP == 0) {	// we are checking here j+1 and j-1, if any of them is at the right they will be the inmediates, if both are or are not, none
+
+
 							int indexMinus, indexPlus;
 							if (firstKey == 0) {
 								indexMinus = polygonIndices[polygonIndices.size() - 2];
@@ -199,6 +201,8 @@ struct WettedSurface {
 							float crossProductInmMinus = isRightOfLine(positionsFourier[i], positionsFourier[i + 1], positionsFourier[i + 2], positionsFourier[i + 3], polygonPositions[indexMinus * 2], polygonPositions[indexMinus * 2 + 1]);
 							float crossProductInmPlus = isRightOfLine(positionsFourier[i], positionsFourier[i + 1], positionsFourier[i + 2], positionsFourier[i + 3], polygonPositions[indexPlus * 2], polygonPositions[indexPlus * 2 + 1]);		//y todo este x2 tú?
 
+							cout << "a "<<"crossProductInmMinus: "<< indexMinus<<" " <<crossProductInmMinus <<endl<< 
+								" crossProductInmPlus: " << indexPlus<<" "<< crossProductInmPlus << endl;
 
 							if (crossProductInmPlus < 0 && crossProductInmMinus >= 0) {
 
@@ -289,7 +293,7 @@ struct WettedSurface {
 		lastIndex = 0;
 
 
-		auto it = mapIntersectionPoints.begin();
+		/*auto it = mapIntersectionPoints.begin();
 
 		while (it != mapIntersectionPoints.end()) {
 			vector<float> intermPositions;
@@ -323,12 +327,12 @@ struct WettedSurface {
 
 
 			++it;
-		}
+		}*/
 
-		cout << "indices" << endl;
+		/*cout << "indices" << endl;
 		for (unsigned int i = 0; i < indices.size(); i++) {
 			cout << indices[i] << " ";
-		}cout << endl;
+		}cout << endl;*/
 		
 
 		/*cout << "positions: " << endl;
@@ -337,13 +341,13 @@ struct WettedSurface {
 		}cout << endl;*/
 
 
-		cout << "triangleIndices:" << endl;
+		/*cout << "triangleIndices:" << endl;
 		for (int i = 0; i < triangleIndices.size(); i += 3) {
 			cout << triangleIndices[i] << " ";
 			cout << triangleIndices[i + 1] << " ";
 			cout << triangleIndices[i + 2] << endl;
 		}
-		cout << endl;
+		cout << endl;*/
 
 
 
