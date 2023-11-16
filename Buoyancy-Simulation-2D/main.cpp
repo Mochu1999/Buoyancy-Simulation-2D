@@ -88,7 +88,7 @@ int main(void)
 
 
 
-	Text text("CCA",100,100);
+	Text text("CANCER DE PIPI", 100, 100);
 	
 	
 

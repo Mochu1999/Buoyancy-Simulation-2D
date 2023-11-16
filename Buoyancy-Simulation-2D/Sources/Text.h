@@ -22,9 +22,9 @@ struct Text {
 	FT_Library ft;
 	FT_Face face;
 	string glyphPath = R"(C:\dev\C++ libs\Helvetica\Helvetica.otf)";
-	//string glyphPath = R"(C:\dev\C++ libs\fonts\Roboto-Light.ttf)";
-	string allGlyphs = "CA";
 
+	//string allGlyphs = "ABCD";
+	string allGlyphs = "CANER D PI";
 
 	int startX, startY;
 
@@ -40,6 +40,7 @@ struct Text {
 
 
 	Text(string textToDraw_, int startX_, int startY_) :textToDraw(textToDraw_), startX(startX_), startY(startY_) {
+		//allGlyphs = textToDraw_;
 		initializeFreeType(glyphPath);
 		processGlyphs();
 		renderGlyph();
@@ -48,36 +49,31 @@ struct Text {
 		initializeIBO();
 		textBind();
 	}
-
 	float widthAtlas = 0;
 	float heightAtlas = 0;
+	float totalAdvance = 0;
 	void processGlyphs() {
 
 		glBindTexture(GL_TEXTURE_2D, textID);
 
-		int i = 0;
+
+
 		float currentX = 0;
-		float xOffset = 0;
 		for (char& c : allGlyphs) {
 
-			widthAtlas += storeGlyph(c);
+			storeGlyph(c, widthAtlas, totalAdvance); //store metrics and increases widthAtlas and totalAdvance
 			if (glyphMetricsMap[c].height > heightAtlas) {
 				heightAtlas = glyphMetricsMap[c].height;
 			}
 		}
-		createTextureAtlas();
+		createTextureAtlas(); //sets empty texture
 		for (char& c : allGlyphs) {
-			glBindTexture(GL_TEXTURE_2D, textID);
 			if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
-				std::cerr << "Failed to load glyph" << std::endl;
+				std::cerr << "Failed to load glyph " << c << std::endl;
 				continue;
 			}
 
 			FT_Bitmap& bitmap = face->glyph->bitmap;
-
-
-
-
 
 			glBindTexture(GL_TEXTURE_2D, textID);
 
@@ -88,35 +84,34 @@ struct Text {
 			cout << "widthAtlas: " << widthAtlas << " heightAtlas: " << heightAtlas << endl;
 			cout << "face->glyph->bitmap.width: " << face->glyph->bitmap.width << " face->glyph->bitmap.rows: " << face->glyph->bitmap.rows << endl;
 
-
+			cout << "currentX: " << currentX << endl;
 			glTexSubImage2D(
 				GL_TEXTURE_2D,
 				0,
-				0, // xoffset is 0 because this is the first glyph.
+				currentX, // currentX should be updated for each glyph
 				0, // yoffset is 0, assuming we start at the top of the texture atlas.
-				face->glyph->bitmap.width, // The width of the glyph's bitmap.
-				face->glyph->bitmap.rows, // The height of the glyph's bitmap.
+				bitmap.width, // The width of the glyph's bitmap.
+				bitmap.rows, // The height of the glyph's bitmap.
 				GL_RED,
 				GL_UNSIGNED_BYTE,
-				face->glyph->bitmap.buffer // The actual bitmap data for the glyph.
+				bitmap.buffer // The actual bitmap data for the glyph.
 			);
 
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
+			glBindTexture(GL_TEXTURE_2D, 0);
 
-
-
-
-
-			xOffset += bitmap.width;
 
 			glyphMetricsMap[c].texCoordX0 = currentX / widthAtlas;
 			glyphMetricsMap[c].texCoordY0 = 0;
 			glyphMetricsMap[c].texCoordX1 = (currentX + glyphMetricsMap[c].width) / widthAtlas;
 			glyphMetricsMap[c].texCoordY1 = 1;
 
-			currentX += glyphMetricsMap[c].advance;
+			currentX += glyphMetricsMap[c].width;
+
+
 		}
+
 		for (auto& pair : glyphMetricsMap) {
 			cout << endl << endl;
 			char i = pair.first;
@@ -131,12 +126,14 @@ struct Text {
 			cout << "glyphMetricsMap[i].texCoordX1: " << glyphMetricsMap[i].texCoordX1 << endl;
 			cout << "glyphMetricsMap[i].texCoordY1: " << glyphMetricsMap[i].texCoordY1 << endl << endl;
 		}//cout
+
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 
 
-	int storeGlyph(char character) {		//Stores metrics inside a map //change to allow multiple glyphs
+	void storeGlyph(char character, float& widthAtlas, float& totalAdvance) {		//Stores metrics inside a map //change to allow multiple glyphs
+
 
 		if (FT_Load_Char(face, character, FT_LOAD_RENDER)) {
 			std::cerr << "Failed to load glyph" << std::endl;
@@ -156,11 +153,12 @@ struct Text {
 		float advance = face->glyph->advance.x >> 6;
 
 
-
+		widthAtlas += w;
+		totalAdvance += advance;
 
 
 		glyphMetricsMap.emplace(character, GlyphMetrics{ w, h, bearingX, bearingY, advance });
-		return advance;
+
 	}
 
 	void pushIndices(size_t i) {
@@ -174,6 +172,7 @@ struct Text {
 
 		for (size_t i = 0; i < textToDraw.length(); ++i) {
 			char c = textToDraw[i];
+
 
 
 			GlyphMetrics metrics = glyphMetricsMap[c];
@@ -198,13 +197,8 @@ struct Text {
 				x0, y1, s0, t0
 				});
 
-
-			/*positions.insert(positions.end(), {
-				x0, y0, 0, 0,
-				x1, y0, 1, 0,
-				x1, y1, 1, 1,
-				x0, y1, 0, 1
-			});*/
+			cout << "character rendering: " << c << endl;
+			cout << s0 << " " << t0 << endl << s1 << " " << t1 << endl;
 
 
 			x += metrics.advance;
@@ -214,26 +208,17 @@ struct Text {
 
 	}
 
+
 	void createTextureAtlas() {
 		glGenTextures(1, &textID);
 		glBindTexture(GL_TEXTURE_2D, textID);
 
-		// Set the unpack alignment to 1 byte to handle bitmaps that are not aligned to 4 bytes
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-		/*glTexImage2D(
-			GL_TEXTURE_2D,
-			0,
-			GL_RED,
-			face->glyph->bitmap.width,
-			face->glyph->bitmap.rows,
-			0,
-			GL_RED,
-			GL_UNSIGNED_BYTE,
-			face->glyph->bitmap.buffer
-		);*/
-				cout << "widthAtlas: " << widthAtlas << " heightAtlas: " << heightAtlas << endl;
-		cout << "face->glyph->bitmap.width: " << face->glyph->bitmap.width << " face->glyph->bitmap.rows: " << face->glyph->bitmap.rows << endl;
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);	// Set the unpack alignment to 1 byte to handle bitmaps that are not aligned to 4 bytes
+
+
+
+
 
 		glTexImage2D(
 			GL_TEXTURE_2D,
@@ -246,6 +231,9 @@ struct Text {
 			GL_UNSIGNED_BYTE,
 			nullptr // Initialize with null since we're defining the texture data later.
 		);
+
+
+
 		/*glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);*/ //smoother, but somewhat blurry 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
