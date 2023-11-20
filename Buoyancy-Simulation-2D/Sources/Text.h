@@ -9,24 +9,25 @@
 
 
 
-struct Text {
+struct Text {		//lacks destructor!
 	unsigned int textID;
 
 
 	unsigned int VA, VB, ibo;
-	vector<float> positions;
-	string textToDraw;
 
+	vector<float> positions;	//quads
 	vector<unsigned int> indices;
 
+	string textToDraw;
+
+	
 	FT_Library ft;
 	FT_Face face;
 	string glyphPath = R"(C:\dev\C++ libs\Helvetica\Helvetica.otf)";
 
-	//string allGlyphs = "ABCD";
-	string allGlyphs = "CANER D PI";
+	string allGlyphs = "abcp .,;?1234567890";
 
-	int startX, startY;
+	
 
 	struct GlyphMetrics {
 		float width, height;
@@ -38,25 +39,22 @@ struct Text {
 	std::map<char, GlyphMetrics> glyphMetricsMap;
 
 
-
+	int startX, startY;
 	Text(string textToDraw_, int startX_, int startY_) :textToDraw(textToDraw_), startX(startX_), startY(startY_) {
 		//allGlyphs = textToDraw_;
 		initializeFreeType(glyphPath);
-		processGlyphs();
+		fillTextureAtlas();
 		renderGlyph();
 
 		initializeBuffer();
 		initializeIBO();
-		textBind();
 	}
+
+
 	float widthAtlas = 0;
 	float heightAtlas = 0;
 	float totalAdvance = 0;
-	void processGlyphs() {
-
-		glBindTexture(GL_TEXTURE_2D, textID);
-
-
+	void fillTextureAtlas() {
 
 		float currentX = 0;
 		for (char& c : allGlyphs) {
@@ -66,53 +64,57 @@ struct Text {
 				heightAtlas = glyphMetricsMap[c].height;
 			}
 		}
+
 		createTextureAtlas(); //sets empty texture
-		for (char& c : allGlyphs) {
+
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1); //Sets the unpack alignment to 1 byte to handle bitmaps that are not aligned to 4 bytes
+
+		for (char& c : allGlyphs) { //stores each metric in the texture
+
+			glBindTexture(GL_TEXTURE_2D, textID);//necessary here
+
 			if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
 				std::cerr << "Failed to load glyph " << c << std::endl;
 				continue;
 			}
-
 			FT_Bitmap& bitmap = face->glyph->bitmap;
 
-			glBindTexture(GL_TEXTURE_2D, textID);
-
-			// Set the unpack alignment to 1 byte to handle bitmaps that are not aligned to 4 bytes
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			
+			
 
 
 			cout << "widthAtlas: " << widthAtlas << " heightAtlas: " << heightAtlas << endl;
 			cout << "face->glyph->bitmap.width: " << face->glyph->bitmap.width << " face->glyph->bitmap.rows: " << face->glyph->bitmap.rows << endl;
-
 			cout << "currentX: " << currentX << endl;
+
 			glTexSubImage2D(
 				GL_TEXTURE_2D,
-				0,
-				currentX, // currentX should be updated for each glyph
-				0, // yoffset is 0, assuming we start at the top of the texture atlas.
-				bitmap.width, // The width of the glyph's bitmap.
-				bitmap.rows, // The height of the glyph's bitmap.
+				0, //detail number, 0 is base image level
+				currentX, // x position in the texture from the left
+				0, // y position in the texture
+				bitmap.width, // width of the subimage
+				bitmap.rows, //  height of the subimage
 				GL_RED,
 				GL_UNSIGNED_BYTE,
 				bitmap.buffer // The actual bitmap data for the glyph.
 			);
 
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+			
 
-			glBindTexture(GL_TEXTURE_2D, 0);
-
+			float yOffset = 0;
 
 			glyphMetricsMap[c].texCoordX0 = currentX / widthAtlas;
-			glyphMetricsMap[c].texCoordY0 = 0;
+			glyphMetricsMap[c].texCoordY0 = yOffset / heightAtlas;
 			glyphMetricsMap[c].texCoordX1 = (currentX + glyphMetricsMap[c].width) / widthAtlas;
-			glyphMetricsMap[c].texCoordY1 = 1;
+			glyphMetricsMap[c].texCoordY1 = (yOffset + glyphMetricsMap[c].height) / heightAtlas;
 
 			currentX += glyphMetricsMap[c].width;
 
 
 		}
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
-		for (auto& pair : glyphMetricsMap) {
+		/*for (auto& pair : glyphMetricsMap) {
 			cout << endl << endl;
 			char i = pair.first;
 			cout << "Glyph: " << i << endl;
@@ -125,7 +127,7 @@ struct Text {
 			cout << "glyphMetricsMap[i].texCoordY0: " << glyphMetricsMap[i].texCoordY0 << endl;
 			cout << "glyphMetricsMap[i].texCoordX1: " << glyphMetricsMap[i].texCoordX1 << endl;
 			cout << "glyphMetricsMap[i].texCoordY1: " << glyphMetricsMap[i].texCoordY1 << endl << endl;
-		}//cout
+		}*/
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
@@ -166,7 +168,8 @@ struct Text {
 		indices.insert(indices.end(), { aux,aux + 1,aux + 2,aux,aux + 2,aux + 3 });
 	}
 
-	void renderGlyph() {
+	void renderGlyph() {	//creates the quads and takes positions from the texture
+
 		int x = startX;
 		int y = startY;
 
@@ -177,28 +180,25 @@ struct Text {
 
 			GlyphMetrics metrics = glyphMetricsMap[c];
 
-			// Calculate the vertex positions based on the glyph metrics
+			
 			float x0 = x + metrics.bearingX;
 			float y0 = y - (metrics.height - metrics.bearingY);
 			float x1 = x0 + metrics.width;
 			float y1 = y0 + metrics.height;
 
-			// The texture coordinates are taken directly from the glyph metrics
+			
 			float s0 = metrics.texCoordX0;
 			float t0 = metrics.texCoordY0;
 			float s1 = metrics.texCoordX1;
 			float t1 = metrics.texCoordY1;
 
-			// Insert positions and texture coordinates into the positions vector
+			
 			positions.insert(positions.end(), {
 				x0, y0, s0, t1,
 				x1, y0, s1, t1,
 				x1, y1, s1, t0,
 				x0, y1, s0, t0
 				});
-
-			cout << "character rendering: " << c << endl;
-			cout << s0 << " " << t0 << endl << s1 << " " << t1 << endl;
 
 
 			x += metrics.advance;
@@ -214,22 +214,17 @@ struct Text {
 		glBindTexture(GL_TEXTURE_2D, textID);
 
 
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);	// Set the unpack alignment to 1 byte to handle bitmaps that are not aligned to 4 bytes
-
-
-
-
 
 		glTexImage2D(
 			GL_TEXTURE_2D,
 			0,
-			GL_RED,
-			widthAtlas, // This is the width of the entire texture atlas.
-			heightAtlas, // This is the height of the tallest glyph in the atlas, used as the atlas height.
+			GL_RED,	//this gives the internal format, look for more info
+			widthAtlas, // width of the entire texture atlas.
+			heightAtlas, //height of the tallest glyph in the atlas, used as the atlas height.
 			0,
 			GL_RED,
 			GL_UNSIGNED_BYTE,
-			nullptr // Initialize with null since we're defining the texture data later.
+			nullptr 
 		);
 
 
@@ -243,7 +238,6 @@ struct Text {
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 	}
 
 
@@ -296,17 +290,10 @@ struct Text {
 		glBindVertexArray(0);
 		glBindVertexArray(VA);
 		glBindBuffer(GL_ARRAY_BUFFER, VB);
+		glBindTexture(GL_TEXTURE_2D, textID);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, positions.size() * 4, positions.data());
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
 	}
-
-
-	void textBind(unsigned int slot = 0) {
-		glActiveTexture(GL_TEXTURE0 + slot);
-		glBindTexture(GL_TEXTURE_2D, textID);
-	} //slot optional parameter for loading one specific texture between multiple
-
-
 
 	void textUnbind() {
 		glBindTexture(GL_TEXTURE_2D, 0);

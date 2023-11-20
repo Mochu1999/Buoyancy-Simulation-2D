@@ -48,12 +48,12 @@ struct FourierMesh {
 	int segments = xn - 1;
 	double endXPosition = 1000;
 
-	float period = 2000;
+	float period = 20000;
 	float frecuency = 2 * PI / period;
-	float amplitude = 0;
-	float offset = 600;
-	float phase = 2 * PI + PI / 2;		//Esto no deja de crecer
-	float phaseSpeed = 0.020;
+	float amplitude = 350;
+	float offset = 500;
+	float phase = 9;// 2 * PI + PI / 2;		//Esto no deja de crecer
+	float phaseSpeed = 0.010;
 
 	void createWavePositions() {
 		double segmentsLength = endXPosition / segments;
@@ -65,7 +65,8 @@ struct FourierMesh {
 			positions.emplace_back(interm);
 			positions.emplace_back(amplitude * sin(frecuency * interm + phase) + offset);
 		}
-		phase += phaseSpeed;
+		//phase += phaseSpeed;
+		//cout << phase << endl;
 		//offset++;
 	}
 

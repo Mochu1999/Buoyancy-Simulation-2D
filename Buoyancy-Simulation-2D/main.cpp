@@ -88,7 +88,7 @@ int main(void)
 
 
 
-	Text text("CANCER DE PIPI", 100, 100);
+	Text text("abcp 100,200.521", 100, 100);
 	
 	
 
@@ -116,21 +116,18 @@ int main(void)
 
 
 
-	bool flagChangeMode = 1;
+
 
 	while (!glfwWindowShouldClose(window))
 	{
 		system("cls");
 		
-		if (flagChangeMode) {
-
-			flagChangeMode = 0;
-		}
 
 
 
 
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0.5);
 		//background.closedDraw();
@@ -159,14 +156,16 @@ int main(void)
 
 
 		//glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-		//wettedSurface.createWettedPositions();
+		//wettedSurface.createWettedPositions(polygon.triangleIndices);
+
+
 
 		//if (wettedSurface.positions.size()) {
 
-		//	//wettedSurface.createPolygonsLines();
-		//	//wettedSurface.createClosedPolygon();
-		//	//wettedSurface.linesDraw();
-		//	//wettedSurface.closedDraw();
+		//	wettedSurface.createPolygonsLines();
+		//	wettedSurface.createClosedPolygon();
+		//	wettedSurface.linesDraw();
+		//	wettedSurface.closedDraw();
 		//}
 
 		//glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
