@@ -113,19 +113,12 @@ struct WettedSurface {
 				positions = polygonPositions;
 				createIndices(positions);
 				triangleIndices = triangleIndices_;
-				
+
 			}
 
 		}
 
-		/*cout << "mapIntersectionPoints:" << endl;
-		for (const auto& entry : mapIntersectionPoints) {
-			std::cout << "{ " << entry.first << ", { ";
-			for (float value : entry.second) {
-				std::cout << value << " ";
-			}
-			std::cout << "}}" << std::endl;
-		}std::cout << std::endl;*/
+
 
 
 	}
@@ -133,19 +126,20 @@ struct WettedSurface {
 
 
 
-	void getWavePoints(float& wav1, float& wav2) {
+	void getWavePoints(vector<float>& intermPositions, float& wav1, float& wav2) {
 		int minWav = std::min(wav1, wav2);
 		int maxWav = std::max(wav1, wav2);
 
 		for (int i = positionsFourier.size() - 2; i >= 0; i -= 2) {
 
 			if (positionsFourier[i] > minWav && positionsFourier[i] < maxWav) {
-				positions.insert(positions.end(), { positionsFourier[i],positionsFourier[i + 1] });
+				intermPositions.insert(intermPositions.end(), { positionsFourier[i],positionsFourier[i + 1] });
 			}
 
 		}
 
 	}
+
 
 	void calculateIntersections() {
 
@@ -156,6 +150,8 @@ struct WettedSurface {
 		mapIntersectionPoints.reserve(polygonIndices.size() / 2);
 
 		for (int i = 0; i < positionsFourier.size() - 2; i += 2) {
+			possibleIntersections.clear();
+
 
 			if (!intersectionFound) {
 
@@ -167,15 +163,22 @@ struct WettedSurface {
 						intersectionFound = true;
 
 						possibleIntersections.push_back({ j, {Px, Py, float(j)} });							//I think I don't need j for anythin
-						//cout << "a" << endl;
 					}
 				}
-
 
 
 				if (intersectionFound) {
 
 					intersectionFound = false;
+
+					//cout << "possibleIntersections:" << endl;
+					//for (const auto& entry : possibleIntersections) {
+					//	std::cout << "{ " << entry.first << ", { ";
+					//	for (float value : entry.second) {
+					//		std::cout << value << " ";
+					//	}
+					//	std::cout << "}}" << std::endl;
+					//}std::cout << std::endl;
 
 					if (possibleIntersections.size() > 1) {
 
@@ -288,18 +291,19 @@ struct WettedSurface {
 		return inmediatesVector;
 	}
 
-	int lastIndex = 0;
+	int lastIndex;
 
 	void mergeWettedPositions() {
-		/*cout << "mapIntersectionPoints" << endl;
+
+
+		/*cout << "mapIntersectionPoints:" << endl;
 		for (const auto& entry : mapIntersectionPoints) {
-			std::cout << "Key: " << entry.first << ",   Values: ";
+			std::cout << "{ " << entry.first << ", { ";
 			for (float value : entry.second) {
 				std::cout << value << " ";
 			}
-			std::cout << std::endl;
+			std::cout << "}}" << std::endl;
 		}std::cout << std::endl;*/
-
 
 
 		lastIndex = 0;
@@ -327,15 +331,15 @@ struct WettedSurface {
 
 			intermPositions.insert(intermPositions.end(), inmediatesVector.begin(), inmediatesVector.end());
 			std::move(it->second.begin(), it->second.begin() + 2, std::back_inserter(intermPositions));
-			getWavePoints(wav1, wav2);
+			//getWavePoints(intermPositions,wav1, wav2);
 
 
 
 			intermPositions.insert(intermPositions.end(), std::begin(firstInters), std::end(firstInters));
 
-//			createIndices(intermPositions);
-			indices = { 0 ,1, 1, 2, 2, 3, 3, 4 ,4, 5, 5, 6, 6, 7 };
 
+			createIndices(intermPositions);
+			
 			positions.insert(positions.end(), std::begin(intermPositions), std::end(intermPositions));
 
 
@@ -347,22 +351,22 @@ struct WettedSurface {
 				cout << intermPositions[i] << " " << intermPositions[i + 1] << endl;
 			}cout << endl;*/
 
-			cout << "indices" << endl;
-			for (unsigned int i = 0; i < indices.size(); i++) {
-				cout << indices[i] << " ";
-			}cout << endl;
+
 		}
+		
+
 
 		/*cout << "indices" << endl;
 		for (unsigned int i = 0; i < indices.size(); i++) {
-			cout << indices[i] << " ";
-		}cout << endl;*/
-
+			cout << indices[i] << ", ";
+		}cout << endl;
 
 		cout << "positions: " << endl;
 		for (int i = 0; i < positions.size(); i += 2) {
-			cout << positions[i] << " " << positions[i + 1] << endl;
-		}cout << endl;
+			cout << positions[i] << ", " << positions[i + 1] << "," << endl;
+		}cout << endl;*/
+
+
 
 
 		/*cout << "triangleIndices:" << endl;
@@ -425,13 +429,13 @@ struct WettedSurface {
 	void createPolygonsLines() {
 
 		areaCalculation();
-		if (area < 0) {
+		/*if (area < 0) {
 			for (int i = 0; i < positions.size() / 2; i += 2) {
 				std::swap(positions[i], positions[positions.size() - 2 - i]);
 				std::swap(positions[i + 1], positions[positions.size() - 1 - i]);
 			}
 			areaCalculation();
-		}
+		}*/
 		centroidCalculation();
 		PolygonsLinesBuffer();
 		CreatePolygonLinesIBO();

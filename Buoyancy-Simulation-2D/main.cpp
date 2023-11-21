@@ -88,7 +88,7 @@ int main(void)
 
 
 
-	Text text("abcp 100,200.521", 100, 100);
+	//Text text("abcp 100,200.521", 100, 100);
 	
 	
 
@@ -120,25 +120,25 @@ int main(void)
 
 	while (!glfwWindowShouldClose(window))
 	{
-		system("cls");
+		//system("cls");
 		
 
 
 
 
 
-		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0.5);
-		//background.closedDraw();
+		glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0.5);
+		background.closedDraw();
 
-		//glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
-		////polygon.linesDraw();
-		//polygon.closedDraw();
-		//
-		//
-		//fourier.createWavePositions();
-		//
+		glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
+		//polygon.linesDraw();
+		polygon.closedDraw();
+		
+		
+		fourier.createWavePositions();
+		
 
 		//glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
 		//circles.draw();
@@ -146,35 +146,37 @@ int main(void)
 		//glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
 		//circles2.createCircles(fourier.positions);					//memory leak
 		//circles2.draw();
-		//
-		//
+		
+		
 
-		//
+		
 
-		//glUniform4f(colorLocation, 1.0f, 0.5f, 1.0f, 1.0f);
-		//fourier.draw();
-
-
-		//glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-		//wettedSurface.createWettedPositions(polygon.triangleIndices);
+		glUniform4f(colorLocation, 1.0f, 0.5f, 1.0f, 1.0f);
+		fourier.draw();
 
 
+		glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+		wettedSurface.createWettedPositions(polygon.triangleIndices);
 
-		//if (wettedSurface.positions.size()) {
 
-		//	wettedSurface.createPolygonsLines();
-		//	wettedSurface.createClosedPolygon();
-		//	wettedSurface.linesDraw();
-		//	wettedSurface.closedDraw();
-		//}
+
+		if (wettedSurface.positions.size()) {
+
+			wettedSurface.createPolygonsLines();
+			wettedSurface.createClosedPolygon();
+			wettedSurface.linesDraw();
+			wettedSurface.closedDraw();
+		}
+
+		
 
 		//glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
 		//circles3.createCircles(wettedSurface.positions);
 		//circles3.draw();
 
-		//glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
+		glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
 
-		text.draw();
+		//text.draw();
 
 
 
