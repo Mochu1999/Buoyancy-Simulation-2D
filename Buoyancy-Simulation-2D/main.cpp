@@ -133,19 +133,21 @@ int main(void)
 		background.closedDraw();
 
 		glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
-		//polygon.linesDraw();
+		polygon.createPolygonsLines();
+		polygon.createClosedPolygon();
+		//polygon.linesDraw();	//only for debugging purposes
 		polygon.closedDraw();
 		
 		
 		fourier.createWavePositions();
 		
 
-		//glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
-		//circles.draw();
+		glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
+		circles.draw();
 
-		//glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-		//circles2.createCircles(fourier.positions);					//memory leak
-		//circles2.draw();
+		glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
+		circles2.createCircles(fourier.positions);					//memory leak
+		circles2.draw();
 		
 		
 
@@ -170,9 +172,9 @@ int main(void)
 
 		
 
-		//glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
-		//circles3.createCircles(wettedSurface.positions);
-		//circles3.draw();
+		glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
+		circles3.createCircles(wettedSurface.positions);
+		circles3.draw();
 
 		glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
 

@@ -60,8 +60,6 @@ inline float isRightOfLine(float& Ax, float& Ay, float& Bx, float& By, float& Px
 
 struct WettedSurface {
 
-	//vector<float> positions = { 100,100,300,100,200,200,100,100 ,		500,100,700,100,600,200,500,100 };
-	//vector<vector<float>> Allpositions;
 	vector<float>positions;
 	std::vector<std::pair<int, std::vector<float>>> mapIntersectionPoints;
 
@@ -156,6 +154,10 @@ struct WettedSurface {
 			if (!intersectionFound) {
 
 				for (int j = 0; j < polygonIndices.size(); j += 2) {	//j values will be twice as big because indices has repeated layout, convenient to avoid multiplying
+					//cout << "j: " << j << endl;
+					//if (j == 4) {
+					//	cout << j << " " << polygonPositions[polygonIndices[j] * 2] << " " << polygonPositions[polygonIndices[j] * 2 + 1] << endl;
+					//}
 
 					if (calculateIntersectionPoints(positionsFourier[i], positionsFourier[i + 1], positionsFourier[i + 2], positionsFourier[i + 3], polygonPositions[polygonIndices[j] * 2],
 						polygonPositions[polygonIndices[j] * 2 + 1], polygonPositions[(polygonIndices[j] + 1) * 2], polygonPositions[(polygonIndices[j] + 1) * 2 + 1], Px, Py)) {
@@ -163,6 +165,7 @@ struct WettedSurface {
 						intersectionFound = true;
 
 						possibleIntersections.push_back({ j, {Px, Py, float(j)} });							//I think I don't need j for anythin
+						//cout << "possibleIntersections: " << j << " " << Px << " " << Py << endl;
 					}
 				}
 
@@ -227,13 +230,18 @@ struct WettedSurface {
 
 							}
 
-
 							else if (crossProductInmMinus < 0 && crossProductInmPlus >= 0) {
 
 								possibleIntersections[k].second[2] = indexMinus * 2;
 								mapIntersectionPoints.emplace_back(std::move(possibleIntersections[k]));
 							}
 
+							else if (crossProductInmMinus < 0 && crossProductInmPlus < 0) {
+								possibleIntersections[k].second[2] = indexMinus * 2;
+								mapIntersectionPoints.emplace_back(possibleIntersections[k]);
+								possibleIntersections[k].second[2] = indexPlus * 2;
+								mapIntersectionPoints.emplace_back(std::move(possibleIntersections[k]));
+							}
 
 							//if none it won't add anything to map
 
@@ -314,7 +322,7 @@ struct WettedSurface {
 		while (it != mapIntersectionPoints.end()) {
 			vector<float> intermPositions;
 
-
+			
 			auto wav1 = it->second[0];
 			auto imm1 = it->second[2];
 			std::move(it->second.begin(), it->second.begin() + 2, std::back_inserter(intermPositions));
@@ -328,16 +336,15 @@ struct WettedSurface {
 			auto imm2 = it->second[2];
 
 			vector<float> inmediatesVector = getImmediates(imm1, imm2);
-
+			
 			intermPositions.insert(intermPositions.end(), inmediatesVector.begin(), inmediatesVector.end());
 			std::move(it->second.begin(), it->second.begin() + 2, std::back_inserter(intermPositions));
-			//getWavePoints(intermPositions,wav1, wav2);
+			getWavePoints(intermPositions,wav1, wav2);
 
 
 
 			intermPositions.insert(intermPositions.end(), std::begin(firstInters), std::end(firstInters));
-
-
+			
 			createIndices(intermPositions);
 			
 			positions.insert(positions.end(), std::begin(intermPositions), std::end(intermPositions));
@@ -345,7 +352,7 @@ struct WettedSurface {
 
 			++it;
 
-
+			
 			/*cout << "intermPositions: " << endl;
 			for (int i = 0; i < intermPositions.size(); i += 2) {
 				cout << intermPositions[i] << " " << intermPositions[i + 1] << endl;
@@ -355,13 +362,12 @@ struct WettedSurface {
 		}
 		
 
+		/*if (checkBarycentric(300, 600, positions[10 * 2], positions[10 * 2 + 1], positions[0 * 2], positions[0 * 2 + 1], positions[1 * 2], positions[1 * 2 + 1])) {
+			cout << " hay barycentric" << endl;
+		}*/
 
-		/*cout << "indices" << endl;
-		for (unsigned int i = 0; i < indices.size(); i++) {
-			cout << indices[i] << ", ";
-		}cout << endl;
 
-		cout << "positions: " << endl;
+		/*cout << "positions: " << endl;
 		for (int i = 0; i < positions.size(); i += 2) {
 			cout << positions[i] << ", " << positions[i + 1] << "," << endl;
 		}cout << endl;*/
@@ -396,7 +402,11 @@ struct WettedSurface {
 		}
 		indicesRemaining = indicesAll;
 
-
+		/*cout << endl << endl;
+		cout << "indices" << endl;
+		for (unsigned int i = 0; i < indices.size(); i++) {
+			cout << indices[i] << ", ";
+		}cout << endl;*/
 		generateTriangleIndices(intermPositions);
 
 
@@ -536,6 +546,11 @@ struct WettedSurface {
 						cout << triangleIndices[i + 1] << " ";
 						cout << triangleIndices[i + 2] << endl;
 					}
+					cout << endl;
+					cout << "indicesRemaining:" << endl;
+					for (int i = 0; i < indicesRemaining.size(); i++) {
+						cout << indicesRemaining[i] << " ";
+					}
 					cout << endl;*/
 
 					unsigned int b = indicesRemaining[i];	//current index is b, nearests indices a and c
@@ -549,14 +564,14 @@ struct WettedSurface {
 						c = indicesRemaining[0];
 					else
 						c = indicesRemaining[i + 1];
-					//b = 0; a = 1; c = 2;
+
 					//cout << "a: " << a << " b: " << b << " c: " << c << endl;
 
 					bool barycentricFlag = 0;
 					for (int k = 0; k < indicesAll.size(); k++) {	//are there points inside abc
 						if (k != a && k != b && k != c) {
 							if (checkBarycentric(intermPositions[k * 2], intermPositions[k * 2 + 1], intermPositions[a * 2], intermPositions[a * 2 + 1], intermPositions[b * 2], intermPositions[b * 2 + 1], intermPositions[c * 2], intermPositions[c * 2 + 1])) {
-								//cout << k << endl;
+								//cout <<"k "<< k << endl;
 								barycentricFlag = 1;
 								break;
 							}
@@ -571,6 +586,9 @@ struct WettedSurface {
 
 							indicesRemaining.erase(indicesRemaining.begin() + i);		//errasing b and adding triangle
 							triangleIndices.insert(triangleIndices.end(), { a + lastIndex,b + lastIndex,c + lastIndex });
+							
+							
+							//return;
 							break;
 						}
 					}

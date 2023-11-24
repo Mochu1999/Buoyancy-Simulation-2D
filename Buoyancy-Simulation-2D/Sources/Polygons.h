@@ -43,12 +43,27 @@ bool checkBarycentric(float x, float y, float x1, float y1, float x2, float y2, 
 	float gamma = 1 - alpha - beta;
 	if (alpha >= 0 && alpha <= 1 && beta >= 0 && beta <= 1 && gamma >= 0 && gamma <= 1) //if any of them is greater than 1 or less than 1 they won't be inside the triangle
 		return true;	//it is inside
-	//if (alpha > 0 && alpha < 1 && beta > 0 && beta < 1 && gamma > 0 && gamma < 1)	//it is strictly inside, not on the border
-	//	check = true;	
 	else
 		return false;
 
 }
+//bool checkBarycentric(float x, float y, float x1, float y1, float x2, float y2, float x3, float y3) {
+//	float epsilon = 1e-2; // Tolerance value, can be adjusted based on your precision requirements
+//
+//	float denominator = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
+//	if (std::abs(denominator) < epsilon) {
+//		return false; // The triangle is degenerate (points are collinear or too close)
+//	}
+//
+//	float alpha = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / denominator;
+//	float beta = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / denominator;
+//	float gamma = 1 - alpha - beta;
+//
+//	return (alpha >= -epsilon && alpha <= 1 + epsilon) &&
+//		(beta >= -epsilon && beta <= 1 + epsilon) &&
+//		(gamma >= -epsilon && gamma <= 1 + epsilon);
+//}
+
 //bool checkBarycentric(float x, float y, float x1, float y1, float x2, float y2, float x3, float y3) {		//suposed to be faster but not checked
 //	// Inline cross product calculation and check for each edge
 //	// Edge 1 (v0: x1->x2, y1->y2)
@@ -62,6 +77,7 @@ bool checkBarycentric(float x, float y, float x1, float y1, float x2, float y2, 
 //	// Final check
 //	return (c1 >= 0 && c2 >= 0 && c3 >= 0) || (c1 <= 0 && c2 <= 0 && c3 <= 0);
 //}
+
 struct Polygons {
 
 
@@ -71,9 +87,12 @@ struct Polygons {
 	//vector<float> positions{ 400, 600, 350, 600, 350, 350, 650, 350, 650, 750, 600, 700, 600, 400, 400, 400, 400, 600 };
 	//vector<float> positions{ 100,700,100,400,300,400,350,350,400,400,400,600,600,600,600,400,650,350,700,400,700,700,360,700,360,450,340,450,340,700,330,700,330,440,370,440,370,520,380,520,380,430,320,430,320,700,300,700,300,450,200,450,200,700,175,700,175,480,125,480,125,700,100,700 };
 
-	//vector<float> positions = { 600,400 ,600,600 ,400,600,400,400,600,400 };
-	vector<float> positions = { 200,200,300,400,300,600		,700,600,700,400,800,200,900,400,900,600,800,800		,200,800,100,600,100,400,200,200 };
+	vector<float> positions = { 600,400,800,400 ,600,600 ,400,600,200,400 ,400,400,600,400 };
+	//vector<float> positions = { 200,200,300,400,300,600		,700,600,700,400,800,200,900,400,900,600,800,800		,200,800,100,600,100,400,200,200 };
+	//vector<float> positions = { 100,700,100,400,300,500,700,400,700,700,100,700 };
 
+
+	
 
 	vector <unsigned int> indices;
 	vector <unsigned int> indicesAll;
@@ -229,31 +248,20 @@ struct Polygons {
 
 
 	void show() {
-		cout << "Positions size: " << positions.size() / 2 << endl;
-		cout << "Positions:" << endl;
+
+		cout << endl << endl;
+		cout << "indices" << endl;
+		for (unsigned int i = 0; i < indices.size(); i++) {
+			cout << indices[i] << ", ";
+		}cout << endl;
+
+		cout << "positions: " << endl;
 		for (int i = 0; i < positions.size(); i += 2) {
-			cout << positions[i] << " ";
-			cout << positions[i + 1] << endl;
-		}
-		cout << endl;
+			cout << positions[i] << ", " << positions[i + 1] << "," << endl;
+		}cout << endl;
 
-		cout << "Indices:" << endl;
-		for (int i = 0; i < indices.size(); i++) {
-			cout << indices[i] << " ";
-		}
-		cout << endl;
 
-		cout << "indicesRemaining:" << endl;
-		for (int i = 0; i < indicesRemaining.size(); i++) {
-			cout << indicesRemaining[i] << " ";
-		}
-		cout << endl;
 
-		cout << "indicesAll:" << endl;
-		for (int i = 0; i < indicesAll.size(); i++) {
-			cout << indicesAll[i] << " ";
-		}
-		cout << endl;
 
 		cout << "triangleIndices:" << endl;
 		for (int i = 0; i < triangleIndices.size(); i += 3) {
@@ -262,6 +270,7 @@ struct Polygons {
 			cout << triangleIndices[i + 2] << endl;
 		}
 		cout << endl;
+
 
 	}
 	void clear() {
@@ -387,8 +396,8 @@ struct Polygons {
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleIndices.size() * 4, triangleIndices.data(), GL_DYNAMIC_DRAW);
 	}
 	void closedDraw() {
+		//show();
 		glBindVertexArray(0);
-
 		glBindVertexArray(VAPolygonClosed);
 		glBindBuffer(GL_ARRAY_BUFFER, VBPolygonClosed);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, positions.size() * 4, positions.data());

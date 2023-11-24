@@ -43,14 +43,23 @@ struct FourierMesh {
 	vector<float> positions;
 	vector <unsigned int> indices;
 
+	//int xn = 3;						//The one with wrong triangulation for 	vector<float> positions = { 200,200,300,400,300,600		,700,600,700,400,800,200,900,400,900,600,800,800		,200,800,100,600,100,400,200,200 };
+	//int segments = xn - 1;
+	//double endXPosition = 1000;
+	//float period = 20000;
+	//float frecuency = 2 * PI / period;
+	//float amplitude = 350;
+	//float offset = 500;
+	//float phase = 6.48005;// 2 * PI + PI / 2;		//Esto no deja de crecer
+	//float phaseSpeed = 0.010;
 
-	int xn = 300;
+	int xn =2;
 	int segments = xn - 1;
 	double endXPosition = 1000;
 
-	float period = 20000;
+	float period = 2000;
 	float frecuency = 2 * PI / period;
-	float amplitude = 350;
+	float amplitude = 250;
 	float offset = 500;
 	float phase = 0;// 2 * PI + PI / 2;		//Esto no deja de crecer
 	float phaseSpeed = 0.010;
@@ -65,7 +74,7 @@ struct FourierMesh {
 			positions.emplace_back(interm);
 			positions.emplace_back(amplitude * sin(frecuency * interm + phase) + offset);
 		}
-		phase += phaseSpeed;
+		//phase += phaseSpeed;
 		//cout << phase << endl;
 		//offset++;
 	}
