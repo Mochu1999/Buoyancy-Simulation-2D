@@ -22,9 +22,14 @@
 
 #include "Text.h"
 #include "wetted_surface.h"
+#include <chrono>
+
+using namespace std::chrono;
 
 //Preincremented for loops?
-//GPT told me something about cleaning up buffers after using them
+//Cleaning up buffers after using them
+//Fix cicles memory leak
+
 
 
 
@@ -75,7 +80,7 @@ int main(void)
 	fourier.show();
 
 	SimpleCircles circles(2); //polygon
-	circles.createCircles(polygon.positions);
+	
 
 	SimpleCircles circles2(3); //fourier positions
 	
@@ -116,14 +121,28 @@ int main(void)
 
 
 
-
-
+	high_resolution_clock::time_point lastFrameTime = high_resolution_clock::now();	//overkill, depends on the pc clock and it might be nanoseconds
+	float frameCount = 0;
+	float timeAccumulator = 0.0f;
 	while (!glfwWindowShouldClose(window))
 	{
 		//system("cls");
 		
+		high_resolution_clock::time_point currentFrameTime = high_resolution_clock::now();
+		float deltaTime = duration_cast<duration<float>>(currentFrameTime - lastFrameTime).count(); // Time elapsed in seconds between while's iterations //converting from clock units to seconds
+		lastFrameTime = currentFrameTime;
 
+		frameCount++;
+		timeAccumulator += deltaTime;
+		if (timeAccumulator >= 1.0f) {
+			float fps = frameCount / timeAccumulator;
+			//std::cout << "FPS: " << fps << std::endl;
 
+			// Reset for the next second
+			frameCount = 0;
+			timeAccumulator -= 1.0f;
+		}
+		//cout << deltaTime << endl;
 
 
 
@@ -143,10 +162,11 @@ int main(void)
 		
 
 		glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
+		circles.createCircles(polygon.positions);
 		circles.draw();
 
 		glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-		circles2.createCircles(fourier.positions);					//memory leak
+		circles2.createCircles(fourier.positions);	//water				//memory leak
 		circles2.draw();
 		
 		
@@ -178,10 +198,29 @@ int main(void)
 
 		glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
 
+		
+		//physics
+		polygon.getDownwardForce();
+		wettedSurface.getUpwardForce();
+		//cout << "polygon.force: " << polygon.force << endl;
+		//cout << "wettedSurface.force: " << wettedSurface.force << endl;
+
+		float verticalForce = wettedSurface.force - polygon.force;
+		//cout << "verticalForce: " << verticalForce << endl;
+
+		polygon.acceleration = verticalForce / polygon.mass;
+		//cout << "polygon.acceleration: " << polygon.acceleration << endl;
+
+		polygon.pos += polygon.vel * deltaTime + 0.5f * polygon.acceleration * deltaTime * deltaTime;
+		//cout << "polygon.vel: " << polygon.vel << endl;
+		
+		polygon.vel += polygon.acceleration * deltaTime;
+		polygon.transform(-0, polygon.pos);
+
+
+
+
 		//text.draw();
-
-
-
 
 
 		glfwSwapBuffers(window);

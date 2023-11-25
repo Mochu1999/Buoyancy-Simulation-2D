@@ -106,49 +106,14 @@ struct Polygons {
 	unsigned int VAPolygonClosed;
 
 	float area;
+	float densityArea=0.2;
+	float mass;
 	vector<float> centroid;
 	float force;
+	float pos = 0;
+	float vel=0;
+	float acceleration=0;
 
-	//std::vector<float> positions = {100, 200, 400, 300, 500, 600,900,200,800,400,700,300};
-	void mySort() {
-
-		std::vector<std::pair<float, float>> pairedVec;
-		for (size_t i = 0; i < positions.size(); i += 2) {		//pairing for sorting in pairs
-			pairedVec.emplace_back(positions[i], positions[i + 1]);
-		}
-
-		std::sort(pairedVec.begin(), pairedVec.end(), [](const auto& a, const auto& b) {
-			return a.first < b.first;
-			});
-
-
-		for (size_t i = 0, j = 0; i < pairedVec.size(); ++i, j += 2) {	//unpairing
-			positions[j] = pairedVec[i].first;
-			positions[j + 1] = pairedVec[i].second;
-		}
-	}
-	void DelaunayTriangulation() {
-		triangleIndices.clear();
-		mySort();
-		int n = positions.size() / 2;
-
-		if (n == 2) {
-			cout << "Error only 2 points" << endl;
-			return;
-		}
-		if (n == 3) {
-
-			triangleIndices.insert(triangleIndices.end(), { 0, 1, 2 });
-
-			return;
-		}
-	}
-	void createDelaunayPolygon() {
-		DelaunayTriangulation();
-		PolygonsClosedBuffer();
-		CreatePolygonClosedIBO();
-		glBindVertexArray(0);
-	}
 	void transform(float translationX, float translationY) {
 		for (int i = 0; i < positions.size(); i += 2) {
 			positions[i] += translationX;
@@ -156,11 +121,10 @@ struct Polygons {
 		}
 	}
 	void getDownwardForce() {
-		force = 0.8 * area;
+		mass = area * densityArea;//que hace aquí si solo o necesito una vez
+		force = 9.81 * mass * 0.01;
 	}
-	void getUpwardForce() {
-		force = 1 * 1 * area * 1.1;
-	}
+	
 	void areaCalculation() {	//surveyor's formula
 		area = 0; //must be here to avoid increasing area value if area is already created
 		for (int i = 0; i < positions.size() - 2; i += 2) {

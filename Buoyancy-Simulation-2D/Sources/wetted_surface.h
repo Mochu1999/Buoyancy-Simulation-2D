@@ -73,7 +73,16 @@ struct WettedSurface {
 		: polygonPositions(polygonPositions_), polygonIndices(polygonIndices_), positionsFourier(positionsFourier_) {
 	}
 
+	float area=0;
+	float densityArea = 1.025;
+	float mass;
+	vector<float> centroid;
+	float force;
 
+	void getUpwardForce() {
+		mass = area + densityArea;//que hace aquí si solo o necesito una vez
+		force = 9.81 * mass *0.01;
+	}
 	void createWettedPositions(vector<unsigned int> triangleIndices_) {
 
 		mapIntersectionPoints.clear();
@@ -431,9 +440,7 @@ struct WettedSurface {
 	unsigned int VBPolygonClosed;
 	unsigned int VAPolygonClosed;
 
-	float area;
-	vector<float> centroid;
-	float force;
+	
 
 
 	void createPolygonsLines() {
