@@ -93,7 +93,7 @@ int main(void)
 
 
 
-	//Text text("abcp 100,200.521", 100, 100);
+	Text text("abcp 100,200.521", 100, 100);
 	
 	
 
@@ -128,99 +128,99 @@ int main(void)
 	{
 		//system("cls");
 		
-		high_resolution_clock::time_point currentFrameTime = high_resolution_clock::now();
-		float deltaTime = duration_cast<duration<float>>(currentFrameTime - lastFrameTime).count(); // Time elapsed in seconds between while's iterations //converting from clock units to seconds
-		lastFrameTime = currentFrameTime;
+		//high_resolution_clock::time_point currentFrameTime = high_resolution_clock::now();
+		//float deltaTime = duration_cast<duration<float>>(currentFrameTime - lastFrameTime).count(); // Time elapsed in seconds between while's iterations //converting from clock units to seconds
+		//lastFrameTime = currentFrameTime;
 
-		frameCount++;
-		timeAccumulator += deltaTime;
-		if (timeAccumulator >= 1.0f) {
-			float fps = frameCount / timeAccumulator;
-			//std::cout << "FPS: " << fps << std::endl;
+		//frameCount++;
+		//timeAccumulator += deltaTime;
+		//if (timeAccumulator >= 1.0f) {
+		//	float fps = frameCount / timeAccumulator;
+		//	//std::cout << "FPS: " << fps << std::endl;
 
-			// Reset for the next second
-			frameCount = 0;
-			timeAccumulator -= 1.0f;
-		}
-		//cout << deltaTime << endl;
-
-
-
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0.5);
-		background.closedDraw();
-
-		glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
-		polygon.createPolygonsLines();
-		polygon.createClosedPolygon();
-		//polygon.linesDraw();	//only for debugging purposes
-		polygon.closedDraw();
-		
-		
-		fourier.createWavePositions();
-		
-
-		glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
-		circles.createCircles(polygon.positions);
-		circles.draw();
-
-		glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-		circles2.createCircles(fourier.positions);	//water				//memory leak
-		circles2.draw();
-		
-		
-
-		
-
-		glUniform4f(colorLocation, 1.0f, 0.5f, 1.0f, 1.0f);
-		fourier.draw();
-
-
-		glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-		wettedSurface.createWettedPositions(polygon.triangleIndices);
+		//	// Reset for the next second
+		//	frameCount = 0;
+		//	timeAccumulator -= 1.0f;
+		//}
+		////cout << deltaTime << endl;
 
 
 
-		if (wettedSurface.positions.size()) {
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			wettedSurface.createPolygonsLines();
-			wettedSurface.createClosedPolygon();
-			wettedSurface.linesDraw();
-			wettedSurface.closedDraw();
-		}
+		//glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0.5);
+		//background.closedDraw();
 
-		
+		//glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
+		//polygon.createPolygonsLines();
+		//polygon.createClosedPolygon();
+		////polygon.linesDraw();	//only for debugging purposes
+		//polygon.closedDraw();
+		//
+		//
+		//fourier.createWavePositions();
+		//
 
-		glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
-		circles3.createCircles(wettedSurface.positions);
-		circles3.draw();
+		//glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
+		//circles.createCircles(polygon.positions);
+		//circles.draw();
 
-		glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
+		//glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
+		//circles2.createCircles(fourier.positions);	//water				//memory leak
+		//circles2.draw();
+		//
+		//
 
-		
-		//physics
-		polygon.getDownwardForce();
-		wettedSurface.getUpwardForce();
-		//cout << "polygon.force: " << polygon.force << endl;
-		//cout << "wettedSurface.force: " << wettedSurface.force << endl;
+		//
 
-		float verticalForce = wettedSurface.force - polygon.force;
-		//cout << "verticalForce: " << verticalForce << endl;
+		//glUniform4f(colorLocation, 1.0f, 0.5f, 1.0f, 1.0f);
+		//fourier.draw();
 
-		polygon.acceleration = verticalForce / polygon.mass;
-		//cout << "polygon.acceleration: " << polygon.acceleration << endl;
 
-		polygon.pos += polygon.vel * deltaTime + 0.5f * polygon.acceleration * deltaTime * deltaTime;
-		//cout << "polygon.vel: " << polygon.vel << endl;
-		
-		polygon.vel += polygon.acceleration * deltaTime;
-		polygon.transform(-0, polygon.pos);
-
+		//glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+		//wettedSurface.createWettedPositions(polygon.triangleIndices);
 
 
 
-		//text.draw();
+		//if (wettedSurface.positions.size()) {
+
+		//	wettedSurface.createPolygonsLines();
+		//	wettedSurface.createClosedPolygon();
+		//	wettedSurface.linesDraw();
+		//	wettedSurface.closedDraw();
+		//}
+
+		//
+
+		//glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
+		//circles3.createCircles(wettedSurface.positions);
+		//circles3.draw();
+
+		//glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
+
+		//
+		////physics
+		//polygon.getDownwardForce();
+		//wettedSurface.getUpwardForce();
+		////cout << "polygon.force: " << polygon.force << endl;
+		////cout << "wettedSurface.force: " << wettedSurface.force << endl;
+
+		//float verticalForce = wettedSurface.force - polygon.force;
+		////cout << "verticalForce: " << verticalForce << endl;
+
+		//polygon.acceleration = verticalForce / polygon.mass;
+		////cout << "polygon.acceleration: " << polygon.acceleration << endl;
+
+		//polygon.pos += polygon.vel * deltaTime + 0.5f * polygon.acceleration * deltaTime * deltaTime;
+		////cout << "polygon.vel: " << polygon.vel << endl;
+		//
+		//polygon.vel += polygon.acceleration * deltaTime;
+		//polygon.transform(-0, polygon.pos);
+
+
+
+
+		text.draw();
 
 
 		glfwSwapBuffers(window);
