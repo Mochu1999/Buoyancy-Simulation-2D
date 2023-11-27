@@ -74,15 +74,24 @@ struct WettedSurface {
 	}
 
 	float area=0;
-	float densityArea = 1.025;
+	float densityArea = 1025;
 	float mass;
 	vector<float> centroid;
 	float force;
 
 	void getUpwardForce() {
-		mass = area + densityArea;//que hace aquí si solo o necesito una vez
-		force = 9.81 * mass *0.01;
+		mass = area* densityArea;//que hace aquí si solo o necesito una vez
+		force = 9.81 * mass;
 	}
+
+	void areaCalculation() {	//surveyor's formula
+		area = 0; //must be here to avoid increasing area value if area is already created
+		for (int i = 0; i < positions.size() - 2; i += 2) {
+			area -= (positions[i + 2] - positions[i]) * (positions[i + 3] + positions[i + 1]) * 1e-6;
+		}
+		area /= 2.0;
+	}
+
 	void createWettedPositions(vector<unsigned int> triangleIndices_) {
 
 		mapIntersectionPoints.clear();
@@ -639,14 +648,7 @@ struct WettedSurface {
 		glDrawElements(GL_TRIANGLES, triangleIndices.size(), GL_UNSIGNED_INT, nullptr);
 	}
 
-	void areaCalculation() {	//surveyor's formula
-		area = 0; //must be here to avoid increasing area value if area is already created
-		for (int i = 0; i < positions.size() - 2; i += 2) {
-			area -= (positions[i + 2] - positions[i]) * (positions[i + 3] + positions[i + 1]);
-		}
-		area /= 2.0;
-		//cout << "area: " << area << endl;
-	}
+	
 	void centroidCalculation() {
 		centroid = { 0,0 };//array
 

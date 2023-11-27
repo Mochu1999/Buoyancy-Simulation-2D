@@ -8,8 +8,8 @@
 #pragma once
 #define PI 3.14159265358979323846	//constexpr?
 
-extern float windowHeight = 1000;
-extern float windowWidth = 1000;
+extern float windowHeight = 1080;
+extern float windowWidth = 1920;
 
 
 #define CHECK_GL_ERROR() {\

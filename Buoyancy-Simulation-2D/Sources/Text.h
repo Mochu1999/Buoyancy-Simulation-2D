@@ -9,7 +9,7 @@
 
 
 
-struct Text {		//lacks destructor!
+struct Text {	
 	unsigned int textID;
 
 
@@ -18,14 +18,14 @@ struct Text {		//lacks destructor!
 	vector<float> positions;	//quads
 	vector<unsigned int> indices;
 
-	string textToDraw;
+	//string textToDraw;
 
 	
 	FT_Library ft;
 	FT_Face face;
 	string glyphPath = R"(C:\dev\C++ libs\Helvetica\Helvetica.otf)";
 
-	string allGlyphs = "abcp .,;?1234567890";
+	string allGlyphs = "abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890.:,;'(!?)+-*/=";
 
 	
 
@@ -38,23 +38,44 @@ struct Text {		//lacks destructor!
 	};
 	std::map<char, GlyphMetrics> glyphMetricsMap;
 
-
-	int startX, startY;
-	Text(string textToDraw_, int startX_, int startY_) :textToDraw(textToDraw_), startX(startX_), startY(startY_) {
+	//int startX, startY;
+	Text(/*string textToDraw_, int startX_, int startY_*/) 
+		/*:textToDraw(textToDraw_), startX(startX_), startY(startY_)*/ {
 		//allGlyphs = textToDraw_;
 		initializeFreeType(glyphPath);
 		fillTextureAtlas();
-		renderGlyph();
+		
 
-		initializeBuffer();
-		initializeIBO();
+		
 	}
+
+
+
+
+	struct textStruct {
+		string streamText;
+		float startX;
+		float startY;
+	};
+
+	vector<textStruct> textToDraw;
+
+
+	void addText(string streamText,float startX_,float startY_) {
+		textToDraw.push_back(textStruct{ streamText ,startX_,startY_ });
+
+		
+	}
+
+
+
 
 
 	float widthAtlas = 0;
 	float heightAtlas = 0;
 	float totalAdvance = 0;
 	void fillTextureAtlas() {
+		//Creates the final texture atlas
 
 		float currentX = 0;
 		for (char& c : allGlyphs) {
@@ -69,7 +90,8 @@ struct Text {		//lacks destructor!
 
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1); //Sets the unpack alignment to 1 byte to handle bitmaps that are not aligned to 4 bytes
 
-		for (char& c : allGlyphs) { //stores each metric in the texture
+		for (char& c : allGlyphs) { 
+			//stores each metric in the texture
 
 			glBindTexture(GL_TEXTURE_2D, textID);//necessary here
 
@@ -79,15 +101,8 @@ struct Text {		//lacks destructor!
 			}
 			FT_Bitmap& bitmap = face->glyph->bitmap;
 
-			
-			
 
-
-			cout << "widthAtlas: " << widthAtlas << " heightAtlas: " << heightAtlas << endl;
-			cout << "face->glyph->bitmap.width: " << face->glyph->bitmap.width << " face->glyph->bitmap.rows: " << face->glyph->bitmap.rows << endl;
-			cout << "currentX: " << currentX << endl;
-
-			glTexSubImage2D(
+			glTexSubImage2D(	//subtexture for each glyph
 				GL_TEXTURE_2D,
 				0, //detail number, 0 is base image level
 				currentX, // x position in the texture from the left
@@ -104,7 +119,7 @@ struct Text {		//lacks destructor!
 			float yOffset = 0;
 
 			glyphMetricsMap[c].texCoordX0 = currentX / widthAtlas;
-			glyphMetricsMap[c].texCoordY0 = yOffset / heightAtlas;
+			glyphMetricsMap[c].texCoordY0 = 0;
 			glyphMetricsMap[c].texCoordX1 = (currentX + glyphMetricsMap[c].width) / widthAtlas;
 			glyphMetricsMap[c].texCoordY1 = (yOffset + glyphMetricsMap[c].height) / heightAtlas;
 
@@ -114,27 +129,15 @@ struct Text {		//lacks destructor!
 		}
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
-		/*for (auto& pair : glyphMetricsMap) {
-			cout << endl << endl;
-			char i = pair.first;
-			cout << "Glyph: " << i << endl;
-			cout << "glyphMetricsMap[i].width: " << glyphMetricsMap[i].width << endl;
-			cout << "glyphMetricsMap[i].height: " << glyphMetricsMap[i].height << endl;
-			cout << "glyphMetricsMap[i].bearingX: " << glyphMetricsMap[i].bearingX << endl;
-			cout << "glyphMetricsMap[i].bearingY: " << glyphMetricsMap[i].bearingY << endl;
-			cout << "glyphMetricsMap[i].advance: " << glyphMetricsMap[i].advance << endl;
-			cout << "glyphMetricsMap[i].texCoordX0: " << glyphMetricsMap[i].texCoordX0 << endl;
-			cout << "glyphMetricsMap[i].texCoordY0: " << glyphMetricsMap[i].texCoordY0 << endl;
-			cout << "glyphMetricsMap[i].texCoordX1: " << glyphMetricsMap[i].texCoordX1 << endl;
-			cout << "glyphMetricsMap[i].texCoordY1: " << glyphMetricsMap[i].texCoordY1 << endl << endl;
-		}*/
+		
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 
 
-	void storeGlyph(char character, float& widthAtlas, float& totalAdvance) {		//Stores metrics inside a map //change to allow multiple glyphs
+	void storeGlyph(char character, float& widthAtlas, float& totalAdvance) {		
+		//Stores metrics inside a map 
 
 
 		if (FT_Load_Char(face, character, FT_LOAD_RENDER)) {
@@ -163,51 +166,58 @@ struct Text {		//lacks destructor!
 
 	}
 
-	void pushIndices(size_t i) {
-		unsigned int aux = i * 4;
-		indices.insert(indices.end(), { aux,aux + 1,aux + 2,aux,aux + 2,aux + 3 });
-	}
+	
 
 	void renderGlyph() {	//creates the quads and takes positions from the texture
+		
+		int count = 0;
+		int lastIndex = 0;
 
-		int x = startX;
-		int y = startY;
-
-		for (size_t i = 0; i < textToDraw.length(); ++i) {
-			char c = textToDraw[i];
-
+		for (const auto& item : textToDraw){
 
 
-			GlyphMetrics metrics = glyphMetricsMap[c];
+			int x = item.startX;
+			int y = item.startY;
 
-			
-			float x0 = x + metrics.bearingX;
-			float y0 = y - (metrics.height - metrics.bearingY);
-			float x1 = x0 + metrics.width;
-			float y1 = y0 + metrics.height;
+			for (size_t i = 0; i < item.streamText.length(); ++i) {
+				char c = item.streamText[i];
+				
 
-			
-			float s0 = metrics.texCoordX0;
-			float t0 = metrics.texCoordY0;
-			float s1 = metrics.texCoordX1;
-			float t1 = metrics.texCoordY1;
-
-			
-			positions.insert(positions.end(), {
-				x0, y0, s0, t1,
-				x1, y0, s1, t1,
-				x1, y1, s1, t0,
-				x0, y1, s0, t0
-				});
+				GlyphMetrics metrics = glyphMetricsMap[c];
 
 
-			x += metrics.advance;
+				float x0 = x + metrics.bearingX;
+				float y0 = y - (metrics.height - metrics.bearingY);
+				float x1 = x0 + metrics.width;
+				float y1 = y0 + metrics.height;
 
-			pushIndices(i);
+
+				float s0 = metrics.texCoordX0;
+				float t0 = metrics.texCoordY0;
+				float s1 = metrics.texCoordX1;
+				float t1 = metrics.texCoordY1;
+
+
+				positions.insert(positions.end(), {
+					x0, y0, s0, t1,
+					x1, y0, s1, t1,
+					x1, y1, s1, t0,
+					x0, y1, s0, t0
+					});
+
+
+				x += metrics.advance;
+				pushIndices(i,count);
+			}
+			count=indices.size()/6;
 		}
-
+		textToDraw.clear();
 	}
 
+	void pushIndices(size_t i,int count) {
+		unsigned int aux = i * 4+count*4;
+		indices.insert(indices.end(), { aux,aux + 1,aux + 2,aux,aux + 2,aux + 3 });
+	}
 
 	void createTextureAtlas() {
 		glGenTextures(1, &textID);
@@ -254,7 +264,7 @@ struct Text {		//lacks destructor!
 			return;
 		}
 
-		FT_Set_Pixel_Sizes(face, 0, 48); // Set font size
+		FT_Set_Pixel_Sizes(face, 0, 24); // Set font size	//Por que no son los tamaños de word?
 	}
 
 
@@ -276,17 +286,20 @@ struct Text {		//lacks destructor!
 		// text coordinate attribute
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-	}
-
-	void initializeIBO() {
-
 
 		glGenBuffers(1, &ibo);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * 4, indices.data(), GL_DYNAMIC_DRAW);
 	}
 
-	void draw() {
+
+	void draw() {		//set to be full dynamic, it shouldn't be
+		indices.clear(); positions.clear(); 
+
+		renderGlyph();
+		initializeBuffer();
+		
+
 		glBindVertexArray(0);
 		glBindVertexArray(VA);
 		glBindBuffer(GL_ARRAY_BUFFER, VB);
@@ -295,9 +308,7 @@ struct Text {		//lacks destructor!
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
 	}
 
-	void textUnbind() {
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
+
 
 	~Text() {
 		// Clean up the resources

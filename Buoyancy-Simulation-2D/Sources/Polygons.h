@@ -87,13 +87,13 @@ struct Polygons {
 	//vector<float> positions{ 400, 600, 350, 600, 350, 350, 650, 350, 650, 750, 600, 700, 600, 400, 400, 400, 400, 600 };
 	//vector<float> positions{ 100,700,100,400,300,400,350,350,400,400,400,600,600,600,600,400,650,350,700,400,700,700,360,700,360,450,340,450,340,700,330,700,330,440,370,440,370,520,380,520,380,430,320,430,320,700,300,700,300,450,200,450,200,700,175,700,175,480,125,480,125,700,100,700 };
 
-	vector<float> positions = { 600,400,800,400 ,600,600 ,400,600,200,400 ,400,400,600,400 };
+	
 	//vector<float> positions = { 200,200,300,400,300,600		,700,600,700,400,800,200,900,400,900,600,800,800		,200,800,100,600,100,400,200,200 };
 	//vector<float> positions = { 100,700,100,400,300,500,700,400,700,700,100,700 };
-
+	vector<float> positions;
+	Polygons(vector<float> positions_) :positions(positions_){}
 
 	
-
 	vector <unsigned int> indices;
 	vector <unsigned int> indicesAll;
 	vector <unsigned int> indicesRemaining;
@@ -106,13 +106,13 @@ struct Polygons {
 	unsigned int VAPolygonClosed;
 
 	float area;
-	float densityArea=0.2;
+	float densityArea = 600;
 	float mass;
 	vector<float> centroid;
 	float force;
 	float pos = 0;
-	float vel=0;
-	float acceleration=0;
+	float vel = 0;
+	float acceleration = 0;
 
 	void transform(float translationX, float translationY) {
 		for (int i = 0; i < positions.size(); i += 2) {
@@ -122,16 +122,16 @@ struct Polygons {
 	}
 	void getDownwardForce() {
 		mass = area * densityArea;//que hace aquí si solo o necesito una vez
-		force = 9.81 * mass * 0.01;
+		force = -9.81 * mass;
 	}
-	
+
 	void areaCalculation() {	//surveyor's formula
 		area = 0; //must be here to avoid increasing area value if area is already created
 		for (int i = 0; i < positions.size() - 2; i += 2) {
-			area -= (positions[i + 2] - positions[i]) * (positions[i + 3] + positions[i + 1]);
+			area -= (positions[i + 2] - positions[i]) * (positions[i + 3] + positions[i + 1]) * 1e-6;
 		}
 		area /= 2.0;
-		//cout << "area: " << area << endl;
+
 	}
 	void centroidCalculation() {
 		centroid = { 0,0 };//array
@@ -150,7 +150,7 @@ struct Polygons {
 		//cout << "Centroid: (" << Cx << ", " << Cy << ")" << endl;	//hacer assert si area=0?
 	}
 
-	
+
 	int createPolygonsLines() { //int feature is not being used?
 
 		if (positions[0] == positions[positions.size() - 2] && positions.back() == positions[1] && positions.size() > 4) {	//if the polygon lines are closed (and not a point)
@@ -165,7 +165,7 @@ struct Polygons {
 			centroidCalculation();
 			PolygonsLinesBuffer();
 			CreatePolygonLinesIBO();
-			
+
 			glBindVertexArray(0);
 			return 1;
 		}

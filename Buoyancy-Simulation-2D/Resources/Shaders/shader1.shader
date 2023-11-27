@@ -1,49 +1,39 @@
 #shader vertex
-//#version 330 core
-//
-//layout(location = 0) in vec4 position;
-//
-//uniform mat4 u_MVP;
-//
-//void main() {
-//	gl_Position = u_MVP * position;
-//};
+
 #version 330 core
 
-layout(location = 0) in vec4 position; 
+layout(location = 0) in vec4 position;
 layout(location = 1) in vec2 texCoord;
 
 uniform mat4 u_MVP;
- vec2 v_TexCoord; 
+out vec2 v_TexCoord;
 
 void main() {
 	gl_Position = u_MVP * position;
-	v_TexCoord = texCoord;	
+	v_TexCoord = texCoord;
 }
 
 
 #shader fragment
-//
-//
-//#version 330 core
-//layout(location = 0) out vec4 color;
-//uniform vec4 u_Color;  // Uniform variable for color
-//
-//void main() {
-//	color = u_Color;
-//};
 
 #version 330 core
-
 layout(location = 0) out vec4 color;
 in vec2 v_TexCoord;
 
-uniform vec4 u_Color;
+uniform vec4 u_Color;  // Uniform variable for color
 uniform sampler2D u_Texture;
-
-
+uniform int u_RenderType; // 0 for geometry, 1 for text
 
 void main() {
-	vec4 texColor = texture(u_Texture, v_TexCoord);
-	color = texColor;
-}
+	
+	if (u_RenderType == 0) {
+		color = u_Color;
+	}
+	else if (u_RenderType == 1) {
+		float alpha = texture(u_Texture, v_TexCoord).r;
+		color = vec4(1.0 * alpha, 1.0* alpha, 1.0* alpha, 0);
+		//El valor alpha (el final) no funciona, ni aquí ni con los que hacen colorLocation
+		//haz funcionar eso y el background de las letras tendría que irse
+    }
+};
+
