@@ -127,7 +127,9 @@ int main(void)
 	
 	
 	float elapsedTimeFloat = 0, fps=0;
-	Data data(colorLocation, renderTypeLocation,elapsedTimeFloat,fps);
+
+	
+	Data data(colorLocation, renderTypeLocation,elapsedTimeFloat,fps,polygon.acceleration);
 
 
 
@@ -151,10 +153,9 @@ int main(void)
 
 		frameCount++;
 		timeAccumulator += deltaTime;
+
 		if (timeAccumulator >= 1.0f) {
 			fps = frameCount / timeAccumulator;
-			//std::cout << "FPS: " << fps << std::endl;
-			// Reset for the next second
 			frameCount = 0;
 			timeAccumulator -= 1.0f;
 		}
@@ -255,7 +256,7 @@ int main(void)
 		
 		polygon.pos += polygon.vel * deltaTime + 0.5f * polygon.acceleration * deltaTime * deltaTime;
 		
-		polygon.pos *= 0.90;
+		polygon.pos *= 0.80;
 
 		polygon.vel += polygon.acceleration * deltaTime;
 

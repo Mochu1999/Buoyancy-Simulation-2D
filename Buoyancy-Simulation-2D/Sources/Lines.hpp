@@ -11,11 +11,11 @@ struct Lines {
 
 	Lines() {
 
-		
+
 	}
 
 	void createPolygonsLines() { //int feature is not being used?
-		
+
 
 		linesBuffer();
 		linesIBO();
@@ -23,12 +23,17 @@ struct Lines {
 		glBindVertexArray(0);
 	}
 
+	int indexCount = 0;
+	int setCount = 0;
 	void addSet(vector<float> items) {
 		positions.insert(positions.end(), items.begin(), items.end());
-
+		
 		for (unsigned int i = 0; i < items.size() / 2 - 1; i++) {
-			indices.insert(indices.end(), { i,i + 1 });
+			indices.insert(indices.end(), { i + indexCount,i + indexCount + 1 });
 		}
+		setCount++;
+		indexCount = indices.size() / 2 + setCount;
+		
 	}
 
 	void linesBuffer() {
