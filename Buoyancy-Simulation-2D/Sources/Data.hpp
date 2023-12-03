@@ -6,23 +6,91 @@
 #include "simple_circles.h"
 
 
-struct Graph {
+struct Graph {	//only accept stuff over time
 
-	Lines* lines;
+	DLines* dlines;
 	Text* text;
+	SLines* slines;
 
 	float& valueX;
 	float& valueY;
 
-	float x0 = 1000.0f, y0 = 300.0f;
-	float spanX = 900.0f, spanY = 500.0f;
+	float x0, y0;
+	float spanX, spanY;
 
-	Graph(float& valueX_,float& valueY_, Lines* lines_, Text* text_) :lines(lines_), text(text_), valueX(valueX_),valueY(valueY_) {
+	vector<float> valuesPositions;
 
-		std::cout << "valueX: " << valueY_ << std::endl;
+	Graph(float& valueX_, float& valueY_, float x0_,float y0_, float spanX_, float spanY_
+		, DLines* dlines_, SLines* slines_, Text* text_)
+		:dlines(dlines_), slines(slines_), text(text_), valueX(valueX_), valueY(valueY_)
+		,x0(x0_),y0(y0_),spanX(spanX_), spanY(spanY_){
 
-		lines->addSet({ x0,y0,x0 + spanX,y0,x0 + spanX,y0 + spanY,x0,y0 + spanY,x0,y0 });
-		lines->addSet({ x0 + spanX * 0.2f,y0 + spanY * 0.8f,x0 + spanX * 0.2f,y0 + spanY * 0.2f,x0 + spanX * 0.8f,y0 + spanY * 0.2f });
+
+		slines->addSet({ x0,y0,x0 + spanX,y0,x0 + spanX,y0 + spanY,x0,y0 + spanY,x0,y0 });
+		slines->addSet({ x0 + spanX * 0.1f,y0 + spanY * 0.8f,x0 + spanX * 0.1f,y0 + spanY * 0.2f,x0 + spanX * 0.9f,y0 + spanY * 0.2f });
+		slines->genBuffers();
+	}
+
+	int graphLength = 10; //max value of valueX before removing valuesPositions start
+
+	float previousValueX = 0;
+	float deltaValueX, drawValueX;
+	//int framecount = 3;
+	void updateDynamicPositions() {
+
+		deltaValueX = valueX - previousValueX;
+		previousValueX = valueX;
+
+		float valueX1d = floor(valueX * 10) / 10;
+		float valueYd = floor(valueY * 10) / 10;
+		
+
+		if (valueX < graphLength) {
+			valuesPositions.insert(valuesPositions.end(), { x0 + spanX * 0.1f + valueX * spanX * 0.8f / graphLength ,
+				y0 + spanY * 0.4f + valueY * spanY * 0.6f / graphLength });
+
+			//dlines->addSet({ x0 + spanX * 0.1f + valueX * spanX * 0.8f / graphLength,y0 + spanY * 0.8f
+			//	,x0 + spanX * 0.1f + valueX * spanX * 0.8f / graphLength,y0 + spanY * 0.2f });
+			//text->addText(x0 + spanX * 0.1f + valueX * spanX * 0.8f / graphLength, y0 + spanY * 0.15f, "t= ", valueX1d/*,"s"*/);
+		}
+		else {
+			
+			valuesPositions.insert(valuesPositions.end(), { x0 + spanX * 0.1f + (graphLength+deltaValueX) * spanX * 0.8f / graphLength ,
+				y0 + spanY * 0.4f + valueY * spanY * 0.6f / graphLength });
+
+			for (int i = 0; i < valuesPositions.size(); i += 2) {
+				valuesPositions[i] -= deltaValueX * spanX * 0.8f / graphLength;			
+			}
+
+			//instead of this erase, count size before reaching 20 and only draw the .size() final elements, once a size is reached deleted the total- .size()
+			valuesPositions.erase(valuesPositions.begin(), valuesPositions.begin() + 2); 
+		}
+
+		dlines->addSet({ x0 + spanX * 0.1f , y0 + spanY * 0.4f
+				,x0 + spanX * 0.9f, y0 + spanY * 0.4f });
+
+		dlines->addSet(valuesPositions);
+
+
+
+
+
+
+
+		
+		text->addText(x0 + spanX * 0.08f, y0 + spanY * 0.82f, "a= ", valueYd/*,"m^2/s"*/);
+		text->addText(x0 + spanX * 0.85f, y0 + spanY * 0.15f, "t= ", valueX1d/*,"s"*/);
+
+		/*if (framecount == 3) {
+
+			framecount = 0;
+		}
+		framecount++;*/
+
+		/*cout << "valuesPositions: " << endl;
+		for (int i = 0; i < valuesPositions.size(); i += 2) {
+			cout << valuesPositions[i] << ", " << valuesPositions[i + 1] << "," << endl;
+		}cout << endl;*/
 	}
 };
 
@@ -31,78 +99,89 @@ struct Graph {
 
 struct Data {
 	Polygons background;
-	Lines lines;
+	DLines dlines;
+	SLines slines;
 	SimpleCircles cheese;
 	Graph graph1;
+	Graph graph2;
 
 	int& colorLocation; int& renderTypeLocation;
 	float& elapsedTimeFloat;
 	float& deltaTime;
 	float& acceleration;
+	float& velocity;
 	Text text;
 
 
 
 
 
-	Data(int& colorLocation_, int& renderTypeLocation_, float& elapsedTimeFloat_, float& deltaTime_,float& acceleration_)
-		:colorLocation(colorLocation_), renderTypeLocation(renderTypeLocation_),
-		deltaTime(deltaTime_), elapsedTimeFloat(elapsedTimeFloat_), cheese(150),
-		background({ 1000,0,windowWidth,0,windowWidth,windowHeight,1000,windowHeight }), acceleration(acceleration_),
-		graph1(elapsedTimeFloat_, acceleration_, &lines, &text) {
+	Data(int& colorLocation_, int& renderTypeLocation_, float& elapsedTimeFloat_
+		, float& deltaTime_, float& acceleration_ ,float& velocity_)
+
+		:colorLocation(colorLocation_), renderTypeLocation(renderTypeLocation_)
+		,deltaTime(deltaTime_), elapsedTimeFloat(elapsedTimeFloat_), cheese(150)
+		,background({ 1000,0,windowWidth,0,windowWidth,windowHeight,1000,windowHeight })
+		,acceleration(acceleration_),velocity(velocity_)
+		,graph1(elapsedTimeFloat_, acceleration_, 1000.0f, 500.0f, 900.0f, 400.0f, &dlines, &slines, &text)
+		, graph2(elapsedTimeFloat_, velocity_, 1000.0f, 100.0f, 900.0f, 400.0f, &dlines, &slines, &text) {
 
 
-		
 
-		background.createPolygonsLines();
+
+		background.createPolygonsLines();	//cambiar al nuevo metodo
 		background.createClosedPolygon();
 
 
-		//lines.addSet({ 1200,400,1200,200,1700,200 });
-		//lines.addSet({ 1200,900,1500,1000,1600,900 });
-		lines.createPolygonsLines();
 
-		
 
-		/*cout << "indices" << endl;
-		for (unsigned int i = 0; i < lines.indices.size(); i++) {
-			cout << lines.indices[i] << ", ";
-		}cout << endl;*/
+
+
+		/**/
 	}
 
 
 
 	void draw() {
-		cout << graph1.valueX << endl;
+		/*cout << "background.positions: " << endl;
+		for (int i = 0; i < background.positions.size(); i += 2) {
+			cout << background.positions[i] << ", " << background.positions[i + 1] << "," << endl;
+		}cout << endl;
+		cout << "indices" << endl;
+		for (unsigned int i = 0; i < background.indices.size(); i++) {
+			cout << background.indices[i] << ", ";
+		}cout << endl;*/
 
-		std::ostringstream st;
-		st << "Elapsed time: " << elapsedTimeFloat << " s";
-		text.addText(st.str(), 1050, 1000);
+		glUniform1i(renderTypeLocation, 0);
+		graph1.updateDynamicPositions();
+		graph2.updateDynamicPositions();
 
-		st.str(std::string());
-		st << "FPS: " << deltaTime;
-		text.addText(st.str(), 1500, 1000);
+		text.addText(1050, 1000, "Elapsed time: ", elapsedTimeFloat, "s");
 
-		/*st.str(std::string());
-		st << "Acceleration";
-		text.addText(st.str(), 1100, 700);*/
+		text.addText(1500, 1000, "FPS: ", deltaTime);
+
+
+
+
 
 
 		glUniform1i(renderTypeLocation, 0);
 		glUniform4f(colorLocation, 0.0f, 0.0f, 0.0f, 1.0f);
 		background.closedDraw();
 
-		glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
-		lines.draw();
+		glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
+		dlines.draw();
+		slines.draw();
+
+
+
+		//glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
+		//cheese.createCircles({ 1460, 200 });
+		////cheese.draw();
+
 
 		glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
 		glUniform1i(renderTypeLocation, 1); //1 for text
 		text.draw();
-
-		glUniform1i(renderTypeLocation, 0);
-		glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
-		cheese.createCircles({ 1460, 200 });
-		//cheese.draw();
-
 	}
 };

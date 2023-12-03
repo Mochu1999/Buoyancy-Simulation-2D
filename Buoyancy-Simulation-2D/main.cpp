@@ -31,7 +31,7 @@ using namespace std::chrono;
 //Preincremented for loops?
 //Cleaning up buffers after using them
 //Fix cicles memory leak
-
+//que pasa con los const macho
 
 
 
@@ -53,8 +53,8 @@ int main(void)
 
 
 
-	/*glDebugMessageCallback(MessageCallback, nullptr);
-	glEnable(GL_DEBUG_OUTPUT);*/
+	glDebugMessageCallback(MessageCallback, nullptr);
+	glEnable(GL_DEBUG_OUTPUT);
 
 
 	
@@ -93,8 +93,7 @@ int main(void)
 
 	WettedSurface wettedSurface(polygon.positions,polygon.indices,fourier.positions);
 	
-	Lines lines;
-	lines.createPolygonsLines();
+	
 
 	
 	
@@ -129,7 +128,7 @@ int main(void)
 	float elapsedTimeFloat = 0, fps=0;
 
 	
-	Data data(colorLocation, renderTypeLocation,elapsedTimeFloat,fps,polygon.acceleration);
+	Data data(colorLocation, renderTypeLocation,elapsedTimeFloat,fps,polygon.acceleration, polygon.vel);
 
 
 
@@ -175,7 +174,7 @@ int main(void)
 		glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
 		polygon.createPolygonsLines();
 		polygon.createClosedPolygon();
-		//polygon.linesDraw();	//only for debugging purposes
+		//polygon.linesDraw();	//only for debugging purposes //does not even work
 		polygon.closedDraw();
 		
 		
@@ -207,7 +206,7 @@ int main(void)
 
 			wettedSurface.createPolygonsLines();
 			wettedSurface.createClosedPolygon();
-			wettedSurface.linesDraw();
+			//wettedSurface.linesDraw();
 			wettedSurface.closedDraw();
 		}
 		else {
@@ -220,7 +219,7 @@ int main(void)
 		circles3.createCircles(wettedSurface.positions);
 		circles3.draw();
 
-		
+		//
 
 
 
@@ -256,7 +255,7 @@ int main(void)
 		
 		polygon.pos += polygon.vel * deltaTime + 0.5f * polygon.acceleration * deltaTime * deltaTime;
 		
-		polygon.pos *= 0.80;
+		polygon.pos *= 0.8;
 
 		polygon.vel += polygon.acceleration * deltaTime;
 
@@ -274,7 +273,6 @@ int main(void)
 
 
 		data.draw();
-		//lines.draw();
 
 		
 

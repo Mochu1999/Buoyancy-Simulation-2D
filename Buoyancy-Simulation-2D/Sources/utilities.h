@@ -12,6 +12,16 @@ extern float windowHeight = 1080;
 extern float windowWidth = 1920;
 
 
+//cout << "positions: " << endl;
+//for (int i = 0; i < positions.size(); i += 2) {
+//	cout << positions[i] << ", " << positions[i + 1] << "," << endl;
+//}cout << endl;
+//cout << "indices" << endl;
+//for (unsigned int i = 0; i < lines.indices.size(); i++) {
+//	cout << lines.indices[i] << ", ";
+//}cout << endl;
+
+
 #define CHECK_GL_ERROR() {\
     GLenum err = glGetError();\
     while (err != GL_NO_ERROR) {\

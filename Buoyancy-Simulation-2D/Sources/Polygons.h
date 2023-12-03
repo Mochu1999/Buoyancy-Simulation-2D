@@ -98,6 +98,7 @@ struct Polygons {
 	vector <unsigned int> indicesAll;
 	vector <unsigned int> indicesRemaining;
 	vector<unsigned int> triangleIndices;
+	unsigned int ibo;
 
 	unsigned int VBPolygonLines;
 	unsigned int VAPolygonLines;
@@ -185,7 +186,6 @@ struct Polygons {
 
 		glGenBuffers(1, &VBPolygonLines);
 		glBindBuffer(GL_ARRAY_BUFFER, VBPolygonLines);
-		glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(float), /*positions.data()*/ nullptr, GL_DYNAMIC_DRAW);
 
 		glEnableVertexAttribArray(0); // Attribute index 0
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -203,7 +203,7 @@ struct Polygons {
 		}
 		indicesRemaining = indicesAll;
 
-		unsigned int ibo;
+		
 		glGenBuffers(1, &ibo);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * 4, indices.data(), GL_DYNAMIC_DRAW);
