@@ -21,15 +21,22 @@ struct DLines {	//D for dynamic, constanly updated
 
 	size_t currentBufferSize = 1000 * sizeof(float);	//simplifying the value for positions as well as indices as it is always the bigger
 
+	//method for reserve?
+
 	DLines() {
 		genBuffers();
 	}
 
+	void clear() {
+		positions.clear(); indices.clear(); setOffset = 0; setCount = 0;
+	}
 
 
 	int setOffset = 0;	//the offset that let multiple indices be over the past ones
 	int setCount = 0;	//to avoid the fact that the last index of each set is not being counted
 	void addSet(vector<float> items) {
+		
+
 		positions.insert(positions.end(), items.begin(), items.end());
 
 		for (unsigned int i = 0; i < items.size() / 2 - 1; i++) {
@@ -84,15 +91,17 @@ struct DLines {	//D for dynamic, constanly updated
 		glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0);
 
 
-		positions.clear(); indices.clear(); setOffset = 0; setCount = 0;
+		
 	}
 
 
 	~DLines() {
-		positions.clear(); indices.clear(); //more variables to clean?
+		
 		glDeleteVertexArrays(1, &vertexArray);
 		glDeleteBuffers(1, &vertexBuffer);
 		glDeleteBuffers(1, &indexBuffer);
+
+		positions.clear(); indices.clear();
 	}
 };
 

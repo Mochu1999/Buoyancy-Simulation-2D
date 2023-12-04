@@ -99,6 +99,8 @@ struct WettedSurface {
 		triangleIndices.clear();
 		indices.clear();
 
+
+
 		calculateIntersections();
 
 		if (mapIntersectionPoints.size()) {

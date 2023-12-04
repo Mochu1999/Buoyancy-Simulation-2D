@@ -18,7 +18,7 @@
 
 #include "Polygons.h"
 #include "FourierMesh.h"
-#include "simple_circles.h"
+#include "Circles.hpp"
 
 #include "Text.h"
 #include "Data.hpp"
@@ -29,8 +29,6 @@
 using namespace std::chrono;
 
 //Preincremented for loops?
-//Cleaning up buffers after using them
-//Fix cicles memory leak
 //que pasa con los const macho
 
 
@@ -53,8 +51,8 @@ int main(void)
 
 
 
-	glDebugMessageCallback(MessageCallback, nullptr);
-	glEnable(GL_DEBUG_OUTPUT);
+	/*glDebugMessageCallback(MessageCallback, nullptr);
+	glEnable(GL_DEBUG_OUTPUT);*/
 
 
 	
@@ -75,24 +73,25 @@ int main(void)
 	Polygons polygon({ 600, 400, 600, 600, 400, 600, 400, 400, 600, 400 });
 	polygon.createPolygonsLines();
 	polygon.createClosedPolygon();
-	//polygon.show();
-	
+
+
 	FourierMesh fourier;
-	fourier.FourierMeshCreation();
-	
-	fourier.show();
-
-	SimpleCircles circles(2); //polygon
+	fourier.createWavePositions();
 	
 
-	SimpleCircles circles2(3); //fourier positions
+	Circles circles(2); //polygon
 	
 
-	SimpleCircles circles3(5); //insidepoints
-
-
-	WettedSurface wettedSurface(polygon.positions,polygon.indices,fourier.positions);
+	Circles circles2(3); //fourier positions
 	
+
+	Circles circles3(5); //insidepoints
+
+
+	WettedSurface wettedSurface(polygon.positions,polygon.indices,fourier.dlines.positions);
+
+	
+
 	
 
 	
@@ -186,18 +185,20 @@ int main(void)
 		circles.draw();
 
 		glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-		circles2.createCircles(fourier.positions);	//water				//memory leak
+		circles2.createCircles(fourier.dlines.positions);	//water				//memory leak
 		circles2.draw();
 		
 		
 
 		
 
-		glUniform4f(colorLocation, 1.0f, 0.5f, 1.0f, 1.0f);
+		glUniform4f(colorLocation, 40.0f/255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
 		fourier.draw();
 
 
 		glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+
+		
 		wettedSurface.createWettedPositions(polygon.triangleIndices);
 
 
@@ -219,13 +220,14 @@ int main(void)
 		circles3.createCircles(wettedSurface.positions);
 		circles3.draw();
 
-		//
+		/*glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
+		cheese.createCircles(wettedSurface.positions);
+		cheese.draw();*/
 
 
 
 
-
-
+		
 
 
 

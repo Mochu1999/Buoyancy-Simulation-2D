@@ -143,6 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Sources\Circles.hpp" />
     <ClInclude Include="Sources\Data.hpp" />
     <ClInclude Include="Sources\FourierMesh.h" />
     <ClInclude Include="Sources\glm\common.hpp" />
@@ -292,7 +293,6 @@
     <ClInclude Include="Sources\Lines.hpp" />
     <ClInclude Include="Sources\Polygons.h" />
     <ClInclude Include="Sources\shader.h" />
-    <ClInclude Include="Sources\simple_circles.h" />
     <ClInclude Include="Sources\Text.h" />
     <ClInclude Include="Sources\utilities.h" />
     <ClInclude Include="Sources\vector_operations.h" />

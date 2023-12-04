@@ -17,8 +17,8 @@ extern float windowWidth = 1920;
 //	cout << positions[i] << ", " << positions[i + 1] << "," << endl;
 //}cout << endl;
 //cout << "indices" << endl;
-//for (unsigned int i = 0; i < lines.indices.size(); i++) {
-//	cout << lines.indices[i] << ", ";
+//for (unsigned int i = 0; i < indices.size(); i++) {
+//	cout << indices[i] << ", ";
 //}cout << endl;
 
 
@@ -74,7 +74,21 @@ void displayMatrix(const std::vector<float>& matrix, int rows, int cols) {
 	}
 }
 
+void printMatrix(const std::vector<float>& matrix, const std::string& matrixName, int rows, int cols) {
+	if (matrix.size() != rows * cols) {
+		std::cout << "Invalid matrix size. Should be " << rows * cols << " elements for a " << rows << "x" << cols << " matrix." << std::endl;
+		return;
+	}
+	std::cout << matrixName << std::endl;
 
+	for (int row = 0; row < rows; ++row) {
+		for (int col = 0; col < cols; ++col) {
+			std::cout << matrix[row * cols + col] << "\t";
+		}
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;
+}
 
 
 
