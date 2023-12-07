@@ -74,14 +74,14 @@ struct WettedSurface {
 	}
 
 	float area=0;
-	float densityArea = 1025;
+	float densityArea = 1000;
 	float mass;
 	vector<float> centroid;
-	float force;
+	float force[2] = { 0,0 };
 
 	void getUpwardForce() {
 		mass = area* densityArea;//que hace aquí si solo o necesito una vez
-		force = 9.81 * mass;
+		force[1] = 9.81 * mass;
 	}
 
 	void areaCalculation() {	//surveyor's formula

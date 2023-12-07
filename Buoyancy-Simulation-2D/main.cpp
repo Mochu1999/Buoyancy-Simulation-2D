@@ -55,50 +55,48 @@ int main(void)
 	glEnable(GL_DEBUG_OUTPUT);*/
 
 
-	
 
-	enum interfaceState {
 
-		
-		visualState
-	};
-	interfaceState currentState = visualState;
+
 
 
 	Polygons background({ 0,0,windowWidth,0,windowWidth,windowHeight,0,windowHeight,0,0 });
 	background.createPolygonsLines();
 	background.createClosedPolygon();
 
+	
 
 	Polygons polygon({ 600, 400, 600, 600, 400, 600, 400, 400, 600, 400 });
 	polygon.createPolygonsLines();
 	polygon.createClosedPolygon();
 
+	polygon.transform(0, 400);
+	std::vector<float> previousPositions = polygon.positions;
 
 	FourierMesh fourier;
 	fourier.createWavePositions();
-	
+
 
 	Circles circles(2); //polygon
-	
+
 
 	Circles circles2(3); //fourier positions
-	
+
 
 	Circles circles3(5); //insidepoints
 
 
-	WettedSurface wettedSurface(polygon.positions,polygon.indices,fourier.dlines.positions);
+	WettedSurface wettedSurface(polygon.positions, polygon.indices, fourier.dlines.positions);
 
-	
 
-	
 
-	
-	
-	
 
-	
+
+
+
+
+
+
 
 	
 
@@ -112,22 +110,22 @@ int main(void)
 	//shader.SetUniform4f("u_Color", 0.8f, 0.3f, 0.8f, 1.0f);
 
 
-	glm::mat4 proj = glm::ortho(0.0f,  windowWidth, 0.0f, windowHeight, -1.0f, 1.0f);
+	glm::mat4 proj = glm::ortho(0.0f, windowWidth, 0.0f, windowHeight, -1.0f, 1.0f);
 	shader.SetUniformMat4f("u_MVP", proj);
 
 	int colorLocation = glGetUniformLocation(shader.m_RendererID, "u_Color");
 
 	int renderTypeLocation = glGetUniformLocation(shader.m_RendererID, "u_RenderType");
-	
 
 
 
-	
-	
-	float elapsedTimeFloat = 0, fps=0;
 
-	
-	Data data(colorLocation, renderTypeLocation,elapsedTimeFloat,fps,polygon.acceleration, polygon.vel);
+
+	//make a struct for time
+	float elapsedTimeFloat = 0, fps = 0;
+
+
+	Data data(colorLocation, renderTypeLocation, elapsedTimeFloat, fps, polygon, wettedSurface);
 
 
 
@@ -138,8 +136,8 @@ int main(void)
 	while (!glfwWindowShouldClose(window))
 	{
 		//system("cls");
-		
-		
+
+
 
 		high_resolution_clock::time_point currentFrameTime = high_resolution_clock::now();
 
@@ -175,10 +173,10 @@ int main(void)
 		polygon.createClosedPolygon();
 		//polygon.linesDraw();	//only for debugging purposes //does not even work
 		polygon.closedDraw();
-		
-		
+
+
 		fourier.createWavePositions();
-		
+
 
 		glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
 		circles.createCircles(polygon.positions);
@@ -187,18 +185,18 @@ int main(void)
 		glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
 		circles2.createCircles(fourier.dlines.positions);	//water				//memory leak
 		circles2.draw();
-		
-		
 
-		
 
-		glUniform4f(colorLocation, 40.0f/255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
+
+
+
+		glUniform4f(colorLocation, 40.0f / 255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
 		fourier.draw();
 
 
 		glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
 
-		
+
 		wettedSurface.createWettedPositions(polygon.triangleIndices);
 
 
@@ -214,7 +212,7 @@ int main(void)
 			wettedSurface.area = 0;
 		}
 
-		
+
 
 		glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
 		circles3.createCircles(wettedSurface.positions);
@@ -227,7 +225,6 @@ int main(void)
 
 
 
-		
 
 
 
@@ -235,48 +232,47 @@ int main(void)
 
 
 
+		//cout<<deltaTime << endl;
 
 		//physics
-		glUniform4f(colorLocation, 1.0, 1.0, 0.5, 1.0);
+
 
 		//cout << "polygon area: " << polygon.area << endl;
 		//cout << "wetted area: " << wettedSurface.area << endl;
 
 		//cout << "polygon.mass: " << polygon.mass << endl << endl;
-		
+
 		polygon.getDownwardForce();
 		wettedSurface.getUpwardForce();
-		//cout << "polygon.force: " << polygon.force << endl;
-		//cout << "wettedSurface.force: " << wettedSurface.force << endl;
 
-		float verticalForce = wettedSurface.force + polygon.force;
+		float force[2];
+		force[0] = wettedSurface.force[0] + polygon.force[0];
+		force[1] = wettedSurface.force[1] + polygon.force[1];
 		//cout << "verticalForce: " << verticalForce << endl << endl;
 
 
-		polygon.acceleration = verticalForce / polygon.mass;
-		
-		polygon.pos += polygon.vel * deltaTime + 0.5f * polygon.acceleration * deltaTime * deltaTime;
-		
-		polygon.pos *= 0.8;
 
-		polygon.vel += polygon.acceleration * deltaTime;
-
-
-		//cout << "polygon.acceleration: " << polygon.acceleration << endl;
-		//cout << "polygon.vel: " << polygon.vel << endl;
-		//cout << "polygon.pos: " << polygon.pos << endl;
-		polygon.transform(-0, polygon.pos);
+		polygon.acceleration[0] = force[0] / polygon.mass;
+		polygon.acceleration[1] = force[1] / polygon.mass;
 
 
 
-		
+		for (int i = 1; i < polygon.positions.size(); i += 2) {
+			//cout << "a " << 2 * polygon.positions[i] << " " << -previousPositions[i] << " " << polygon.acceleration * deltaTime * deltaTime << endl;
+
+			float newPositionY = 2 * polygon.positions[i] - previousPositions[i] + polygon.acceleration[1] * deltaTime * deltaTime;
+			previousPositions[i] = polygon.positions[i];
+			polygon.positions[i] = newPositionY; // Update current position to new position
+		}
+
+
 
 
 
 
 		data.draw();
 
-		
+
 
 
 		glfwSwapBuffers(window);

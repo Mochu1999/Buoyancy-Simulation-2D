@@ -91,7 +91,9 @@ struct Polygons {
 	//vector<float> positions = { 200,200,300,400,300,600		,700,600,700,400,800,200,900,400,900,600,800,800		,200,800,100,600,100,400,200,200 };
 	//vector<float> positions = { 100,700,100,400,300,500,700,400,700,700,100,700 };
 	vector<float> positions;
-	Polygons(vector<float> positions_) :positions(positions_){}
+
+	Polygons(vector<float> positions_) 
+		:positions(positions_){}
 
 	
 	vector <unsigned int> indices;
@@ -106,14 +108,16 @@ struct Polygons {
 	unsigned int VBPolygonClosed;
 	unsigned int VAPolygonClosed;
 
-	float area;
-	float densityArea = 600;
-	float mass;
+	float area; //m^2
+	float densityArea = 500; //kg/m^2
+	float mass; //kg
+
 	vector<float> centroid;
-	float force;
+
+	float force [2] = { 0,0 }; //N
 	float pos = 0;
 	float vel = 0;
-	float acceleration = 0;
+	float acceleration[2] = { 0,0 };
 
 	void transform(float translationX, float translationY) {
 		for (int i = 0; i < positions.size(); i += 2) {
@@ -122,8 +126,8 @@ struct Polygons {
 		}
 	}
 	void getDownwardForce() {
-		mass = area * densityArea;//que hace aquí si solo o necesito una vez
-		force = -9.81 * mass;
+		mass = area * densityArea;
+		force[1] = -9.81 * mass;
 	}
 
 	void areaCalculation() {	//surveyor's formula
