@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Polygons.h"
+#include "Polygons.hpp"
 #include "wetted_surface.h"
 #include "Lines.hpp"
 #include "Text.h"
@@ -154,16 +154,16 @@ struct Data {
 
 		:colorLocation(colorLocation_), renderTypeLocation(renderTypeLocation_)
 		, deltaTime(deltaTime_), elapsedTimeFloat(elapsedTimeFloat_), cheese(150)
-		, background({ 1000,0,windowWidth,0,windowWidth,windowHeight,1000,windowHeight })
+		, background({ 1000,0,windowWidth,0,windowWidth,windowHeight,1000,windowHeight,1000,0 })
 		, polygon(polygon_), wettedSurface(wettedSurface_)
 		, graph1(elapsedTimeFloat_, polygon_.acceleration[1], 1000.0f, 500.0f, 900.0f, 400.0f, "a", &dlines, &slines, &text)
-		, graph2(elapsedTimeFloat_, polygon_.vel, 1000.0f, 100.0f, 900.0f, 400.0f, "v", &dlines, &slines, &text) {
+		, graph2(elapsedTimeFloat_, polygon_.velocity[1], 1000.0f, 100.0f, 900.0f, 400.0f, "v", &dlines, &slines, &text) {
 
 
 
 
-		background.createPolygonsLines();	//cambiar al nuevo metodo
-		background.createClosedPolygon();
+		//background.createPolygonsLines();	//cambiar al nuevo metodo
+		//background.createClosedPolygon();
 
 
 
@@ -190,7 +190,8 @@ struct Data {
 		dlines.clear();
 
 		graph1.updateDynamicPositions();
-		//graph2.updateDynamicPositions();
+		graph2.updateDynamicPositions();
+
 
 		text.addText(1050, 1000, "Elapsed time: ", elapsedTimeFloat, "s");
 
@@ -203,7 +204,7 @@ struct Data {
 
 		glUniform1i(renderTypeLocation, 0);
 		glUniform4f(colorLocation, 0.0f, 0.0f, 0.0f, 1.0f);
-		background.closedDraw();
+		background.draw();
 
 		glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
 		dlines.draw();

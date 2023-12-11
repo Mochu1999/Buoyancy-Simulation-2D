@@ -76,7 +76,7 @@ struct WettedSurface {
 	float area=0;
 	float densityArea = 1000;
 	float mass;
-	vector<float> centroid;
+	float centroid[2] = { 0,0 };
 	float force[2] = { 0,0 };
 
 	void getUpwardForce() {
@@ -452,7 +452,20 @@ struct WettedSurface {
 	unsigned int VAPolygonClosed;
 
 	
+	void centroidCalculation() {
+		std::fill(centroid, centroid + 2, 0);
 
+
+		for (int i = 0; i < positions.size() - 2; i += 2) {
+			float Ai = (positions[i] * positions[i + 3] - positions[i + 2] * positions[i + 1]) * 1e-6;
+
+			centroid[0] += (positions[i] + positions[i + 2]) * 1e-3 * Ai;
+			centroid[1] += (positions[i + 1] + positions[i + 3]) * 1e-3 * Ai;
+		}
+
+		centroid[0] /= (6.0 * area);
+		centroid[1] /= (6.0 * area);
+	}
 
 	void createPolygonsLines() {
 
@@ -651,22 +664,7 @@ struct WettedSurface {
 	}
 
 	
-	void centroidCalculation() {
-		centroid = { 0,0 };//array
-
-
-		for (int i = 0; i < positions.size() - 2; i += 2) {
-			float Ai = positions[i] * positions[i + 3] - positions[i + 2] * positions[i + 1];
-
-			centroid[0] += (positions[i] + positions[i + 2]) * Ai;
-			centroid[1] += (positions[i + 1] + positions[i + 3]) * Ai;
-		}
-
-		centroid[0] /= (6.0 * area);
-		centroid[1] /= (6.0 * area);
-
-		//cout << "Centroid: (" << Cx << ", " << Cy << ")" << endl;	//hacer assert si area=0?
-	}
+	
 
 
 };

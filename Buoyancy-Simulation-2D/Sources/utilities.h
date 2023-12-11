@@ -22,6 +22,96 @@ extern float windowWidth = 1920;
 //}cout << endl;
 
 
+//Esto es de old polygons
+float absoluteAngle(float x, float y) {
+	/*if (x == 0 && y == 0) {
+		std::cout << "Error triggered: 0/0 is undefined" << std::endl;
+		std::exit(EXIT_FAILURE);
+	}*/
+
+	float angleInRadians = atan2(y, x);
+	float angleInDegrees = angleInRadians * 180 / PI;
+
+
+	if (angleInDegrees < 0) {
+		angleInDegrees += 360;
+	}
+
+	return angleInDegrees;
+}
+
+bool isConcave(float angle1, float angle2) {
+	float angleDifference = angle2 - angle1;
+
+	while (angleDifference < 0) {
+		angleDifference += 360;
+	}
+	while (angleDifference >= 360) {
+		angleDifference -= 360;
+	}
+
+	return angleDifference <= 180;
+}
+
+bool checkBarycentric(float x, float y, float x1, float y1, float x2, float y2, float x3, float y3) {
+
+	float alpha = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / ((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3)); //meassures the influence of x1,k1, if it were 1 and the rest  0 x,y would be on x1,y1
+	float beta = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / ((y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3));
+	float gamma = 1 - alpha - beta;
+	if (alpha >= 0 && alpha <= 1 && beta >= 0 && beta <= 1 && gamma >= 0 && gamma <= 1) //if any of them is greater than 1 or less than 1 they won't be inside the triangle
+		return true;	//it is inside
+	else
+		return false;
+
+}
+//bool checkBarycentric(float x, float y, float x1, float y1, float x2, float y2, float x3, float y3) {
+//	float epsilon = 1e-2; // Tolerance value, can be adjusted based on your precision requirements
+//
+//	float denominator = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
+//	if (std::abs(denominator) < epsilon) {
+//		return false; // The triangle is degenerate (points are collinear or too close)
+//	}
+//
+//	float alpha = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / denominator;
+//	float beta = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / denominator;
+//	float gamma = 1 - alpha - beta;
+//
+//	return (alpha >= -epsilon && alpha <= 1 + epsilon) &&
+//		(beta >= -epsilon && beta <= 1 + epsilon) &&
+//		(gamma >= -epsilon && gamma <= 1 + epsilon);
+//}
+
+//bool checkBarycentric(float x, float y, float x1, float y1, float x2, float y2, float x3, float y3) {		//suposed to be faster but not checked
+//	// Inline cross product calculation and check for each edge
+//	// Edge 1 (v0: x1->x2, y1->y2)
+//	float c1 = (x2 - x1) * (y - y1) - (y2 - y1) * (x - x1);
+//	// Edge 2 (v1: x1->x3, y1->y3)
+//	float c2 = (x3 - x1) * (y - y1) - (y3 - y1) * (x - x1);
+//	// If c1 and c2 are not on the same side, return false early
+//	if ((c1 < 0 || c2 < 0) && (c1 > 0 || c2 > 0)) return false;
+//	// Edge 3 (v2: x3->x2, y3->y2)
+//	float c3 = (x2 - x3) * (y - y3) - (y2 - y3) * (x - x3);
+//	// Final check
+//	return (c1 >= 0 && c2 >= 0 && c3 >= 0) || (c1 <= 0 && c2 <= 0 && c3 <= 0);
+//}
+
+
+//void hop(float& xpos, float& ypos) {
+//
+//	if (abs(xpos - positions[0]) <= 20 && abs(ypos - positions[1]) <= 20) {
+//		xpos = positions[0];
+//		ypos = positions[1];
+//	}
+//	positions[positions.size() - 2] = xpos;
+//	positions.back() = ypos;
+//
+//}
+
+
+
+
+
+
 #define CHECK_GL_ERROR() {\
     GLenum err = glGetError();\
     while (err != GL_NO_ERROR) {\

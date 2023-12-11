@@ -456,7 +456,7 @@
     <ClInclude Include="Sources\glm\vector_relational.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Polygons.h">
+    <ClInclude Include="Sources\borrar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Sources\FourierMesh.h">
@@ -475,6 +475,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Sources\Circles.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Polygons.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\FloatingObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
