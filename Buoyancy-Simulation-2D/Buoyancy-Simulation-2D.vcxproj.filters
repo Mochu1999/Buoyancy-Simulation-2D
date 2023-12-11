@@ -483,6 +483,9 @@
     <ClInclude Include="Sources\FloatingObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Sources\NewWettedSurface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

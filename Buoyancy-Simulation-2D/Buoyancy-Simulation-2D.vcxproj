@@ -292,6 +292,7 @@
     <ClInclude Include="Sources\glm\vec4.hpp" />
     <ClInclude Include="Sources\glm\vector_relational.hpp" />
     <ClInclude Include="Sources\Lines.hpp" />
+    <ClInclude Include="Sources\NewWettedSurface.h" />
     <ClInclude Include="Sources\Polygons.hpp" />
     <ClInclude Include="Sources\borrar.h" />
     <ClInclude Include="Sources\shader.h" />

@@ -21,12 +21,17 @@ struct Polygons {
 
 	size_t currentBufferSize = 1000 * sizeof(float);
 
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	////	It should let you add sets for NewWetted Surface
+
 	Polygons(vector <float> positions_) :positions(positions_) {
 		genBuffers();
 
 		
 		oldPositions = positions_;
 	}
+
+
 	vector <float> oldPositions;
 	float area; //m^2
 	float densityArea = 500; //kg/m^2
@@ -288,4 +293,9 @@ struct Polygons {
 		glBindVertexArray(0);
 	}
 
+	~Polygons() {
+		glDeleteVertexArrays(1, &vertexArray);
+		glDeleteBuffers(1, &vertexBuffer);
+		glDeleteBuffers(1, &indexBuffer);
+	}
 };
