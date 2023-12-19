@@ -9,16 +9,16 @@ struct FourierMesh {
 
 	vector<float> intermVector;
 
-	int xn =2;
+	int xn =20;
 	int segments = xn - 1;
 	float endXPosition = 1000;
 
-	float period = 2000;
+	float period = 400;// 500;
 	float frecuency = 2 * PI / period;
-	float amplitude = 0;
+	float amplitude = 400;
 	float offset = 500;
-	float phase = 0;		//Esto no deja de crecer
-	float phaseSpeed = 0.010;
+	float phase = 15.5502f;		//Esto no deja de crecer
+	float phaseSpeed = 0.01;
 
 
 	void createWavePositions() {
@@ -38,9 +38,10 @@ struct FourierMesh {
 		dlines.addSet(intermVector);	//it would be ideal that it could take a reference
 
 		phase += phaseSpeed;
-		//cout << phase << endl;
+		cout << "phase: "<<phase << endl;
 		//offset++;
-
+		//cout << offset << endl;
+		//offset--;
 	}
 
 

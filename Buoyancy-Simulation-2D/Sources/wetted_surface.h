@@ -174,10 +174,7 @@ struct WettedSurface {
 			if (!intersectionFound) {
 
 				for (int j = 0; j < polygonIndices.size(); j += 2) {	//j values will be twice as big because indices has repeated layout, convenient to avoid multiplying
-					//cout << "j: " << j << endl;
-					//if (j == 4) {
-					//	cout << j << " " << polygonPositions[polygonIndices[j] * 2] << " " << polygonPositions[polygonIndices[j] * 2 + 1] << endl;
-					//}
+
 
 					if (calculateIntersectionPoints(positionsFourier[i], positionsFourier[i + 1], positionsFourier[i + 2], positionsFourier[i + 3], polygonPositions[polygonIndices[j] * 2],
 						polygonPositions[polygonIndices[j] * 2 + 1], polygonPositions[(polygonIndices[j] + 1) * 2], polygonPositions[(polygonIndices[j] + 1) * 2 + 1], Px, Py)) {
@@ -193,15 +190,6 @@ struct WettedSurface {
 				if (intersectionFound) {
 
 					intersectionFound = false;
-
-					//cout << "possibleIntersections:" << endl;
-					//for (const auto& entry : possibleIntersections) {
-					//	std::cout << "{ " << entry.first << ", { ";
-					//	for (float value : entry.second) {
-					//		std::cout << value << " ";
-					//	}
-					//	std::cout << "}}" << std::endl;
-					//}std::cout << std::endl;
 
 					if (possibleIntersections.size() > 1) {
 
@@ -219,8 +207,8 @@ struct WettedSurface {
 
 						float crossProductWP = isRightOfLine(positionsFourier[i], positionsFourier[i + 1], positionsFourier[i + 2], positionsFourier[i + 3], polygonPositions[polygonIndices[firstKey] * 2], polygonPositions[polygonIndices[firstKey] * 2 + 1]);
 
-						if (crossProductWP == 0) {	// we are checking here j+1 and j-1, if any of them is at the right they will be the inmediates, if both are or are not, none
 
+						if (crossProductWP == 0) {	// we are checking here j+1 and j-1, if any of them is at the right they will be the inmediates, if both are or are not, none
 
 							int indexMinus, indexPlus;
 							if (firstKey == 0) {
@@ -236,12 +224,8 @@ struct WettedSurface {
 								indexPlus = polygonIndices[firstKey] + 1;
 							}
 
-
 							float crossProductInmMinus = isRightOfLine(positionsFourier[i], positionsFourier[i + 1], positionsFourier[i + 2], positionsFourier[i + 3], polygonPositions[indexMinus * 2], polygonPositions[indexMinus * 2 + 1]);
 							float crossProductInmPlus = isRightOfLine(positionsFourier[i], positionsFourier[i + 1], positionsFourier[i + 2], positionsFourier[i + 3], polygonPositions[indexPlus * 2], polygonPositions[indexPlus * 2 + 1]);		//y todo este x2 tú?
-
-							//cout <<"crossProductInmMinus: "<< indexMinus<<" " <<crossProductInmMinus <<endl<< 
-							//	" crossProductInmPlus: " << indexPlus<<" "<< crossProductInmPlus << endl;
 
 							if (crossProductInmPlus < 0 && crossProductInmMinus >= 0) {
 
@@ -264,10 +248,11 @@ struct WettedSurface {
 							}
 
 							//if none it won't add anything to map
-
 						}
 
-						else if (crossProductWP > 0) {				//nesting else if?
+
+
+						else if (crossProductWP > 0) {
 
 
 							possibleIntersections[k].second[2] += 2;

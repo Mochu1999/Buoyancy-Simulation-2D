@@ -1,8 +1,14 @@
 #pragma once
 
+#include <unordered_set>
+
+//maybe breaking the surface in no concave surfaces is faster...
+
 struct NewWettedSurface {
 
-	vector<float>positions;
+	vector<float>positions;		//final positions of the wetted surface
+	//Cuando hagas un reserve tienes que estimar también el tamaño de wavespositons, quizás cogiendo el largo y multiplicandolo por la densidad en x de olas
+
 	std::vector<std::pair<int, std::vector<float>>> mapIntersectionPoints;
 
 
@@ -12,77 +18,458 @@ struct NewWettedSurface {
 	vector<float>& positionsFourier;
 
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//meter data en polygon y quitar basura
+
 	Polygons polygon;
 
-	//Deberías meter la instance de polygon mejor? //Creo que es mejor porque el hecho de que la cojas no implica coger más memoria
 
-	NewWettedSurface(vector<float>& polygonPositions_, vector<unsigned int>& polygonIndices_, vector<float>& positionsFourier_)			
-		: polygonPositions(polygonPositions_), polygonIndices(polygonIndices_), positionsFourier(positionsFourier_), polygon(positions) {
+	//Deberías meter la instance de polygon mejor? //Creo que es mejor porque el hecho de que la cojas no implica coger más memoria
+	NewWettedSurface(vector<float>& polygonPositions_, vector<unsigned int>& polygonIndices_, vector<float>& positionsFourier_)
+		: polygonPositions(polygonPositions_), polygonIndices(polygonIndices_), positionsFourier(positionsFourier_)
+	{}
+
+
+	void draw() {
+		createWettedPositions();
+
+
+		/*if (positions.size()) {
+			polygon.clear();
+			polygon.addSet(positions);
+			polygon.draw();
+		}*/
 	}
 
 
-	void createWettedPositions(vector<unsigned int> triangleIndices_) {
+
+
+	void createWettedPositions() {
 
 		mapIntersectionPoints.clear();
 		positions.clear();
-		triangleIndices.clear();
-		indices.clear();
+
 
 
 
 		calculateIntersections();
 
+
+
+
+
+
+		cout << "mapIntersectionPoints:" << endl;
+		for (const auto& entry : mapIntersectionPoints) {
+			std::cout << "{ " << entry.first << ", { ";
+			for (float value : entry.second) {
+				std::cout << value << " ";
+			}
+			std::cout << "}}" << std::endl;
+		}std::cout << std::endl;
+
+
+
+
+
+
 		if (mapIntersectionPoints.size()) {
-			mergeWettedPositions();
-		}
-		else {
 
-			float biggestY = std::numeric_limits<float>::min();
-			int biggestj = 0;
-			for (int j = 0; j < polygonIndices.size(); j += 2) {	//finds uppermost polygon index
 
-				if (polygonPositions[j + 1] > biggestY) {
-					biggestY = polygonPositions[j + 1];
-					biggestj = j;
+			//vector that orders imms depending on the 3 intersection cases, normal, same immediate and same segment
+			vector<vector<float>> orderedImms;
+
+
+			//adding the immediate, the distance to begin, the segment and a flag for areImmediates in the third case
+			float distanceCounter = 0;
+			for (auto it = mapIntersectionPoints.begin(); it != mapIntersectionPoints.end(); ++it) {
+
+				vector<float> interm = { it->second[2],distanceCounter ,static_cast<float>(it->first),1 };
+
+				orderedImms.push_back(interm);
+
+				distanceCounter++;
+			}
+
+
+
+
+			//secondImm will be firstImm+1 unless second or third cases where they will be ordered by distance
+			std::sort(orderedImms.begin(), orderedImms.end(),
+				[](const std::vector<float>& a, const std::vector<float>& b)
+				{
+					//same segment or same immediate condition
+					//if (a[2] == b[2] )  //checking by segments and immediates
+					//{
+					//	return a[1] < b[1]; //the one with less distance
+					//}
+					if (a[0] == b[0])  //checking by segments and immediates
+					{
+						return a[1] < b[1]; //the one with less distance
+					}
+
+
+					return a[0] < b[0]; //normal condition, ordered by immediates
+				}
+			);
+
+
+
+			size_t i = 1;
+			//if the second or third case happens, you don't know if the order will be first to second or second to first,
+			// so you wrap around the first one after the second one just in case  //I'm sure there is a complex way to know it beforehand but it may be less efficient overall
+			//while (i < orderedImms.size())
+			//{
+			//	if (orderedImms[i][0] == orderedImms[i - 1][0])
+			//	{
+			//		vector<vector<float>> interm;
+			//		interm.reserve(orderedImms.size() + 1);
+
+			//		//It occurs to me a way that only adds the first insert and push_back so you don't have to do orderedImms = interm;
+			//		interm.insert(interm.end(), orderedImms.begin(), orderedImms.begin() + i + 1);
+			//		interm.push_back(orderedImms[i - 1]);
+			//		interm.insert(interm.end(), orderedImms.begin() + i + 1, orderedImms.end());
+
+			//		orderedImms = interm;
+			//		i++;
+			//	}
+
+			//	i++;
+
+			//}
+
+			//float maxVal = orderedImms[0][0];
+			//int lastIndex = 0;
+			//for (int i = 0; i < orderedImms.size(); ++i) {
+			//	if (orderedImms[i][0] >= maxVal) {
+			//		maxVal = orderedImms[i][0];
+			//		lastIndex = i;
+			//	}
+			//}
+			//orderedImms.insert(orderedImms.begin() + lastIndex + 1, orderedImms[0]);
+			orderedImms.push_back(orderedImms[0]); //normal case where the first intersection is the last index, wraps around
+			/*
+			A ver tío, si te has despertado no tendrías que estar aquí, tendrías que quitarte lo de fatiga de encima para estar
+			full con esto por la tarde
+
+
+
+
+			
+
+
+
+
+
+			/////////////////////// No sé si esto es correcto
+			//Changes the flags for the segment case once the immediate starts to decrease
+			for (size_t i = 0; i < orderedImms.size() - 2; i++)
+			{
+				if (orderedImms[i + 1][0] < orderedImms[i][0])
+				{
+					orderedImms[i][3] = 0;
 				}
 			}
 
-			int biggesti = 0;
-			for (int i = 0; i < positionsFourier.size(); i += 2) {	//finds the wave just previous to biggestj
 
-				if (positionsFourier[i] < polygonPositions[biggestj]) {
-					biggesti = i;
+
+
+			/*cout << "orderedImms: " << endl;
+			for (const auto& item : orderedImms) {
+				cout << "{";
+				for (const auto& val : item) {
+					std::cout << val << ", ";
 				}
-				else break;	//it found it
-			}
-			if (isRightOfLine(positionsFourier[biggesti], positionsFourier[biggesti + 1], positionsFourier[biggesti + 2], positionsFourier[biggesti + 3],
-				polygonPositions[polygonIndices[biggestj] * 2], polygonPositions[polygonIndices[biggestj] * 2 + 1]) <= 0) {
-				positions = polygonPositions;
-				createIndices(positions);
-				triangleIndices = triangleIndices_;
+				std::cout << "}," << std::endl;
+			}cout << endl;*/
 
+
+
+			//stores imms and distances
+			vector<unsigned int> usedImms;
+
+			std::vector<std::pair<int, std::vector<float>>>::iterator initialIt, firstIt, secondIt;
+			unsigned int firstImm, secondImm;
+
+
+
+
+
+			int count = 0;
+
+			//this while loop defines initialIt and the first firstIt
+			//returns here at the start of each surface
+			while (usedImms.size() < mapIntersectionPoints.size() * 2) {
+
+				unsigned int distanceInitialImm = 0;
+				//with sets elements are located faster using a hash table (efficient af look for it and try it in other places)
+				//Each element is unique, it automatically prevents duplicates
+				std::unordered_set<int> secondElements;
+
+				for (size_t i = 1; i < usedImms.size(); i += 2) {
+					secondElements.insert(usedImms[i]);
+				}
+				while (secondElements.find(distanceInitialImm) != secondElements.end()) {
+					++distanceInitialImm; //increments till you find one that is not in the set
+				}
+
+
+
+
+				unsigned int distanceFirstImm = distanceInitialImm;
+				initialIt = mapIntersectionPoints.begin() + distanceInitialImm;
+
+
+				firstIt = initialIt;
+				firstImm = firstIt->second[2];
+
+				positions.insert(positions.end(), { firstIt->second[0], firstIt->second[1] });
+
+
+
+				std::size_t distanceCheck = -1;// invalid distance to enter the while loop
+
+
+
+				//cout << endl << "count " << count; count++;
+				int countInnerLoop = 0;
+
+
+
+
+
+
+				//You get here with firstIt already known. Calculates secondIt with orderedImms
+				// Goes from first to second with getImmediates if applies, and second to the next first with getWavePoints
+				//stays here till the surface closes
+				while (distanceCheck != 0) {
+
+					/*cout << " .......countInnerLoop " << countInnerLoop << endl << endl; */
+					countInnerLoop++;
+
+
+
+					bool areImmediates; //takes the flag of same segments
+					bool isSecondItFound = false;
+					//looks for secondImm and secondIt with orderedImms
+
+					
+
+
+
+
+
+					//Vamos a ver, para que se produzca el tercer caso los immediates tienen que contradecirse, si no son
+					// dos "casos 2" distintos
+					//Como sabes si se contradicen? En el caso de la izq para 1 imm>segm y para 2 imm=seg
+					//para el de la derecha también (así que eso no son parámetros a analizar)
+					
+					//idea loca, el caso 3 solo puede ocurrir para initialIt, prove me wrong
+					areImmediates = 1;
+					cout << "firstImm " << firstImm << " dist " << distanceFirstImm << endl;
+					for (size_t i = 0; i < orderedImms.size(); i++)
+					{
+						if (firstImm == orderedImms[i][0] && distanceFirstImm == orderedImms[i][1])
+						{
+							orderedImms[i][3] = 0;
+
+							if (i == 0)
+							{
+								orderedImms[orderedImms.size() - 1][3] = 0;
+							}
+
+							//la premisa que el tercer caso solo puede ocurrir para comienzo de superficie, prove me wrong
+							if(firstIt==initialIt)
+							{
+								bool foundThirdCase = false;
+								float currentDistance = std::numeric_limits<float>::max();
+								size_t savedJ;
+								for (size_t j = 1; j < orderedImms.size(); j++) //no estoy cogiendo el primer elemento repetido
+								{
+									if (j != i)
+									{
+										if (orderedImms[j][2] == orderedImms[i][2] && orderedImms[j][3] == 1)
+										{
+											foundThirdCase = true;
+
+											if (orderedImms[j][1] > orderedImms[i][1] && orderedImms[j][1] < currentDistance)
+											{
+												currentDistance = orderedImms[j][1];
+												savedJ = j;
+
+											}
+
+										}
+									}
+								}
+								if (foundThirdCase)
+								{
+									areImmediates = 0;
+
+									isSecondItFound = true;//coño es esto?
+									secondImm = orderedImms[savedJ][0];
+
+									secondIt = mapIntersectionPoints.begin() + orderedImms[savedJ][1];
+
+									orderedImms[savedJ][3] = 0;
+
+									break;
+								}
+							}
+							
+
+							if (orderedImms[i + 1][3] == 1)
+							{
+								isSecondItFound = true;
+								secondImm = orderedImms[i + 1][0];
+								orderedImms[i + 1][3] = 0;
+
+								secondIt = mapIntersectionPoints.begin() + orderedImms[i + 1][1];
+
+								break;
+							}
+
+							//if orderedImms[i + 1][3] !=1 and there is no third case
+							isSecondItFound = true;
+							secondImm = orderedImms[i - 1][0];
+							orderedImms[i - 1][3] = 0;
+
+							secondIt = mapIntersectionPoints.begin() + orderedImms[i - 1][1];
+
+							break;
+
+
+
+						}
+
+					}
+
+
+
+
+
+
+
+
+					if (areImmediates) {
+						getImmediates(firstImm, secondImm);
+					}
+					positions.insert(positions.end(), { secondIt->second[0], secondIt->second[1] });
+
+
+
+					//tío pero si secondImm ya lo estás sacando en el for de arriba, que haces
+					unsigned int distanceSecondImm = std::distance(mapIntersectionPoints.begin(), secondIt);
+
+
+					cout << "secondImm " << secondImm << " dist " << distanceSecondImm << endl;
+
+					//cout << "firstImm " << firstImm << ", distanceFirstImm " << distanceSecondImm << endl;
+					//cout << " secondImm " << secondImm << ", distanceSecondImm " << distanceSecondImm << endl;
+					usedImms.insert(usedImms.end(), { firstImm, distanceFirstImm, secondImm, distanceSecondImm });
+
+
+
+					//The key in all of this. secondIt is linked to its pair, to be used in the next iteration
+					if (distanceSecondImm % 2 == 0) {
+						distanceFirstImm = distanceSecondImm + 1;
+					}
+					else {
+						distanceFirstImm = distanceSecondImm - 1;
+					}
+
+
+
+					//for the next iteration
+					firstIt = mapIntersectionPoints.begin() + distanceFirstImm;
+					firstImm = firstIt->second[2];
+
+
+					getWavePoints(firstIt->second[0], secondIt->second[0]);
+
+
+					positions.insert(positions.end(), { firstIt->second[0], firstIt->second[1] });
+
+
+
+					distanceCheck = distanceInitialImm - distanceFirstImm; //if 0 you have arrived to initialIt again and the loop ends
+
+					/*if (countInnerLoop == 10) {
+						cout << endl << "usedImms: " << endl;
+						for (int i = 0; i < usedImms.size(); i += 4) {
+							cout << usedImms[i] << " " << usedImms[i + 1] << ", " << usedImms[i + 2] << " " << usedImms[i + 3] << endl;
+						}cout << endl;
+					}*/
+					cout << "orderedImms: " << endl;
+					for (const auto& item : orderedImms) {
+						cout << "{";
+						for (const auto& val : item) {
+							std::cout << val << ", ";
+						}
+						std::cout << "}," << std::endl;
+					}cout << endl;
+				}
+
+
+				cout << endl << "usedImms: " << endl;
+				for (int i = 0; i < usedImms.size(); i += 4) {
+					cout << usedImms[i] << " " << usedImms[i + 1] << ", " << usedImms[i + 2] << " " << usedImms[i + 3] << endl;
+				}cout << endl;
 			}
 
 		}
+
+
+
+
+
+
+
+
+
+		/*cout << "positions: " << endl;
+		for (int i = 0; i < positions.size(); i += 2) {
+			cout << positions[i] << " " << positions[i + 1] << endl;
+		}cout << endl;*/
+
+		//if (mapIntersectionPoints.size()) {
+		//	mergeWettedPositions();
+		//}
+		//else {
+		//	float biggestY = std::numeric_limits<float>::min();
+		//	int biggestj = 0;
+		//	for (int j = 0; j < polygonIndices.size(); j += 2) {	//finds uppermost polygon index
+		//		if (polygonPositions[j + 1] > biggestY) {
+		//			biggestY = polygonPositions[j + 1];
+		//			biggestj = j;
+		//		}
+		//	}
+		//	int biggesti = 0;
+		//	for (int i = 0; i < positionsFourier.size(); i += 2) {	//finds the wave just previous to biggestj
+		//		if (positionsFourier[i] < polygonPositions[biggestj]) {
+		//			biggesti = i;
+		//		}
+		//		else break;	//it found it
+		//	}
+		//	if (isRightOfLine(positionsFourier[biggesti], positionsFourier[biggesti + 1], positionsFourier[biggesti + 2], positionsFourier[biggesti + 3],
+		//		polygonPositions[polygonIndices[biggestj] * 2], polygonPositions[polygonIndices[biggestj] * 2 + 1]) <= 0) {
+		//		positions = polygonPositions;
+		//		//createIndices(positions);
+		//		//triangleIndices = triangleIndices_;
+		//	}
+		//}
 
 
 
 
 	}
 
+	//change this to a binary search where you find with this method the upper and lower bounds 
+	void getWavePoints(float firstItXInters, float secondItXInters) {
 
-
-
-	void getWavePoints(vector<float>& intermPositions, float& wav1, float& wav2) {
-		int minWav = std::min(wav1, wav2);
-		int maxWav = std::max(wav1, wav2);
 
 		for (int i = positionsFourier.size() - 2; i >= 0; i -= 2) {
 
-			if (positionsFourier[i] > minWav && positionsFourier[i] < maxWav) {
-				intermPositions.insert(intermPositions.end(), { positionsFourier[i],positionsFourier[i + 1] });
+			if (positionsFourier[i] > firstItXInters && positionsFourier[i] < secondItXInters) {
+				positions.insert(positions.end(), { positionsFourier[i],positionsFourier[i + 1] });
 			}
 
 		}
@@ -90,7 +477,7 @@ struct NewWettedSurface {
 	}
 
 
-	void calculateIntersections() {
+	void calculateIntersections() { //fills mapIntersectionPoints with intersections and immediates indices
 
 		float Px, Py;
 		bool intersectionFound = false;
@@ -105,10 +492,7 @@ struct NewWettedSurface {
 			if (!intersectionFound) {
 
 				for (int j = 0; j < polygonIndices.size(); j += 2) {	//j values will be twice as big because indices has repeated layout, convenient to avoid multiplying
-					//cout << "j: " << j << endl;
-					//if (j == 4) {
-					//	cout << j << " " << polygonPositions[polygonIndices[j] * 2] << " " << polygonPositions[polygonIndices[j] * 2 + 1] << endl;
-					//}
+
 
 					if (calculateIntersectionPoints(positionsFourier[i], positionsFourier[i + 1], positionsFourier[i + 2], positionsFourier[i + 3], polygonPositions[polygonIndices[j] * 2],
 						polygonPositions[polygonIndices[j] * 2 + 1], polygonPositions[(polygonIndices[j] + 1) * 2], polygonPositions[(polygonIndices[j] + 1) * 2 + 1], Px, Py)) {
@@ -124,15 +508,6 @@ struct NewWettedSurface {
 				if (intersectionFound) {
 
 					intersectionFound = false;
-
-					//cout << "possibleIntersections:" << endl;
-					//for (const auto& entry : possibleIntersections) {
-					//	std::cout << "{ " << entry.first << ", { ";
-					//	for (float value : entry.second) {
-					//		std::cout << value << " ";
-					//	}
-					//	std::cout << "}}" << std::endl;
-					//}std::cout << std::endl;
 
 					if (possibleIntersections.size() > 1) {
 
@@ -150,8 +525,8 @@ struct NewWettedSurface {
 
 						float crossProductWP = isRightOfLine(positionsFourier[i], positionsFourier[i + 1], positionsFourier[i + 2], positionsFourier[i + 3], polygonPositions[polygonIndices[firstKey] * 2], polygonPositions[polygonIndices[firstKey] * 2 + 1]);
 
-						if (crossProductWP == 0) {	// we are checking here j+1 and j-1, if any of them is at the right they will be the inmediates, if both are or are not, none
 
+						if (crossProductWP == 0) {	// we are checking here j+1 and j-1, if any of them is at the right they will be the inmediates, if both are or are not, none
 
 							int indexMinus, indexPlus;
 							if (firstKey == 0) {
@@ -167,12 +542,8 @@ struct NewWettedSurface {
 								indexPlus = polygonIndices[firstKey] + 1;
 							}
 
-
 							float crossProductInmMinus = isRightOfLine(positionsFourier[i], positionsFourier[i + 1], positionsFourier[i + 2], positionsFourier[i + 3], polygonPositions[indexMinus * 2], polygonPositions[indexMinus * 2 + 1]);
-							float crossProductInmPlus = isRightOfLine(positionsFourier[i], positionsFourier[i + 1], positionsFourier[i + 2], positionsFourier[i + 3], polygonPositions[indexPlus * 2], polygonPositions[indexPlus * 2 + 1]);		//y todo este x2 tú?
-
-							//cout <<"crossProductInmMinus: "<< indexMinus<<" " <<crossProductInmMinus <<endl<< 
-							//	" crossProductInmPlus: " << indexPlus<<" "<< crossProductInmPlus << endl;
+							float crossProductInmPlus = isRightOfLine(positionsFourier[i], positionsFourier[i + 1], positionsFourier[i + 2], positionsFourier[i + 3], polygonPositions[indexPlus * 2], polygonPositions[indexPlus * 2 + 1]);
 
 							if (crossProductInmPlus < 0 && crossProductInmMinus >= 0) {
 
@@ -189,16 +560,17 @@ struct NewWettedSurface {
 
 							else if (crossProductInmMinus < 0 && crossProductInmPlus < 0) {
 								possibleIntersections[k].second[2] = indexMinus * 2;
-								mapIntersectionPoints.emplace_back(possibleIntersections[k]);
+								mapIntersectionPoints.emplace_back(possibleIntersections[k]);//Que es esto? 
 								possibleIntersections[k].second[2] = indexPlus * 2;
 								mapIntersectionPoints.emplace_back(std::move(possibleIntersections[k]));
 							}
 
 							//if none it won't add anything to map
-
 						}
 
-						else if (crossProductWP > 0) {				//nesting else if?
+
+
+						else if (crossProductWP > 0) {
 
 
 							possibleIntersections[k].second[2] += 2;
@@ -224,325 +596,31 @@ struct NewWettedSurface {
 
 	}
 
-	vector<float> getImmediates(int key1, int key2) {
-		vector<float> inmediatesVector;
+	void getImmediates(int firstImm, int secondImm) { //It adds the immediates and those in-between to the positions
 
-		if (key1 < key2) {
+		if (firstImm < secondImm) {
 
 
-			for (int i = key1; i <= key2; i += 2) {
+			for (int i = firstImm; i <= secondImm; i += 2) {
 
-				inmediatesVector.insert(inmediatesVector.end(), { polygonPositions[i], polygonPositions[i + 1] });
+				positions.insert(positions.end(), { polygonPositions[i], polygonPositions[i + 1] });
 			}
 		}
-		if (key2 < key1) {
-			for (int i = key1; i < polygonIndices.size(); i += 2) {
-				inmediatesVector.insert(inmediatesVector.end(), { polygonPositions[i],polygonPositions[i + 1] });
+		else if (secondImm < firstImm) {
+			for (int i = firstImm; i < polygonIndices.size(); i += 2) {
+				positions.insert(positions.end(), { polygonPositions[i],polygonPositions[i + 1] });
 			}
-			for (int i = 0; i <= key2; i += 2) {
-				inmediatesVector.insert(inmediatesVector.end(), { polygonPositions[i],polygonPositions[i + 1] });
-			}
-		}
-		if (key1 == key2) {
-
-			inmediatesVector.insert(inmediatesVector.end(), { polygonPositions[key1],polygonPositions[key1 + 1] });
-		}
-		return inmediatesVector;
-	}
-
-	int lastIndex;
-
-	void mergeWettedPositions() {
-
-
-		/*cout << "mapIntersectionPoints:" << endl;
-		for (const auto& entry : mapIntersectionPoints) {
-			std::cout << "{ " << entry.first << ", { ";
-			for (float value : entry.second) {
-				std::cout << value << " ";
-			}
-			std::cout << "}}" << std::endl;
-		}std::cout << std::endl;*/
-
-
-		lastIndex = 0;
-
-
-		auto it = mapIntersectionPoints.begin();
-
-		while (it != mapIntersectionPoints.end()) {
-			vector<float> intermPositions;
-
-
-			auto wav1 = it->second[0];
-			auto imm1 = it->second[2];
-			std::move(it->second.begin(), it->second.begin() + 2, std::back_inserter(intermPositions));
-
-			float firstInters[2];
-			std::move(it->second.begin(), it->second.begin() + 2, firstInters);
-
-
-			++it;
-			auto wav2 = it->second[0];
-			auto imm2 = it->second[2];
-
-			vector<float> inmediatesVector = getImmediates(imm1, imm2);
-
-			intermPositions.insert(intermPositions.end(), inmediatesVector.begin(), inmediatesVector.end());
-			std::move(it->second.begin(), it->second.begin() + 2, std::back_inserter(intermPositions));
-			getWavePoints(intermPositions, wav1, wav2);
-
-
-
-			intermPositions.insert(intermPositions.end(), std::begin(firstInters), std::end(firstInters));
-
-			createIndices(intermPositions);
-
-			positions.insert(positions.end(), std::begin(intermPositions), std::end(intermPositions));
-
-
-			++it;
-
-
-			/*cout << "intermPositions: " << endl;
-			for (int i = 0; i < intermPositions.size(); i += 2) {
-				cout << intermPositions[i] << " " << intermPositions[i + 1] << endl;
-			}cout << endl;*/
-
-
-		}
-
-
-		/*if (checkBarycentric(300, 600, positions[10 * 2], positions[10 * 2 + 1], positions[0 * 2], positions[0 * 2 + 1], positions[1 * 2], positions[1 * 2 + 1])) {
-			cout << " hay barycentric" << endl;
-		}*/
-
-
-		/*cout << "positions: " << endl;
-		for (int i = 0; i < positions.size(); i += 2) {
-			cout << positions[i] << ", " << positions[i + 1] << "," << endl;
-		}cout << endl;*/
-
-
-
-
-		/*cout << "triangleIndices:" << endl;
-		for (int i = 0; i < triangleIndices.size(); i += 3) {
-			cout << triangleIndices[i] << " ";
-			cout << triangleIndices[i + 1] << " ";
-			cout << triangleIndices[i + 2] << endl;
-		}
-		cout << endl;*/
-
-
-
-	}
-
-	void createIndices(vector<float>& intermPositions) {
-
-		for (unsigned int i = 0; i < intermPositions.size() / 2 - 1; i++) {
-			indices.insert(indices.end(), { i + lastIndex,i + 1 + lastIndex });
-		}
-
-
-		indicesAll.clear(); indicesRemaining.clear();
-
-		for (unsigned int i = 0; i < intermPositions.size() / 2 - 1; i++) {
-			indicesAll.insert(indicesAll.end(), { i });
-
-		}
-		indicesRemaining = indicesAll;
-
-		/*cout << endl << endl;
-		cout << "indices" << endl;
-		for (unsigned int i = 0; i < indices.size(); i++) {
-			cout << indices[i] << ", ";
-		}cout << endl;*/
-		generateTriangleIndices(intermPositions);
-
-
-
-		lastIndex = indices.back() + 1;
-	}
-
-
-
-
-
-
-
-	vector <unsigned int> indices;
-	vector <unsigned int> indicesAll;
-	vector <unsigned int> indicesRemaining;
-	vector<unsigned int> triangleIndices;
-
-	unsigned int VBPolygonLines;
-	unsigned int VAPolygonLines;
-
-	unsigned int VBPolygonClosed;
-	unsigned int VAPolygonClosed;
-
-
-
-
-	void createPolygonsLines() {
-
-
-		PolygonsLinesBuffer();
-		CreatePolygonLinesIBO();
-
-		glBindVertexArray(0);
-
-	}
-
-	void PolygonsLinesBuffer() {
-
-		glGenVertexArrays(1, &VAPolygonLines);
-		glBindVertexArray(VAPolygonLines);
-
-		glGenBuffers(1, &VBPolygonLines);
-		glBindBuffer(GL_ARRAY_BUFFER, VBPolygonLines);
-		glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(float), /*positions.data()*/ nullptr, GL_DYNAMIC_DRAW);
-
-		glEnableVertexAttribArray(0); // Attribute index 0
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	}
-
-	void CreatePolygonLinesIBO()
-	{
-
-
-		unsigned int ibo;
-		glGenBuffers(1, &ibo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * 4, indices.data(), GL_DYNAMIC_DRAW);
-	}
-
-
-
-
-
-
-	void linesDraw() {
-
-		glBindVertexArray(0);
-		glBindVertexArray(VAPolygonLines);
-		glBindBuffer(GL_ARRAY_BUFFER, VBPolygonLines);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, positions.size() * 4, positions.data());
-		glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0);
-	}
-
-
-
-
-
-
-	void generateTriangleIndices(vector<float>& intermPositions) {	//grouping indices
-
-		while (!indicesRemaining.empty()) {
-
-			for (int i = 0; i < indicesRemaining.size(); i++) {
-
-				if (indicesRemaining.size() == 3) {		//ends while loop, closes polygon
-
-					triangleIndices.insert(triangleIndices.end(), { indicesRemaining[0] + lastIndex,indicesRemaining[1] + lastIndex,indicesRemaining[2] + lastIndex });
-					indicesRemaining.clear(); //para que?
-					break;
-				}
-
-				else {
-					/*cout <<endl<< "triangleIndices:" << endl;
-					for (int i = 0; i < triangleIndices.size(); i += 3) {
-						cout << triangleIndices[i] << " ";
-						cout << triangleIndices[i + 1] << " ";
-						cout << triangleIndices[i + 2] << endl;
-					}
-					cout << endl;
-					cout << "indicesRemaining:" << endl;
-					for (int i = 0; i < indicesRemaining.size(); i++) {
-						cout << indicesRemaining[i] << " ";
-					}
-					cout << endl;*/
-
-					unsigned int b = indicesRemaining[i];	//current index is b, nearests indices a and c
-					unsigned int a, c;
-					if (b == indicesRemaining[0])
-						a = indicesRemaining.back();
-					else
-						a = indicesRemaining[i - 1];
-
-					if (b == indicesRemaining.back())
-						c = indicesRemaining[0];
-					else
-						c = indicesRemaining[i + 1];
-
-					//cout << "a: " << a << " b: " << b << " c: " << c << endl;
-
-					bool barycentricFlag = 0;
-					for (int k = 0; k < indicesAll.size(); k++) {	//are there points inside abc
-						if (k != a && k != b && k != c) {
-							if (checkBarycentric(intermPositions[k * 2], intermPositions[k * 2 + 1], intermPositions[a * 2], intermPositions[a * 2 + 1], intermPositions[b * 2], intermPositions[b * 2 + 1], intermPositions[c * 2], intermPositions[c * 2 + 1])) {
-								//cout <<"k "<< k << endl;
-								barycentricFlag = 1;
-								break;
-							}
-						}
-					}
-					/*cout << "barycentricFlag " << barycentricFlag << endl;
-					cout <<"isConcave: "<< isConcave(absoluteAngle(positions[b * 2] - positions[a * 2], positions[b * 2 + 1] - positions[a * 2 + 1]),
-						absoluteAngle(positions[c * 2] - positions[b * 2], positions[c * 2 + 1] - positions[b * 2 + 1])) << endl;*/
-					if (!barycentricFlag) {
-						if (isConcave(absoluteAngle(intermPositions[b * 2] - intermPositions[a * 2], intermPositions[b * 2 + 1] - intermPositions[a * 2 + 1]),
-							absoluteAngle(intermPositions[c * 2] - intermPositions[b * 2], intermPositions[c * 2 + 1] - intermPositions[b * 2 + 1]))) {				//is concave
-
-							indicesRemaining.erase(indicesRemaining.begin() + i);		//errasing b and adding triangle
-							triangleIndices.insert(triangleIndices.end(), { a + lastIndex,b + lastIndex,c + lastIndex });
-
-
-							//return;
-							break;
-						}
-					}
-
-
-				}
+			for (int i = 0; i <= secondImm; i += 2) {
+				positions.insert(positions.end(), { polygonPositions[i],polygonPositions[i + 1] });
 			}
 		}
+		else if (firstImm == secondImm) {
+
+			positions.insert(positions.end(), { polygonPositions[firstImm],polygonPositions[firstImm + 1] });
+		}
+
 	}
 
-	void createClosedPolygon() {
-
-		PolygonsClosedBuffer();
-		CreatePolygonClosedIBO();
-		glBindVertexArray(0);
-	}
-
-	void PolygonsClosedBuffer() {
-		glGenVertexArrays(1, &VAPolygonClosed);
-		glBindVertexArray(VAPolygonClosed);
-
-		glGenBuffers(1, &VBPolygonClosed);
-		glBindBuffer(GL_ARRAY_BUFFER, VBPolygonClosed);
-		glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(float), /*positions.data()*/ nullptr, GL_DYNAMIC_DRAW);
-
-		glEnableVertexAttribArray(0); // Attribute index 0
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	}
-	void CreatePolygonClosedIBO() {
-		unsigned int ibo;
-
-		glGenBuffers(1, &ibo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleIndices.size() * 4, triangleIndices.data(), GL_DYNAMIC_DRAW);
-	}
-	void closedDraw() {
-		glBindVertexArray(0);
-
-		glBindVertexArray(VAPolygonClosed);
-		glBindBuffer(GL_ARRAY_BUFFER, VBPolygonClosed);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, positions.size() * 4, positions.data());
-		glDrawElements(GL_TRIANGLES, triangleIndices.size(), GL_UNSIGNED_INT, nullptr);
-	}
 
 
 

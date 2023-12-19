@@ -35,8 +35,9 @@ using namespace std::chrono;
 //Preincremented for loops?
 //que pasa con los const macho
 
+//un único dlines?
 
-
+//switch statements are much faster than if statements
 
 float xpos, ypos;
 double xpos1, ypos1;
@@ -48,6 +49,28 @@ void getPos(GLFWwindow* window) {
 	ypos = (float)ypos1;
 }
 
+void changePositions(vector<float>& polygonPositions) {
+	polygonPositions.erase(polygonPositions.begin(), polygonPositions.begin() + 2);
+
+	polygonPositions.insert(polygonPositions.end(), { polygonPositions[0],polygonPositions[1] });
+}
+
+vector<float> polygonPositions = { 350, 600, 350, 350, 650, 350, 650, 750, 600, 700, 600, 400, 400, 400, 400, 600 ,350, 600 };
+
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	Polygons* polygon2 = static_cast<Polygons*>(glfwGetWindowUserPointer(window));
+
+	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) 
+	{
+		changePositions(polygonPositions);
+	}
+
+	
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) 
+	{
+		glfwSetWindowShouldClose(window, GLFW_TRUE);
+	}
+}
 
 int main(void)
 {
@@ -64,24 +87,12 @@ int main(void)
 
 
 
-	Polygons background({ 0,0,windowWidth,0,windowWidth,windowHeight,0,windowHeight,0,0 });
+	Polygons background;
 
 
-	//vector<float> positions{ 100,100,900,100,950,350,820,460,700,350,800,200,600,400,800,600,500,800, 150,600, 400,400,500,200,100,100 };//{ 400,400,500,200,600,400,700,600,150,600,400,400 };
-	//vector<float> positions{ 400, 600, 350, 600, 350, 350, 650, 350, 650, 750, 250, 750, 250, 250, 750, 250, 750, 600, 700, 600, 700, 300, 300, 300, 300, 700, 600, 700, 600, 400, 400, 400, 400, 600 };
-	//vector<float> positions{ 400, 600, 350, 600, 350, 350, 650, 350, 650, 750, 600, 700, 600, 400, 400, 400, 400, 600 };
-	//vector<float> positions{ 100,700,100,400,300,400,350,350,400,400,400,600,600,600,600,400,650,350,700,400,700,700,360,700,360,450,340,450,340,700,330,700,330,440,370,440,370,520,380,520,380,430,320,430,320,700,300,700,300,450,200,450,200,700,175,700,175,480,125,480,125,700,100,700 };
+	Polygons polygon;
 
-
-	//vector<float> positions = { 200,200,300,400,300,600		,700,600,700,400,800,200,900,400,900,600,800,800		,200,800,100,600,100,400,200,200 };
-	//vector<float> positions = { 100,700,100,400,300,500,700,400,700,700,100,700 };
-
-
-
-
-	Polygons polygon({ 600, 500, 600, 700, 400, 700, 400, 300, 600, 500 });
-
-	Polygons polygon2({ 100,400,300,400,300,600,100,600,100,400 });
+	Polygons polygon2;
 
 
 
@@ -90,22 +101,23 @@ int main(void)
 	fourier.createWavePositions();
 
 
-	Circles circles(2); //polygon			//renombrar por circlesPolygon y eso
+	Circles circlesPolygon(2);
 
 
-	Circles circles2(3); //fourier positions
+	Circles circlesFourier(3); 
 
 
-	Circles circles3(5); //insidepoints
+	Circles circlesWS(5);
 
+	Circles circles0(3);
 
 	WettedSurface wettedSurface(polygon.positions, polygon.dlines.indices, fourier.dlines.positions);
 
 	NewWettedSurface newWettedSurface(polygon2.positions, polygon2.dlines.indices, fourier.dlines.positions);
 
 
-
-
+	glfwSetWindowUserPointer(window, &polygon2);
+	glfwSetKeyCallback(window, keyCallback);
 
 
 
@@ -131,7 +143,7 @@ int main(void)
 	int renderTypeLocation = glGetUniformLocation(shader.m_RendererID, "u_RenderType");
 
 
-
+	
 
 
 	//make a struct for time
@@ -142,6 +154,13 @@ int main(void)
 
 
 
+	changePositions(polygonPositions);
+	changePositions(polygonPositions);
+	changePositions(polygonPositions);
+	changePositions(polygonPositions);
+	changePositions(polygonPositions);
+	changePositions(polygonPositions);
+
 	high_resolution_clock::time_point lastFrameTime = high_resolution_clock::now();	//overkill, depends on the pc clock and it might be nanoseconds
 	high_resolution_clock::time_point startElapsedTime = lastFrameTime;
 	float frameCount = 0;
@@ -150,7 +169,7 @@ int main(void)
 	{
 		//system("cls");
 
-
+		
 
 		high_resolution_clock::time_point currentFrameTime = high_resolution_clock::now();
 
@@ -173,12 +192,15 @@ int main(void)
 
 
 
+
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glUniform1i(renderTypeLocation, 0); //0 for geometry
 
 
 
 		glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0);
+		background.clear();
+		background.addSet({ 0,0,windowWidth,0,windowWidth,windowHeight,0,windowHeight,0,0 });
 		background.draw();
 
 
@@ -187,67 +209,92 @@ int main(void)
 
 
 		glUniform4f(colorLocation, 195.0f / 255.0f, 130.0f / 255.0f, 49.0f / 255.0f, 1.0f);
-		polygon.draw();
+		//polygon.clear();
+		//polygon.addSet({ 600, 500, 600, 700, 400, 700, 400, 300, 600, 500 });
+		//polygon.draw();
+
+
+
+
+		/*
+		gato 
+		{ 100,100,900,100,950,350,820,460,700,350,800,200,600,400,800,600,500,800, 150,600, 400,400,500,200,100,100 }
+		
+		espiral 
+		{ 400, 600, 350, 600, 350, 350, 650, 350, 650, 750, 250, 750, 250, 250, 750, 250, 750, 600, 700, 600, 700, 300, 300, 300, 300, 700, 600, 700, 600, 400, 400, 400, 400, 600 }
+		
+		semi espiral 
+		{  350, 600, 350, 350, 650, 350, 650, 750, 600, 700, 600, 400, 400, 400, 400, 600 ,350, 600 }
+
+		complejidad 
+		{ 100,700,100,400,300,400,350,350,400,400,400,600,600,600,600,400,650,350,700,400,700,700,360,700,360,450,340,450,340,700,330,700,330,440,370,440,370,520,380,520,380,430,320,430,320,700,300,700,300,450,200,450,200,700,175,700,175,480,125,480,125,700,100,700 }
+		
+		catamaran 
+		{ 200,200,300,400,300,600,700,600,700,400,800,200,900,400,900,600,800,800,200,800,100,600,100,400,200,200 }
+		
+		cuadrado { 300,600,300,300,600,300,600,600,300,600}
+		cuadrado pico 
+		{ 300,600,300,300,450,100,600,300,600,600,300,600}
+
+		tridente
+		{ 350, 600, 350, 350, 650, 350, 650, 750, 600, 700, 600, 400,550,400,550,600,500,600,500,400, 400, 400, 400, 600 ,350, 600 }
+		
+		{100,900,100,400,900,400,900,900,100,900}
+		*/
+
+		polygon2.clear(); 
+		//polygon2.addSet({ 400, 600, 350, 600, 350, 350, 650, 350, 650, 750, 250, 750, 250, 250, 750, 250, 750, 600, 700, 600, 700, 300, 300, 300, 300, 700, 600, 700, 600, 400, 400, 400, 400, 600 });
+		polygon2.addSet(
+
+			polygonPositions
+
+		);
 		polygon2.draw();
 
-		fourier.createWavePositions();
 
 
-		glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
-		circles.createCircles(polygon.positions);
-		circles.draw();
-
-		glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-		circles2.createCircles(fourier.dlines.positions);	//water	
-		circles2.draw();
-
-
-
+		
 
 
 		glUniform4f(colorLocation, 40.0f / 255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
+		fourier.createWavePositions();
 		fourier.draw();
 
 
 		glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
 
 
-		wettedSurface.createWettedPositions(polygon.indices);
+		//wettedSurface.createWettedPositions(polygon.indices);
+		//if (wettedSurface.positions.size()) {
 
+		//	wettedSurface.createPolygonsLines();
+		//	wettedSurface.createClosedPolygon();
 
+		//	wettedSurface.closedDraw();
+		//}
+		//else {
+		//	wettedSurface.area = 0;
+		//}
 
-		if (wettedSurface.positions.size()) {
+		newWettedSurface.draw();
 
-			wettedSurface.createPolygonsLines();
-			wettedSurface.createClosedPolygon();
+		
 
-			wettedSurface.closedDraw();
-		}
-		else {
-			wettedSurface.area = 0;
-		}
+		glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
+		circlesPolygon.createCircles(polygon2.positions);
+		circlesPolygon.draw();
 
-
-
-		newWettedSurface.createWettedPositions(polygon2.indices);
-		if (newWettedSurface.positions.size()) {
-
-			newWettedSurface.createPolygonsLines();
-			newWettedSurface.createClosedPolygon();
-
-			newWettedSurface.closedDraw();
-		}
-		else {
-			//newWettedSurface.area = 0;
-		}
-
+		glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
+		circlesFourier.createCircles(fourier.dlines.positions);	//water	
+		circlesFourier.draw();
 
 		glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
-		circles3.createCircles(wettedSurface.positions);
-		circles3.draw();
+		circlesWS.createCircles(newWettedSurface.positions);
+		circlesWS.draw();
 
-
-
+		glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+		circles0.createCircles({ polygon2.positions[0],polygon2.positions[1] });
+		circles0.draw();
 
 
 

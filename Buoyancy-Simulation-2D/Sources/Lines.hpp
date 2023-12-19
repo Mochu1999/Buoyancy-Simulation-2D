@@ -1,15 +1,5 @@
 #pragma once
 
-//cout << "positions: " << endl;
-//for (int i = 0; i < positions.size(); i += 2) {
-//	cout << positions[i] << ", " << positions[i + 1] << "," << endl;
-//}cout << endl;
-//cout << "indices" << endl;
-//for (unsigned int i = 0; i < lines.indices.size(); i++) {
-//	cout << lines.indices[i] << ", ";
-//}cout << endl;
-
-
 struct DLines {	//D for dynamic, constanly updated
 	//draw lines defined in sets, this sets creates indices for their components
 

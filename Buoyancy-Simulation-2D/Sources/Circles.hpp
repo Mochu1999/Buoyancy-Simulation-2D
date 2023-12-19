@@ -24,8 +24,10 @@ struct Circles {
 	unsigned int vertexBuffer;
 	unsigned int indexBuffer;
 
-	size_t currentBufferSize = 1000 * sizeof(float);
-
+	size_t currentBufferSize = 100000 * sizeof(float);
+	/////////////////////////////////////////////////////////////////////////////////////////////
+	// Efectivamente no funciona, si metes 200 circulos por ejemplo en fourier, se va a la mierda
+	/////////////////////////////////////////////////////////////////////////////////////////////
 
 	float fraction_circle; //theta increased by each segments
 

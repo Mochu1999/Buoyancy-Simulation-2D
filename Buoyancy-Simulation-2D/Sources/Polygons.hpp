@@ -19,20 +19,20 @@ struct Polygons {
 
 	
 
-	size_t currentBufferSize = 1000 * sizeof(float);
+	size_t currentBufferSize = 100000 * sizeof(float);
+	/////////////////////////////////////////////////////////////////////////////////////////////
+	// Si en circles no funciona aquí tampoco lo hará
+	/////////////////////////////////////////////////////////////////////////////////////////////
 
-	//////////////////////////////////////////////////////////////////////////////////////////////
-	////	It should let you add sets for NewWetted Surface
-
-	Polygons(vector <float> positions_) :positions(positions_) {
+	Polygons(/*vector <float> miau*/) /*:positions(positions_)*/ {
 		genBuffers();
 
 		
-		oldPositions = positions_;
+		/*oldPositions = positions_;*/
 	}
 
 
-	vector <float> oldPositions;
+	/*vector <float> oldPositions;*/
 	float area; //m^2
 	float densityArea = 500; //kg/m^2
 	float mass; //kg
@@ -147,6 +147,37 @@ struct Polygons {
 		}
 	}
 
+	void clear() {
+		positions.clear(); //el clear de los indices está en generate indices y lo que quieres es que se borre al principio antes de recalcularse, mover(? 
+
+	}
+
+	void addSet(vector<float> items) {
+
+		positions.insert(positions.end(), items.begin(), items.end());
+
+		/////////////////////////////////////////////
+		//Esto no va a funcionar para multiples polígonos, los indices serían iguales
+		//////// area calculation y el resto tendrían que depender de items
+
+		createIndices();
+
+		areaCalculation();
+
+		//// Esto al autocad 
+		/*if (area < 0) {
+			for (int i = 0; i < positions.size() / 2; i += 2) {
+				std::swap(positions[i], positions[positions.size() - 2 - i]);
+				std::swap(positions[i + 1], positions[positions.size() - 1 - i]);
+			}
+			areaCalculation();
+		}*/
+
+		centroidCalculation();
+		polarAreaMomentOfInertia();
+	}
+
+
 	void draw() {
 
 		dlines.clear();
@@ -154,22 +185,7 @@ struct Polygons {
 		//dlines.draw();	//you don't want to draw its lines
 
 
-		createIndices();
 
-
-
-		areaCalculation();
-		if (area < 0) {
-			for (int i = 0; i < positions.size() / 2; i += 2) {
-				std::swap(positions[i], positions[positions.size() - 2 - i]);
-				std::swap(positions[i + 1], positions[positions.size() - 1 - i]);
-			}
-			areaCalculation();
-		}
-		centroidCalculation();
-
-
-		polarAreaMomentOfInertia();
 
 
 
