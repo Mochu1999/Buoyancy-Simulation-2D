@@ -17,7 +17,7 @@ struct FourierMesh {
 	float frecuency = 2 * PI / period;
 	float amplitude = 400;
 	float offset = 600;
-	float phase = 23.6302f;		//Esto no deja de crecer
+	float phase = 24.8302f;		//Esto no deja de crecer
 	float phaseSpeed = 0.01;
 
 

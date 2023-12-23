@@ -136,12 +136,13 @@ struct NewWettedSurface {
 			vector<unsigned int> usedImms;
 
 			std::vector<std::pair<int, std::vector<float>>>::iterator initialIt, firstIt, secondIt;
-			unsigned int firstImm, secondImm;
+			unsigned int initialImm, firstImm, secondImm;
 			unsigned int distanceInitialImm, distanceFirstImm, distanceSecondImm;
 
+			unsigned int totalPolygonIndices = polygonIndices.back() * 2;
 
-
-
+			
+			
 			int count = 0;
 
 			//this while loop defines initialIt and the first firstIt
@@ -172,6 +173,9 @@ struct NewWettedSurface {
 
 
 				firstIt = initialIt;
+
+				//he creado esto para para tener un indice de poligono variable segun initial, lo mismo se me olvida borrar esto si acabo no usandolo
+				initialImm = initialIt->second[2]; 
 				firstImm = firstIt->second[2];
 				positions.insert(positions.end(), { firstIt->second[0], firstIt->second[1] });
 
@@ -231,10 +235,10 @@ struct NewWettedSurface {
 
 
 
-
+							cout << firstImm << initialImm << endl;
 							if (firstIt == initialIt)
 							{
-
+								
 
 								cout << "*firstIt == initialIt" << endl;
 
@@ -288,6 +292,7 @@ struct NewWettedSurface {
 								float c = 1;
 								while (true)
 								{
+									
 									if (orderedImms[i + c][3] == 1)
 									{
 										if (orderedImms[i][0] != orderedImms[i + c][0]
@@ -314,7 +319,7 @@ struct NewWettedSurface {
 
 
 
-
+								break;
 							}
 
 
@@ -322,26 +327,6 @@ struct NewWettedSurface {
 							else
 
 							{
-								/*for (size_t j = 1; j < orderedImms.size(); j++)
-								{
-									if (j != i)
-									{
-										if (orderedImms[j][1] == orderedImms[i][1] - 1)
-										{
-											secondImm = orderedImms[j][0];
-											orderedImms[j][3] = 0;
-											distanceSecondImm = orderedImms[j][1];
-
-											secondIt = mapIntersectionPoints.begin() + distanceSecondImm;
-
-											if (orderedImms[i][2] == orderedImms[j][2])
-												areImmediates = 0;
-
-											break;
-										}
-									}
-								}*/
-
 
 
 
@@ -402,67 +387,63 @@ struct NewWettedSurface {
 
 
 
+								unsigned int sumingDistance = totalPolygonIndices - initialImm;
 
-
-
-
-
-
-
-
-
-
-								/*
-								Que hay, soy yo, tú. No te agobies, supongo que tendrás pocos recuerdos de que pasó ayer porque
-								hasta yo los tengo y lo acabo de hacer. La pipeline consiste en, primero es initialIt y puede no
-								haber o haber caso tres o caso normal. Ese debería de ir bien siempre por depender de orderedImms
-
-								Para cuando no es initialIt, aquí, puede haber un tercer caso pero en sentido contrario o
-								está el caso normal inverso que se hace sin depender de orderedImms (menos por el i)
-
-								Yo te menciono varias de tus opciones y luego ya haces lo que te salga de la polla, sin juzgar.
-								Tienes para hacer o arreglar normal inverse, que depende de una comparación entre segments y
-								si el indice 0 no está a la izquierda de la figura va a crashear, ese es el mayor reto que puedes
-								pelear en verdad. Puedes ir a ese la cosa es que si empiezas ahí no vas a limpiar, lo cual
-								no es ni malo ni bueno. También tienes la opción de empezar a quitar orderedImms y creo
-								que [3] tiene que estar a punto de ser inutil y poder ser eliminado. Anyways, esto más bien
-								es pequeño recap, sé que vas a ir a arreglar normal inverse porque te conozco
-
-								Pasatelo bien y alegrate que estamos terminando esto, quien sabe, lo mismo arreglas eso y el
-								programa ya es full funcional en todos los casos, no veo porque no iba a ser, complejidad llegó
-								a funcionar
-								*/
-
-
-
-
-
-
-
-
+								//cout << "sumingDistance " << sumingDistance << endl;
 
 								int maxeameEsta = std::numeric_limits<int>::max();
 								int guardameEsta;
+								
 
+
+								cout << "a "<< distanceInitialImm + 1 << " " << distancefirstSecondImm << endl;
+
+								//for (size_t j = distanceInitialImm + 1; j < distanceFirstImm; j++)
+								//{
+								//	cout << "if" << mapIntersectionPoints[j].first << " " << j << endl;
+								//	cout << " " << mapIntersectionPoints[j].first << " "
+								//		<< orderedImms[i][0] << endl
+								//		<< " " << mapIntersectionPoints[j].first << " "
+								//		<< maxeameEsta << endl;
+								//	if (mapIntersectionPoints[j].first >= orderedImms[i][0]
+								//		&& mapIntersectionPoints[j].first <= maxeameEsta)//a lo mejor en vez de .first es sec[2]
+								//	{
+								//		cout << " ** " << j << endl;
+								//		maxeameEsta = mapIntersectionPoints[j].first;
+								//		guardameEsta = j;
+								//	}
+								//	cout << endl;//
+								//}
 
 								for (size_t j = distanceInitialImm + 1; j < distancefirstSecondImm; j++)
 								{
-									cout << "if" << mapIntersectionPoints[j].first << " " << j << endl;
+									cout << "if: segment " << mapIntersectionPoints[j].first << ", dist " << j << endl;
 
-									cout << " " << mapIntersectionPoints[j].first << " "
-										<< orderedImms[i][0] << endl
-										<< " " << mapIntersectionPoints[j].first << " "
-										<< maxeameEsta << endl;
+									
+									unsigned int correctedDistI;
+									if (orderedImms[i][2] > initialImm)
+										correctedDistI = mapIntersectionPoints[j].first - initialImm;
+									if (orderedImms[i][2] < initialImm)
+										correctedDistI = mapIntersectionPoints[j].first + sumingDistance;
+
+									unsigned int correctedDistJ;
+									if (mapIntersectionPoints[j].second[2] > initialImm)
+										correctedDistJ = mapIntersectionPoints[j].first - initialImm;
+									if (mapIntersectionPoints[j].second[2] < initialImm)
+										correctedDistJ = mapIntersectionPoints[j].first + sumingDistance;
+
+									cout << " " << correctedDistJ << " >= " << orderedImms[i][2] << endl
+										<< " " << correctedDistJ << " <= " << maxeameEsta << endl;
 
 
-									if (mapIntersectionPoints[j].first >= orderedImms[i][0]
-										&& mapIntersectionPoints[j].first <= maxeameEsta)
+									if (correctedDistJ >= 0 //0 porque nuevo initialIm es 0
+										&& correctedDistJ <= maxeameEsta)//a lo mejor en vez de .first es sec[2]
 									{
 										cout << " ** " << j << endl;
-										maxeameEsta = mapIntersectionPoints[j].second[2];
+										maxeameEsta = mapIntersectionPoints[j].first;
 										guardameEsta = j;
 									}
-									cout << endl;
+									cout << endl;//
 
 								}
 								cout << "normal inverso" << endl;
@@ -484,117 +465,8 @@ struct NewWettedSurface {
 								break;
 
 
-								//for (size_t j = 1; j < orderedImms.size(); j++) //no estoy cogiendo el primer elemento repetido //no tendría que hacer falta mirar todo orderedImms, los que compartan segmento van a estar o en el immediato de arriba o del segmento
-								//{
-								//	
-								//		/*cout << "j " << j << endl;
-								//		cout << " "<<(orderedImms[j][0] > orderedImms[i][0]
-								//			&& orderedImms[j][1] < orderedImms[i][1]) << endl;*/
-								//		if (orderedImms[j][0] > orderedImms[i][0]
-								//			&& orderedImms[j][1] < orderedImms[i][1] 
-								//			&& orderedImms[j][1] < orderedImms[distanceInitialImm][1])
-								//		{
-								//			
-								//			if(orderedImms[j][0]- orderedImms[i][0]< maxeameEsta)
-								//			{
-								//				maxeameEsta = orderedImms[j][0] - orderedImms[i][0];
-								//				guardameEsta = j;
-								//			}
-								//		}
-								//	
-								//}
-								//secondImm = orderedImms[guardameEsta][0];
-								//orderedImms[guardameEsta][3] = 0;
-								//distanceSecondImm = orderedImms[guardameEsta][1];
+								
 
-								//secondIt = mapIntersectionPoints.begin() + distanceSecondImm;
-
-								//if (orderedImms[i][2] == orderedImms[guardameEsta][2])
-								//	areImmediates = 0;
-
-								//break;
-
-								/*
-								//El retorno del mítico caso 2
-								//Esto se da porque en caso 2 volviendo, este se queda detrás de i en vez de en +1
-								if (orderedImms[i - 1][3] == 1 && orderedImms[i - 1][0] == orderedImms[i][0]
-									&& orderedImms[i - 1][1] == orderedImms[i][1] - 1)
-								{
-									cout << "renacido caso 2" << endl;
-									secondImm = orderedImms[i - 1][0];
-									orderedImms[i - 1][3] = 0;
-									distanceSecondImm = orderedImms[i - 1][1];
-
-									secondIt = mapIntersectionPoints.begin() + distanceSecondImm;
-
-									break;
-								}
-								//El razonamiento de esto es que buscas si puedes ir a i+1 y si no es valido va para atrás
-
-
-								//Esto estoy viendo que se da en casos donde hay caso 2 pero en vez de mirar a su compañero de imm
-								// mira por encima a donde no es, [3] es un indicador de casos 2 cuando va de vuelta a initialIt
-								// (porque si no es indistinguible de casos 1)
-								if (orderedImms[i + 1][3] == 1 && orderedImms[i + 1][1] < distancefirstSecondImm)
-								{
-									if (orderedImms[i + 1][1] < orderedImms[i][1])
-									{
-										cout << "*first case" << endl;
-										secondImm = orderedImms[i + 1][0];
-										orderedImms[i + 1][3] = 0;
-										distanceSecondImm = orderedImms[i + 1][1];
-
-										secondIt = mapIntersectionPoints.begin() + distanceSecondImm;
-
-										break;
-									}
-								}
-
-
-								//second case, se diferencia del primero solo cuando comparten imms pero está detrás del que estás
-								//analizando porque el que estás analizando es un firstImm después de firstSecondImm (intentas ir
-								// para atrás)
-								//Lo de immediatamente arriba es mentira, también puedes necesitar volver para atrás en otros
-								//casos, y es esos casos si no se comparte immediate no hay immediates
-
-								float c = 1;
-								while (true) {
-									if (orderedImms[i - c][1] < orderedImms[i][1] && orderedImms[i - c][3] == 1)
-									{
-										break;
-									}
-
-									c++;
-								}
-
-								//bool statement = false;
-								//float c = 1;
-								////baja hasta que tenga menos distancia y sea valido
-								//while (!statement) {
-								//	if (orderedImms[i - c][1] > orderedImms[i][1] || orderedImms[i - c][3] == 0)
-								//	{
-								//		c++;
-								//	}
-								//	else
-								//	{
-								//		statement = false;
-								//	}
-								//}
-
-
-								cout << " *behind case" << endl;
-								secondImm = orderedImms[i - c][0];
-								orderedImms[i - c][3] = 0;
-								distanceSecondImm = orderedImms[i - c][1];
-
-								secondIt = mapIntersectionPoints.begin() + distanceSecondImm;
-
-								if (firstImm != secondImm)
-									areImmediates = 0;
-
-								break;
-
-								*/
 							}
 
 
@@ -606,10 +478,13 @@ struct NewWettedSurface {
 
 						}
 
-
+						cout << "que hago aquí" << endl;
+						break;
 
 					}
 					//cout << "-areImmediates? " << areImmediates << endl;
+
+					cout << "secondImm " << secondImm << " dist " << distanceSecondImm << endl;
 
 					if (initialIt == firstIt) {
 						distancefirstSecondImm = distanceSecondImm;
@@ -631,7 +506,7 @@ struct NewWettedSurface {
 
 
 
-					cout << "secondImm " << secondImm << " dist " << distanceSecondImm << endl;
+					
 
 					//cout << "firstImm " << firstImm << ", distanceFirstImm " << distanceSecondImm << endl;
 					//cout << " secondImm " << secondImm << ", distanceSecondImm " << distanceSecondImm << endl;
@@ -697,7 +572,10 @@ struct NewWettedSurface {
 
 
 
-
+		cout << "polygonIndices: " << endl;
+		for (int i = 0; i < polygonIndices.size(); i += 2) {
+			cout << polygonIndices[i] << " " << polygonIndices[i + 1] << endl;
+		}cout << endl;
 
 
 		/*cout << "positions: " << endl;
