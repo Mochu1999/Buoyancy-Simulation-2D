@@ -194,7 +194,17 @@ struct NewWettedSurface {
 				unsigned int distancefirstSecondImm = std::numeric_limits<unsigned int>::max();
 
 
+				////////////////////////////////
+				/*
+				Hola, soy Papa Noel, tengo un regalo para ti, vas a ser quien termine este algoritmo.
+				Si le das dos veces a espacio en cuadradado grande verás que peta, si miras ordered imms verás que
+				es porque se queda sin sitios valido a donde ir porque 2,7 no está copiado al final
 
+				Las opciones que tienes son, o conseguir que 2,7 vaya al final o conseguir que first case no dependa de ordered
+				imms, lo cual era el objetivo al fin y al cabo. En verdad no es tan trivial y lo mismo no lo terminas tú, lo 
+				mismo simplemente empieza a no usar ordered imms y ya, a ver donde te quedas, good luck have fun
+				
+				*/
 
 
 				//You get here with firstIt already known. Calculates secondIt with orderedImms
@@ -214,20 +224,20 @@ struct NewWettedSurface {
 
 
 					areImmediates = 1;
-					cout << "firstImm " << firstImm << " dist " << distanceFirstImm << endl;
+					cout << endl<< "firstImm " << firstImm << " dist " << distanceFirstImm << endl;
 
 
-
+					
 					for (size_t i = 0; i < orderedImms.size(); i++)
 					{
 						//finds in ordered imms where you are
 						if (firstImm == orderedImms[i][0] && distanceFirstImm == orderedImms[i][1])
 						{
-							//makes your id unusable for the future //es necesario?
+							//makes your id unusable for the future
 							orderedImms[i][3] = 0;
 							if (i == 0)
 							{
-								cout << "ocurre i==0" << endl;
+								//cout << "ocurre i==0" << endl;
 								orderedImms[i][3] = 0; 
 								orderedImms[orderedImms.size() - 1][3] = 0;
 							}
@@ -235,7 +245,7 @@ struct NewWettedSurface {
 
 
 
-							cout << firstImm << initialImm << endl;
+							
 							if (firstIt == initialIt)
 							{
 								
@@ -292,7 +302,7 @@ struct NewWettedSurface {
 								float c = 1;
 								while (true)
 								{
-									
+									cout << "Hola" << endl;
 									if (orderedImms[i + c][3] == 1)
 									{
 										if (orderedImms[i][0] != orderedImms[i + c][0]
@@ -307,7 +317,6 @@ struct NewWettedSurface {
 
 											secondIt = mapIntersectionPoints.begin() + distanceSecondImm;
 
-
 											break;
 										}
 
@@ -316,10 +325,10 @@ struct NewWettedSurface {
 									}
 									c++;
 								}
-
-
-
 								break;
+								  
+
+								
 							}
 
 
@@ -386,7 +395,7 @@ struct NewWettedSurface {
 
 
 
-
+								//de cara a optimizar, podrías hacer el for loop al revés y estoy seguro que se puede cortar cuando se encuentra al primer candidato
 								unsigned int sumingDistance = totalPolygonIndices - initialImm;
 
 								//cout << "sumingDistance " << sumingDistance << endl;
@@ -396,7 +405,7 @@ struct NewWettedSurface {
 								
 
 
-								cout << "a "<< distanceInitialImm + 1 << " " << distancefirstSecondImm << endl;
+								
 
 								//for (size_t j = distanceInitialImm + 1; j < distanceFirstImm; j++)
 								//{
@@ -415,16 +424,19 @@ struct NewWettedSurface {
 								//	cout << endl;//
 								//}
 
-								for (size_t j = distanceInitialImm + 1; j < distancefirstSecondImm; j++)
+								unsigned int correctedDistI;
+								if (orderedImms[i][2] > initialImm)
+									correctedDistI = orderedImms[i][0] - initialImm;
+								if (orderedImms[i][2] < initialImm)
+									correctedDistI = orderedImms[i][0] + sumingDistance;
+
+								for (size_t j = distanceInitialImm + 1; j < distanceFirstImm; j++)
 								{
+									cout << endl;//
 									cout << "if: segment " << mapIntersectionPoints[j].first << ", dist " << j << endl;
 
 									
-									unsigned int correctedDistI;
-									if (orderedImms[i][2] > initialImm)
-										correctedDistI = mapIntersectionPoints[j].first - initialImm;
-									if (orderedImms[i][2] < initialImm)
-										correctedDistI = mapIntersectionPoints[j].first + sumingDistance;
+									
 
 									unsigned int correctedDistJ;
 									if (mapIntersectionPoints[j].second[2] > initialImm)
@@ -432,18 +444,18 @@ struct NewWettedSurface {
 									if (mapIntersectionPoints[j].second[2] < initialImm)
 										correctedDistJ = mapIntersectionPoints[j].first + sumingDistance;
 
-									cout << " " << correctedDistJ << " >= " << orderedImms[i][2] << endl
+									cout << " " << correctedDistJ << " >= " << correctedDistI << endl
 										<< " " << correctedDistJ << " <= " << maxeameEsta << endl;
 
 
-									if (correctedDistJ >= 0 //0 porque nuevo initialIm es 0
+									if (correctedDistJ >= correctedDistI //0 porque nuevo initialIm es 0
 										&& correctedDistJ <= maxeameEsta)//a lo mejor en vez de .first es sec[2]
 									{
 										cout << " ** " << j << endl;
-										maxeameEsta = mapIntersectionPoints[j].first;
+										maxeameEsta = correctedDistJ;
 										guardameEsta = j;
 									}
-									cout << endl;//
+									
 
 								}
 								cout << "normal inverso" << endl;
@@ -478,13 +490,18 @@ struct NewWettedSurface {
 
 						}
 
-						cout << "que hago aquí" << endl;
-						break;
+						
+						
 
 					}
+					
 					//cout << "-areImmediates? " << areImmediates << endl;
 
 					cout << "secondImm " << secondImm << " dist " << distanceSecondImm << endl;
+
+					if (countInnerLoop == 100)
+						//return;
+
 
 					if (initialIt == firstIt) {
 						distancefirstSecondImm = distanceSecondImm;
@@ -572,10 +589,7 @@ struct NewWettedSurface {
 
 
 
-		cout << "polygonIndices: " << endl;
-		for (int i = 0; i < polygonIndices.size(); i += 2) {
-			cout << polygonIndices[i] << " " << polygonIndices[i + 1] << endl;
-		}cout << endl;
+
 
 
 		/*cout << "positions: " << endl;
