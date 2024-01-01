@@ -181,5 +181,27 @@ void printMatrix(const std::vector<float>& matrix, const std::string& matrixName
 }
 
 
+//this is in my weird format
+int binarySearchX(float& indexToFind, vector<float>& range) {
+	int start = 0, end = range.size() / 2 - 1;//-1 to be an x coordinate
+	//defines the current search range, they define all the possible range at the start
 
+	int output;
+
+	// Binary search for firstX
+	while (start <= end)
+	{
+		int mid = start + (end - start) / 2;
+		if (range[2 * mid] >= indexToFind)
+		{
+			output = 2 * mid;
+			end = mid - 1;
+		}
+		else
+		{
+			start = mid + 1;
+		}
+	}
+	return output;
+}
 

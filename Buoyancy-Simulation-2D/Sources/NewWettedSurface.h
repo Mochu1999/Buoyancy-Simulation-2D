@@ -1,12 +1,11 @@
 #pragma once
 
-#include <unordered_set>
 
-//maybe breaking the surface in no concave surfaces is faster...
+
 
 struct NewWettedSurface {
 
-	vector<float>positions;		//final positions of the wetted surface
+	vector<float>positions;
 	//Cuando hagas un reserve tienes que estimar también el tamaño de wavespositons, quizás cogiendo el largo y multiplicandolo por la densidad en x de olas
 
 	std::vector<std::pair<int, std::vector<float>>> mapIntersectionPoints;
@@ -53,87 +52,41 @@ struct NewWettedSurface {
 		calculateIntersections();
 
 
+		//////////////////////////////////////
+		/*
+		Que hay, solo falta organización y cambiarle el formato a mapIntersectionPoints, vas a tener que estudiarte si es siquiera necesario.
+		Tu tarea es complicada macho porque vas a necesitar una perspectiva global de todo el proceso para ver que es redundante y que simplificar
+		Dicho eso, falta tu tarea, lo de las intersecciones para el que vaya después de ti y esto lo damos por terminado hasta que volvamos 
+		 aquí con un nuevo algoritmo para triangular, hacia las estrellas
+
+		*/
 
 
 
-
-		cout << "mapIntersectionPoints:" << endl;
+		/*cout << "mapIntersectionPoints:" << endl;
 		for (const auto& entry : mapIntersectionPoints) {
 			std::cout << "{ " << entry.first << ", { ";
 			for (float value : entry.second) {
 				std::cout << value << " ";
 			}
 			std::cout << "}}" << std::endl;
-		}std::cout << std::endl;
+		}std::cout << std::endl;*/
 
 
+		/////reservar para todos los vectors
 
 
-
-		//the pipeline consists in start with one immediate, jump to the next one and repeat the process till getting where 
-		// you started
+		//Ponte aquí alguna explicación crack
 		if (mapIntersectionPoints.size())
 		{
 
+			
 
-			//vector that orders the immediates from smallest to largest
-			vector<vector<float>> orderedImms;
+			//stores distances
+			std::unordered_set<int> usedDistances;
+			usedDistances.reserve(mapIntersectionPoints.size());
 
-
-			//adding the immediate, the distance to begin, the segment and a flag for areImmediates in the third case
-			float distanceCounter = 0;
-			for (auto it = mapIntersectionPoints.begin(); it != mapIntersectionPoints.end(); ++it)
-			{
-
-				vector<float> interm = { it->second[2],distanceCounter ,static_cast<float>(it->first),1 };
-
-				orderedImms.push_back(interm);
-
-				distanceCounter++;
-			}
-
-
-
-
-			//secondImm will be firstImm+1 unless case with same segments
-			std::sort(orderedImms.begin(), orderedImms.end(),
-				[](const std::vector<float>& a, const std::vector<float>& b)
-				{
-					if (a[0] == b[0])  //if same immediate
-					{
-						return a[1] < b[1]; //the one with less distance
-					}
-
-
-					return a[0] < b[0]; //normal condition, ordered by immediates
-				}
-			);
-
-
-
-
-
-			orderedImms.push_back(orderedImms[0]); //normal case where the first intersection is the last index, wraps around
-
-
-
-
-
-
-
-			/*cout << "orderedImms: " << endl;
-			for (const auto& item : orderedImms) {
-				cout << "{";
-				for (const auto& val : item) {
-					std::cout << val << ", ";
-				}
-				std::cout << "}," << std::endl;
-			}cout << endl;*/
-
-
-
-			//stores imms and distances
-			vector<unsigned int> usedImms;
+			vector<unsigned int> debugInfo; //to store the info for debug purposes
 
 			std::vector<std::pair<int, std::vector<float>>>::iterator initialIt, firstIt, secondIt;
 			unsigned int initialImm, firstImm, secondImm;
@@ -141,26 +94,33 @@ struct NewWettedSurface {
 
 			unsigned int totalPolygonIndices = polygonIndices.back() * 2;
 
-			
-			
-			int count = 0;
 
-			//this while loop defines initialIt and the first firstIt
+
+
+
+
+			std::unordered_map<int, vector<int>> mapSharedSegments;
+			for (int i = 0; i < mapIntersectionPoints.size(); ++i) {
+				int num = mapIntersectionPoints[i].first;
+				mapSharedSegments[num].push_back(i);
+			}
+
+
+
+
+
+			//outer loop that defines initialIt and the first firstIt
 			//returns here at the start of each surface
-			while (usedImms.size() < mapIntersectionPoints.size() * 2)
+			while (usedDistances.size() < mapIntersectionPoints.size() )
 			{
 
 
 				distanceInitialImm = 0;
+
+
 				//with sets, elements are located faster using a hash table (efficient af look for it and try it in other places)
 				//Each element is unique, it automatically prevents duplicates
-				std::unordered_set<int> distancesSet;
-				for (size_t i = 1; i < usedImms.size(); i += 2)
-				{
-					distancesSet.insert(usedImms[i]);
-				}
-
-				while (distancesSet.find(distanceInitialImm) != distancesSet.end())
+				while (usedDistances.find(distanceInitialImm) != usedDistances.end())
 				{
 					++distanceInitialImm; //increments till you find one that is not in the set
 				}
@@ -169,400 +129,228 @@ struct NewWettedSurface {
 
 
 				distanceFirstImm = distanceInitialImm;
-				initialIt = mapIntersectionPoints.begin() + distanceInitialImm;
 
+
+				initialIt = mapIntersectionPoints.begin() + distanceInitialImm;
 
 				firstIt = initialIt;
 
-				//he creado esto para para tener un indice de poligono variable segun initial, lo mismo se me olvida borrar esto si acabo no usandolo
-				initialImm = initialIt->second[2]; 
-				firstImm = firstIt->second[2];
+
+				initialImm = initialIt->second[2];
+				firstImm = initialImm;
+
 				positions.insert(positions.end(), { firstIt->second[0], firstIt->second[1] });
+
+
+				//Premise: no distance in a surface will be higher than that of the first secondImm
+				unsigned int distancefirstSecondImm = std::numeric_limits<unsigned int>::max();
 
 
 
 				std::size_t distanceCheck = -1;// invalid distance to enter the while loop
 
 
+				//You get here with firstIt already known. Calculates secondIt, goes from first to second with getImmediates if applies
+				// ,and second to the next first with getWavePoints. Stays here till the surface closes
+				while (distanceCheck != 0)
+				{
+					unsigned int segmentFirstImm = mapIntersectionPoints[distanceFirstImm].first;
 
-				//cout << endl << "count " << count; count++;
-				int countInnerLoop = 0;
-
-
-
-				//Premise, no distance in a surface will be higher than that of the first secondImm
-				unsigned int distancefirstSecondImm = std::numeric_limits<unsigned int>::max();
-
-
-				
+					bool areImmediates = 1; //activates getImmediates
 
 
-				//You get here with firstIt already known. Calculates secondIt with orderedImms
-				// Goes from first to second with getImmediates if applies, and second to the next first with getWavePoints
-				//stays here till the surface closes
-				while (distanceCheck != 0  /*countInnerLoop < 3*/) {
-
-					//cout << " .......countInnerLoop " << countInnerLoop << endl << endl; 
-					countInnerLoop++;
-
-
-
-					bool areImmediates; //takes the flag of same segments
-					//looks for secondImm and secondIt with orderedImms
-
-
-
-
-					areImmediates = 1;
-					cout << endl<< "******firstImm " << firstImm << " dist " << distanceFirstImm << endl;
-
-
-					
-					for (size_t i = 0; i < orderedImms.size(); i++)
+					//defining secondImm and distanceSecondImm
+					//Different cases for when is initialIt and when it is not
 					{
-						//finds in ordered imms where you are
-						if (firstImm == orderedImms[i][0] && distanceFirstImm == orderedImms[i][1])
+						if (firstIt == initialIt)
 						{
-							//makes your id unusable for the future
-							orderedImms[i][3] = 0;
-							if (i == 0)
+							//////esto le quita mucha claridad, lo mismo hacer dos functiones para secondIt solo por readability
+
+							//third case. When first and second intersection share same segment
+
+
+
+							bool foundThirdCase = false;
+							//if there is a third case it will be from initial+1 to the end
+							if (mapSharedSegments[segmentFirstImm].size() > 1)
 							{
-								//cout << "ocurre i==0" << endl;
-								orderedImms[i][3] = 0; 
-								orderedImms[orderedImms.size() - 1][3] = 0;
+								for (size_t j : mapSharedSegments[segmentFirstImm])
+								{
+									if (j > distanceFirstImm)
+									{
+										if (polygonPositions[firstImm] > polygonPositions[mapIntersectionPoints[j].second[2]])
+										{
+											foundThirdCase = true;
+
+											distanceSecondImm = j;
+
+											break;
+										}
+									}
+								}
 							}
-
-
-							/////////////////////////
-							/*
-							Hola que tal, esto bien podría estar finalizado, si estás aquí es porque quieres optimizar, antes de
-							eso te recomendaría confirmar en gato que positions están efectivamente bien, 
-							
-							Amable recordatorio de que el objetivo final es deshacerse de orderedimms, tu objetivo sería a lo mejor
-							intentar no depender de ordered imms solo en third case pasatelo bien, un saludo
-							*/
-
-
-
-
-							
-							if (firstIt == initialIt)
+							if (foundThirdCase)
 							{
-								
+								areImmediates = 0;
 
-								cout << "*firstIt == initialIt" << endl;
-
-								//third case
-								
-								size_t savedJ;
-								bool foundThirdCase = false;
-								float currentDistance = std::numeric_limits<float>::max();
-								//looking for lines with the same segment
-								for (size_t j = 1; j < orderedImms.size(); j++) //no estoy cogiendo el primer elemento repetido //no tendría que hacer falta mirar todo orderedImms, los que compartan segmento van a estar o en el immediato de arriba o del segmento
-								{
-									if (j != i)
-									{
-										if (orderedImms[j][2] == orderedImms[i][2] /*&& orderedImms[j][3] == 1*/) //if same segment
-										{
-											//equivalent of saying that j isRightOf i
-											if (polygonPositions[firstImm] > polygonPositions[orderedImms[j][0]])
-											{
-												if (orderedImms[j][1] > orderedImms[i][1] && orderedImms[j][1] < currentDistance)
-												{
-													foundThirdCase = true;
-
-													currentDistance = orderedImms[j][1];
-													savedJ = j;
-
-												}
-											}
-
-										}
-									}
-								}
-								
-								if (foundThirdCase)
-								{
-									cout << " third case" << endl;
-									areImmediates = 0;
-
-									secondImm = orderedImms[savedJ][0];
-									orderedImms[savedJ][3] = 0;
-
-
-									distanceSecondImm = orderedImms[savedJ][1];
-
-									secondIt = mapIntersectionPoints.begin() + distanceSecondImm;
-
-
-									break;
-								}
-
-
-
-
-
-								////if third case fails, enters first case
-								//float c = 1;
-								//while (true)
-								//{
-								//	cout << "Hola" << endl;
-								//	if (orderedImms[i + c][3] == 1)
-								//	{
-								//		if (orderedImms[i][0] != orderedImms[i + c][0]
-								//			|| orderedImms[i][2] != orderedImms[i + c][2])
-								//		{
-								//			cout << " first case" << endl;
-								//			secondImm = orderedImms[i + c][0];
-								//			orderedImms[i + c][3] = 0;
-								//			distanceSecondImm = orderedImms[i + c][1];
-								//			secondIt = mapIntersectionPoints.begin() + distanceSecondImm;
-								//			break;
-								//		}
-								//	}
-								//	c++;
-								//}
-								//break;//breaks the i for loop
-
-
-
-
-
-
-								//new method for first case, looks for the imm closest or equal to initial imm
-								// if multiple share the same imms it takes the first one
-								
-								unsigned int sumingDistance = totalPolygonIndices - initialImm;
-
-								//cout << "sumingDistance " << sumingDistance << endl;
-
-								int maxeameEsta = std::numeric_limits<int>::max();
-								int guardameEsta;
-
-								cout << "normal case" << endl;
-
-								unsigned int correctedDistI;
-								if (orderedImms[i][0] >= initialImm)
-									correctedDistI = orderedImms[i][0] - initialImm;
-								if (orderedImms[i][0] < initialImm)
-									correctedDistI = orderedImms[i][0] + sumingDistance;
-								//No es correctedDistI 0? Me lo saco de la polla
-										//yo creo que confirmo que sí
-								cout << endl << "-correctedI " << correctedDistI << endl;
-
-								
-								for (size_t j = distanceInitialImm + 1; j < mapIntersectionPoints.size(); j++)
-								{
-									
-
-									///Estoy intentando trabajar con imms porque tiene más sentido, pero en else va por segments
-									unsigned int correctedDistJ;
-									if (mapIntersectionPoints[j].second[2] >= initialImm)
-										correctedDistJ = mapIntersectionPoints[j].second[2] - initialImm;
-									if (mapIntersectionPoints[j].second[2] < initialImm)
-										correctedDistJ = mapIntersectionPoints[j].second[2] + sumingDistance;
-
-									//cout << endl;//
-									//cout << "if: correctedJ " << correctedDistJ << ", j " << j << endl;
-
-									//cout << " correctedJ  >= " << correctedDistI << endl
-									//	 << " correctedJ  <= " << maxeameEsta << endl;
-
-
-									if (correctedDistJ >= correctedDistI 
-
-										&& correctedDistJ < maxeameEsta)//a lo mejor en vez de .first es sec[2]
-									{
-										//cout << mapIntersectionPoints[j].first<<" != " << orderedImms[i][2] << endl;
-
-										//j can't be on the same segment as i unless there are only two (it will enter here and not in third case because they don't share imm)
-										if ((mapIntersectionPoints[j].first != orderedImms[i][2]) || j == distanceInitialImm + 1)
-										{
-											cout << " ** " << endl;
-											maxeameEsta = correctedDistJ;
-											guardameEsta = j;
-										}
-									}
-
-
-								}
-								
-
-								secondImm = mapIntersectionPoints[guardameEsta].second[2];
-
-
-								distanceSecondImm = guardameEsta /*+ distanceInitialImm*/;
-
-
+								secondImm = mapIntersectionPoints[distanceSecondImm].second[2];
 								secondIt = mapIntersectionPoints.begin() + distanceSecondImm;
 
+								distancefirstSecondImm = distanceSecondImm;
 
 
-
-								break;
-
-								
 							}
-
-
 
 							else
-
 							{
 
 
+								//First case, looks for the imm closest to initial imm
+								//If multiple share the same imms it takes the nearest in distance												
 
-								//caso 3 invertido, busca si alguno tiene segments igual a i
-								//, coge el que tenga menor dist que i pero mayor que distInitial
-								std::vector<std::pair<int, std::vector<float>>> possibleSecondImm;
-								size_t savedJ;
-								bool foundThirdCase = false;
-								float currentDistance = std::numeric_limits<float>::min();
-								//looking for lines with the same segment
-								for (size_t j = 1; j < orderedImms.size(); j++) //no estoy cogiendo el primer elemento repetido //no tendría que hacer falta mirar todo orderedImms, los que compartan segmento van a estar o en el immediato de arriba o del segmento
+								//checks all valid distances and saves here the current one for the next check
+								int currentMinImm = std::numeric_limits<int>::max();
+
+								unsigned int summingDistance = totalPolygonIndices - initialImm;//for later
+
+								//Checking from the firt valid distance till the end of the distances
+								for (size_t j = distanceInitialImm + 1; j < mapIntersectionPoints.size(); j++)
 								{
-									if (j != i)
-									{
-										if (orderedImms[j][2] == orderedImms[i][2]) //if same segment
-										{
-											//equivalent of saying that j isRightOf i
-											if (polygonPositions[firstImm] < polygonPositions[orderedImms[j][0]])
-											{
-												if (orderedImms[j][1] < orderedImms[i][1] && orderedImms[j][1] > currentDistance)
-												{
-													foundThirdCase = true;
-
-													currentDistance = orderedImms[j][1];
-													savedJ = j;
-
-												}
-											}
-
-										}
-									}
-								}
-								float possibleSecondIndex;
-								if (foundThirdCase)
-								{
-									cout << "inverse third case" << endl;
-									areImmediates = 0;
-
-									secondImm = orderedImms[savedJ][0];
-									orderedImms[savedJ][3] = 0;
-
-
-									distanceSecondImm = orderedImms[savedJ][1];
-
-									secondIt = mapIntersectionPoints.begin() + distanceSecondImm;
-
-
-									break;
-
-								}
-
-
-
-
-
-
-
-
-
-								//de cara a optimizar, podrías hacer el for loop al revés y estoy seguro que se puede cortar cuando se encuentra al primer candidato
-								unsigned int sumingDistance = totalPolygonIndices - initialImm;
-
-								//cout << "sumingDistance " << sumingDistance << endl;
-
-								int maxeameEsta = std::numeric_limits<int>::max();
-								int guardameEsta;
-								
-
-								unsigned int correctedDistI;
-								if (orderedImms[i][2] > initialImm)
-									correctedDistI = orderedImms[i][0] - initialImm;
-								if (orderedImms[i][2] < initialImm)
-									correctedDistI = orderedImms[i][0] + sumingDistance;
-
-								for (size_t j = distanceInitialImm + 1; j < distanceFirstImm; j++)
-								{
-									//cout << endl;//
-									//cout << "if: segment " << mapIntersectionPoints[j].first << ", dist " << j << endl;
-
-									
-									
-
-									unsigned int correctedDistJ;
-									if (mapIntersectionPoints[j].second[2] > initialImm)
-										correctedDistJ = mapIntersectionPoints[j].first - initialImm;
+									//We use a corrected "j" that is relative to initialImm instead of the original indices
+									unsigned int correctedImmJ;
 									if (mapIntersectionPoints[j].second[2] < initialImm)
-										correctedDistJ = mapIntersectionPoints[j].first + sumingDistance;
-
-									//cout << " " << correctedDistJ << " >= " << correctedDistI << endl
-									//	<< " " << correctedDistJ << " <= " << maxeameEsta << endl;
-
-
-									if (correctedDistJ >= correctedDistI //0 porque nuevo initialIm es 0
-										&& correctedDistJ <= maxeameEsta)//a lo mejor en vez de .first es sec[2]
 									{
-										//cout << " ** " << j << endl;
-										maxeameEsta = correctedDistJ;
-										guardameEsta = j;
+										//if the original index of secondImm was between 0 and initialImm, now it will by larger by a factor
+										//that is totalIndices-initialImm
+										correctedImmJ = mapIntersectionPoints[j].second[2] + summingDistance;
 									}
-									
+									else
+									{
+										//if secondImm is greater than initial imm (therefor less than max index), and initialImm has 
+										// become 0, its difference will be the relative distance to initialImm
+										correctedImmJ = mapIntersectionPoints[j].second[2] - initialImm;
+									}
 
+
+									if (correctedImmJ < currentMinImm)
+									{
+										//j can't be on the same segment as i unless it is dist+1 (otherwise it will take the one that is in the same
+										// segment instead of the one that it should be because is correctedImmJ=0 although is farther)
+										if ((mapIntersectionPoints[j].first != mapIntersectionPoints[distanceFirstImm].first) || j == distanceInitialImm + 1)
+										{
+											currentMinImm = correctedImmJ;
+											distanceSecondImm = j; //iterative process
+										}///can this be removed when it exists a case for only 2 intersection.size()==2?
+									}
 								}
-								cout << "normal inverso" << endl;
-
-								secondImm = mapIntersectionPoints[guardameEsta].second[2];
-
-
-								distanceSecondImm = guardameEsta /*+ distanceInitialImm*/;
-
-
-								secondIt = mapIntersectionPoints.begin() + distanceSecondImm;
-
-								if (orderedImms[i][2] == mapIntersectionPoints[guardameEsta].first)
-									areImmediates = 0;
-
-								//cout << "secondImm " << secondImm << " distanceSecondImm " << distanceSecondImm << endl;;
-
-
-								break;
-
-
-								
-
 							}
 
+							//we end with the correct distanceSecondImm
 
+							//Y esta advertencia tío? No entiendo
 
+							secondImm = mapIntersectionPoints[distanceSecondImm].second[2];
+							secondIt = mapIntersectionPoints.begin() + distanceSecondImm;
 
-
+							distancefirstSecondImm = distanceSecondImm;
 
 
 
 						}
 
-						
-						
+						//firstSecondImm is already found and the premise is that we won't have a distance greater than its till the surface closes
+						else
+						{
 
+							//reverse third case
+
+							bool foundThirdCase = false;
+							if (mapSharedSegments[segmentFirstImm].size() > 1)
+							{
+								for (auto it = mapSharedSegments[segmentFirstImm].end(); it != mapSharedSegments[segmentFirstImm].begin();)
+								{
+									it--;//this is here to cover .begin() (and not specifying end()+1
+									size_t j = *it;
+									if (j < distanceFirstImm)
+									{
+										if (polygonPositions[firstImm] < polygonPositions[mapIntersectionPoints[j].second[2]])
+										{
+											foundThirdCase = true;
+
+											distanceSecondImm = j;
+
+											break;
+										}
+									}
+
+								}
+							}
+
+							if (foundThirdCase)
+							{
+								areImmediates = 0;
+
+								secondImm = mapIntersectionPoints[distanceSecondImm].second[2];
+								secondIt = mapIntersectionPoints.begin() + distanceSecondImm;
+
+
+							}
+
+
+
+
+							else
+							{
+
+								//reverse first case 
+								unsigned int summingDistance = totalPolygonIndices - initialImm;
+
+
+								int currentMinImm = std::numeric_limits<int>::max();
+
+
+
+
+
+								for (size_t j = distanceFirstImm - 1; j > distanceInitialImm; j--)
+								{
+
+									//for initial case I was changing correctedImmJ to be relative to initialImm, not everything is relative to firstImm
+									unsigned int correctedImmJ;
+									if (mapIntersectionPoints[j].second[2] < firstImm)
+									{
+										//if the original index of secondImm was between 0 and firstImm, now it will by larger by a factor
+										//that is totalIndices-initialImm
+										correctedImmJ = mapIntersectionPoints[j].second[2] + summingDistance;
+									}
+									else
+									{
+										//if secondImm is greater than initial imm (therefor less than max index), and firstImm has 
+										// become 0, its difference will be the relative distance to firstImm
+										correctedImmJ = mapIntersectionPoints[j].second[2] - firstImm;
+									}
+
+
+
+
+									if (correctedImmJ <= currentMinImm)
+									{
+										currentMinImm = correctedImmJ;
+										distanceSecondImm = j;
+									}
+
+
+								}
+
+
+								secondImm = mapIntersectionPoints[distanceSecondImm].second[2];
+								secondIt = mapIntersectionPoints.begin() + distanceSecondImm;
+
+
+							}
+
+						}
 					}
-					
-					cout << "-areImmediates? " << areImmediates << endl;
-
-					cout << "******secondImm " << secondImm << " dist " << distanceSecondImm << endl;
-
-					if (countInnerLoop == 100)
-						//return;
-
-
-					if (initialIt == firstIt) {
-						distancefirstSecondImm = distanceSecondImm;
-					}
-
-
-
-
 
 
 
@@ -576,12 +364,14 @@ struct NewWettedSurface {
 
 
 
-					
 
-					//cout << "firstImm " << firstImm << ", distanceFirstImm " << distanceSecondImm << endl;
-					//cout << " secondImm " << secondImm << ", distanceSecondImm " << distanceSecondImm << endl;
-					usedImms.insert(usedImms.end(), { firstImm, distanceFirstImm, secondImm, distanceSecondImm });
 
+
+
+					usedDistances.emplace(distanceFirstImm);
+					usedDistances.emplace(distanceSecondImm);
+
+					debugInfo.insert(debugInfo.end(), { firstImm, distanceFirstImm, secondImm, distanceSecondImm });
 
 
 					//The key in all of this. secondIt is linked to its pair, to be used in the next iteration
@@ -608,41 +398,17 @@ struct NewWettedSurface {
 
 					distanceCheck = distanceInitialImm - distanceFirstImm; //if 0 you have arrived to initialIt again and the loop ends
 
-					/*if (countInnerLoop == 10) {
-						cout << endl << "usedImms: " << endl;
-						for (int i = 0; i < usedImms.size(); i += 4) {
-							cout << usedImms[i] << " " << usedImms[i + 1] << ", " << usedImms[i + 2] << " " << usedImms[i + 3] << endl;
-						}cout << endl;
-					}*/
-					/*cout << "orderedImms: " << endl;
-					for (const auto& item : orderedImms) {
-						cout << "{";
-						for (const auto& val : item) {
-							std::cout << val << ", ";
-						}
-						std::cout << "}," << std::endl;
-					}cout << endl;*/
 				}
 
 
 
-				cout << endl << "usedImms: " << endl;
-				for (int i = 0; i < usedImms.size(); i += 4) {
-					cout << usedImms[i] << " " << usedImms[i + 1] << ", " << usedImms[i + 2] << " " << usedImms[i + 3] << endl;
-				}cout << endl;
+				/*cout << "debugInfo: " << endl;
+				for (int i = 0; i < debugInfo.size(); i += 4) {
+					cout << debugInfo[i] << " " << debugInfo[i + 1] << ", " << debugInfo[i + 2] << " " << debugInfo[i + 3] << endl;
+				}cout << endl;*/
 			}
-			/*cout << "positions: " << endl;
-			for (int i = 0; i < positions.size(); i += 2) {
-				cout << positions[i] << " " << positions[i + 1] << endl;
-			}cout << endl;*/
+
 		}
-
-
-
-
-
-
-
 
 
 		/*cout << "positions: " << endl;
@@ -682,19 +448,26 @@ struct NewWettedSurface {
 
 	}
 
-	//change this to a binary search where you find with this method the upper and lower bounds 
-	void getWavePoints(float firstItXInters, float secondItXInters) {
+	void getWavePoints(float firstX, float secondX) {//x values of the intersections. Will go from secondX to firstX
+
+		float interval = positionsFourier[2] - positionsFourier[0]; // Take this out from here
+
+		int firstIndex = (firstX - positionsFourier[0]) / interval * 2;
+		int secondIndex = (secondX - positionsFourier[0]) / interval * 2;
 
 
-		for (int i = positionsFourier.size() - 2; i >= 0; i -= 2) {
+		// Ensure even indices
+		firstIndex -= firstIndex % 2;
+		secondIndex -= secondIndex % 2;
 
-			if (positionsFourier[i] > firstItXInters && positionsFourier[i] < secondItXInters) {
-				positions.insert(positions.end(), { positionsFourier[i],positionsFourier[i + 1] });
-			}
 
+		// Collect points between firstIndex and secondIndex
+		for (int i = secondIndex; i > firstIndex; i -= 2) {
+			positions.insert(positions.end(), { positionsFourier[i], positionsFourier[i + 1] });
 		}
-
 	}
+
+	
 
 
 	void calculateIntersections() { //fills mapIntersectionPoints with intersections and immediates indices
@@ -840,9 +613,5 @@ struct NewWettedSurface {
 		}
 
 	}
-
-
-
-
 
 };
