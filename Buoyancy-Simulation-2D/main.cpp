@@ -7,6 +7,7 @@
 #include <string>
 
 #include <vector>
+#include <array>
 #include <cmath>
 #include <set>
 #include <algorithm>
@@ -40,6 +41,9 @@ using namespace std::chrono;
 //un único dlines?
 
 //switch statements are much faster than if statements
+
+//Hola, vas a tener que testear de una vez si insert es comparable a emplace_back
+
 
 float xpos, ypos;
 double xpos1, ypos1;
@@ -85,7 +89,7 @@ vector<float> polygonPositions =
 //{ 350, 600, 350, 350, 650, 350, 650, 750, 600, 700, 600, 400,550,400,550,600,500,600,500,400, 400, 400, 400, 600 ,350, 600 }
 
 //{100,900,100,400,900,400,900,900,100,900}
-//{ 300,600,300,300, 800,300,600,600,300,600 }
+//{ 300,600,300,300, 600,300,600,600,300,600 }
 
 ;
 
@@ -119,8 +123,8 @@ int main(void)
 
 
 
-	/*glDebugMessageCallback(MessageCallback, nullptr);
-	glEnable(GL_DEBUG_OUTPUT);*/
+	glDebugMessageCallback(MessageCallback, nullptr);
+	glEnable(GL_DEBUG_OUTPUT);
 
 
 
@@ -154,7 +158,7 @@ int main(void)
 
 	WettedSurface wettedSurface(polygon.positions, polygon.dlines.indices, fourier.dlines.positions);
 
-	NewWettedSurface newWettedSurface(polygon2.positions, polygon2.dlines.indices, fourier.dlines.positions);
+	NewWettedSurface newWettedSurface(polygon2,fourier);
 
 
 	glfwSetWindowUserPointer(window, &polygon2);

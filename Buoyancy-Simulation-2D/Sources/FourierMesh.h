@@ -9,17 +9,17 @@ struct FourierMesh {
 
 	vector<float> intermVector;
 
-	int xn =50;
+	int xn =20;
 	int segments = xn - 1;
 	float endXPosition = 1000;
-	//flaot interval = (endXPositions-startXPosition)/segments
+	float interval = (endXPosition - 0) / segments;
+	float intervalInverse = 1 / interval;
 
-
-	float period = 900;
+	float period = 400;
 	float frecuency = 2 * PI / period;
 	float amplitude = 400;
 	float offset = 600;
-	float phase = 3.5f;		//Esto no deja de crecer
+	float phase = 0.0f;		//Esto no deja de crecer
 	float phaseSpeed = 0.01;
 
 
@@ -43,7 +43,7 @@ struct FourierMesh {
 		//cout << "phase: "<<phase << endl;
 		//offset++;
 		//cout << offset << endl;
-		//offset--;
+		
 	}
 
 

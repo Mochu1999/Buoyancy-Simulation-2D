@@ -3,7 +3,8 @@
 
 
 #include "shader.h"
-
+#include <chrono>
+using namespace chrono;
 
 #pragma once
 #define PI 3.14159265358979323846	//constexpr?
@@ -204,4 +205,13 @@ int binarySearchX(float& indexToFind, vector<float>& range) {
 	}
 	return output;
 }
+
+void timeMeThis()
+{
+	high_resolution_clock::time_point time0 = high_resolution_clock::now();
+	high_resolution_clock::time_point time1 = high_resolution_clock::now();
+	float deltaTime = duration_cast<duration<float>>(time1 - time0).count();
+	cout << "deltaTime: " << deltaTime << " s" << endl;
+}
+
 
