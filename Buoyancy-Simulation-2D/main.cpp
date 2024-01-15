@@ -123,8 +123,8 @@ int main(void)
 
 
 
-	glDebugMessageCallback(MessageCallback, nullptr);
-	glEnable(GL_DEBUG_OUTPUT);
+	/*glDebugMessageCallback(MessageCallback, nullptr);
+	glEnable(GL_DEBUG_OUTPUT);*/
 
 
 

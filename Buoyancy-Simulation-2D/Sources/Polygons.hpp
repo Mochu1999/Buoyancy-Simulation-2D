@@ -164,7 +164,7 @@ struct Polygons {
 
 		areaCalculation();
 
-		//// Esto al autocad 
+		
 		/*if (area < 0) {
 			for (int i = 0; i < positions.size() / 2; i += 2) {
 				std::swap(positions[i], positions[positions.size() - 2 - i]);
@@ -220,36 +220,39 @@ struct Polygons {
 	void createIndices() {	//grouping indices
 		indices.clear(); indicesAll.clear(); indicesRemaining.clear();
 
-		for (unsigned int i = 0; i < positions.size() / 2 - 1; i++) {
-			indicesAll.insert(indicesAll.end(), { i });
+		indices.reserve(positions.size()/2);
 
+		indicesAll.reserve(positions.size() / 2);
+		for (unsigned int i = 0; i < positions.size() / 2 - 1; i++) 
+		{
+			indicesAll.emplace_back( i );
 		}
 		indicesRemaining = indicesAll;
 
 
+		//when there are no more indices remaining, the surface has closed
+		while (!indicesRemaining.empty()) 
+		{
 
-		while (!indicesRemaining.empty()) {
-
-			for (int i = 0; i < indicesRemaining.size(); i++) {
-
-				if (indicesRemaining.size() == 3) {		//ends while loop, closes polygon
+			//will try to triangulate indicesRemaining[i] with its nearest indices from indicesRemaining
+			for (int i = 0; i < indicesRemaining.size(); i++) 
+			{
+				//ends while loop, closes polygon
+				if (indicesRemaining.size() == 3) 
+				{		
 
 					indices.insert(indices.end(), { indicesRemaining[0],indicesRemaining[1],indicesRemaining[2] });
 					indicesRemaining.clear();
 					break;
 				}
 
-				else {
-					/*cout <<endl<< "indices:" << endl;
-					for (int i = 0; i < indices.size(); i += 3) {
-						cout << indices[i] << " ";
-						cout << indices[i + 1] << " ";
-						cout << indices[i + 2] << endl;
-					}
-					cout << endl;*/
-
-					unsigned int b = indicesRemaining[i];	//current index is b, nearests indices a and c
+				else 
+				{
+					//current index is b, nearests indices a and c
+					unsigned int b = indicesRemaining[i];	
 					unsigned int a, c;
+
+					//contemplating the cases where b is at the start or at the end
 					if (b == indicesRemaining[0])
 						a = indicesRemaining.back();
 					else
@@ -259,27 +262,31 @@ struct Polygons {
 						c = indicesRemaining[0];
 					else
 						c = indicesRemaining[i + 1];
-					//b = 0; a = 1; c = 2;
-					//cout << "a: " << a << " b: " << b << " c: " << c << endl;
+
 
 					bool barycentricFlag = 0;
-					for (int k = 0; k < indicesAll.size(); k++) {	//are there points inside abc
+					
+					for (int k = 0; k < indicesAll.size(); k++) 
+					{	
+						//are there points inside abc
 						if (k != a && k != b && k != c) {
-							if (checkBarycentric(positions[k * 2], positions[k * 2 + 1], positions[a * 2], positions[a * 2 + 1], positions[b * 2], positions[b * 2 + 1], positions[c * 2], positions[c * 2 + 1])) {
-								//cout << k << endl;
+							if (checkBarycentric(positions[k * 2], positions[k * 2 + 1], positions[a * 2], positions[a * 2 + 1]
+								, positions[b * 2], positions[b * 2 + 1], positions[c * 2], positions[c * 2 + 1])) 
+							{
 								barycentricFlag = 1;
 								break;
 							}
 						}
 					}
-					/*cout << "barycentricFlag " << barycentricFlag << endl;
-					cout <<"isConcave: "<< isConcave(absoluteAngle(positions[b * 2] - positions[a * 2], positions[b * 2 + 1] - positions[a * 2 + 1]),
-						absoluteAngle(positions[c * 2] - positions[b * 2], positions[c * 2 + 1] - positions[b * 2 + 1])) << endl;*/
-					if (!barycentricFlag) {
-						if (isConcave(absoluteAngle(positions[b * 2] - positions[a * 2], positions[b * 2 + 1] - positions[a * 2 + 1]),
-							absoluteAngle(positions[c * 2] - positions[b * 2], positions[c * 2 + 1] - positions[b * 2 + 1]))) {				//is concave
 
-							indicesRemaining.erase(indicesRemaining.begin() + i);		//errasing b and adding triangle
+					if (!barycentricFlag) 
+					{
+						//must be concave to be valid
+						if (isConcave(absoluteAngle(positions[b * 2] - positions[a * 2], positions[b * 2 + 1] - positions[a * 2 + 1]),
+							absoluteAngle(positions[c * 2] - positions[b * 2], positions[c * 2 + 1] - positions[b * 2 + 1]))) 
+						{	
+							//errasing b and adding the indices
+							indicesRemaining.erase(indicesRemaining.begin() + i);		
 							indices.insert(indices.end(), { a,b,c });
 							break;
 						}
