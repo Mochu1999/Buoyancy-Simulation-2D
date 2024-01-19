@@ -21,7 +21,7 @@
 
 #include "Polygons.hpp"
 
-#include "wetted_surface.h"
+
 #include "NewWettedSurface.h"
 
 #include "FourierMesh.h"
@@ -35,15 +35,43 @@
 
 using namespace std::chrono;
 
+
+
+
+
+
+#include <CGAL/Simple_cartesian.h>
+#include <CGAL/Triangulation_2.h>
+
+#include <CGAL/Delaunay_triangulation_2.h>
+#include <CGAL/Constrained_Delaunay_triangulation_2.h>
+
+
+//typedef CGAL::Triangulation_2<K>         Triangulation;
+
+//typedef CGAL::Delaunay_triangulation_2<K> Triangulation;
+
+
+
+
+#include <CGAL/Partition_traits_2.h>
+#include <CGAL/partition_2.h>
+#include <list>
+
+typedef CGAL::Simple_cartesian<float> K;
+typedef CGAL::Triangulation_2<K> Triangulation;
+typedef K::Point_2 Point;
+//typedef CGAL::Partition_traits_2<K>::Polygon_2 Polygon;
+//typedef std::vector<Polygon> PolygonVector;
+
+
+
 //Preincremented for loops?
 //que pasa con los const macho
-
 //un único dlines?
-
 //switch statements are much faster than if statements
-
 //Hola, vas a tener que testear de una vez si insert es comparable a emplace_back
-
+//Mirar triangulation hierarchy para un locate más rápido O(sqrtN) en vez de O(n) https://doc.cgal.org/latest/Triangulation_2/index.html#Section_2D_Triangulations_Hierarchy
 
 float xpos, ypos;
 double xpos1, ypos1;
@@ -120,11 +148,65 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 int main(void)
 {
 	GLFWwindow* window = initialize();
-
-
-
 	/*glDebugMessageCallback(MessageCallback, nullptr);
 	glEnable(GL_DEBUG_OUTPUT);*/
+
+
+
+
+	vector<float> truePoints = { 100,100,200,100,200,200,100,200,100,100 };
+	Polygons truePolygon;
+	truePolygon.addSet(truePoints);
+	truePolygon.draw();
+	cout << "truePolygon.indices" << endl;
+	for (unsigned int i = 0; i < truePolygon.indices.size(); i++) {
+		cout << truePolygon.indices[i] << ", ";
+	}cout << endl;
+	
+	//std::vector<Point> points = { Point(0,0), Point(10,0), Point(10,10), Point(0,10) };
+
+	//Triangulation t;
+	//t.insert(points.begin(), points.end()); //triangulation occurs here
+
+	//for (Triangulation::Finite_faces_iterator it = t.finite_faces_begin(); it != t.finite_faces_end(); ++it) {
+	//	Triangulation::Triangle tr = t.triangle(it); //tr is each triangle
+	//	std::cout << "Triangle: " << tr[0] << ", " << tr[1] << ", " << tr[2] << std::endl;
+	//}
+
+
+	/*
+	std::vector<Point> points = { Point(0,0), Point(10,0),Point(5,5), Point(10,10), Point(0,10) };
+	Polygon polygon_2;
+	for (const Point& p : points) {
+		polygon_2.push_back(p);
+	}
+
+	PolygonVector partitionedPolygons;
+	CGAL::greene_approx_convex_partition_2(polygon_2.vertices_begin(), polygon_2.vertices_end(), std::back_inserter(partitionedPolygons));
+
+	// Triangulate each convex sub-polygon
+	int polygonCounter = 0;
+	for (const auto& subPolygon : partitionedPolygons) {
+		std::vector<Point> subPolygonPoints(subPolygon.container().begin(), subPolygon.container().end());
+
+		// Perform triangulation
+		Triangulation triangulation;
+		triangulation.insert(subPolygonPoints.begin(), subPolygonPoints.end());
+
+		// Output the triangles
+		cout << "polygonCounter: " << polygonCounter << endl;
+		polygonCounter++;
+
+		for (auto it = triangulation.finite_faces_begin(); it != triangulation.finite_faces_end(); ++it) {
+			Triangulation::Triangle tr = triangulation.triangle(it);
+			std::cout << "Triangle: " << tr[0] << ", " << tr[1] << ", " << tr[2] << std::endl;
+		}
+		cout << endl;
+	}
+	*/
+
+
+
 
 
 
@@ -133,10 +215,9 @@ int main(void)
 
 
 	Polygons background;
-
+	background.addSet({ 0,0,windowWidth,0,windowWidth,windowHeight,0,windowHeight,0,0 }); //is outside the while because is static
 
 	Polygons polygon;
-
 	Polygons polygon2;
 
 
@@ -156,9 +237,8 @@ int main(void)
 
 	Circles circles0(3);
 
-	WettedSurface wettedSurface(polygon.positions, polygon.dlines.indices, fourier.dlines.positions);
 
-	NewWettedSurface newWettedSurface(polygon2,fourier);
+	NewWettedSurface newWettedSurface(polygon2, fourier);
 
 
 	glfwSetWindowUserPointer(window, &polygon2);
@@ -195,7 +275,7 @@ int main(void)
 	float elapsedTimeFloat = 0, fps = 0;
 
 
-	Data data(colorLocation, renderTypeLocation, elapsedTimeFloat, fps, polygon, wettedSurface);
+	Data data(colorLocation, renderTypeLocation, elapsedTimeFloat, fps, polygon, newWettedSurface);
 
 
 
@@ -227,7 +307,9 @@ int main(void)
 			frameCount = 0;
 			timeAccumulator -= 1.0f;
 		}
-		////cout << deltaTime << endl;
+
+
+
 
 
 
@@ -239,8 +321,8 @@ int main(void)
 
 
 		glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0);
-		background.clear();
-		background.addSet({ 0,0,windowWidth,0,windowWidth,windowHeight,0,windowHeight,0,0 });
+
+
 		background.draw();
 
 
@@ -255,7 +337,7 @@ int main(void)
 
 
 
-
+		truePolygon.draw();
 
 
 		polygon2.clear();
@@ -265,7 +347,7 @@ int main(void)
 			polygonPositions
 
 		);
-		polygon2.draw();
+		//polygon2.draw();
 
 
 
@@ -280,40 +362,29 @@ int main(void)
 		glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
 
 
-		//wettedSurface.createWettedPositions(polygon.indices);
-		//if (wettedSurface.positions.size()) {
-
-		//	wettedSurface.createPolygonsLines();
-		//	wettedSurface.createClosedPolygon();
-
-		//	wettedSurface.closedDraw();
-		//}
-		//else {
-		//	wettedSurface.area = 0;
-		//}
 		if (continueRunning)
 		{
 			fourier.createWavePositions();
-			newWettedSurface.draw();
+			//newWettedSurface.draw();
 		}
 		glUniform4f(colorLocation, 40.0f / 255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
-		fourier.draw();
+		//fourier.draw();
 
 		glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
 		circlesPolygon.createCircles(polygon2.positions);
-		circlesPolygon.draw();
+		//circlesPolygon.draw();
 
 		glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
 		circlesFourier.createCircles(fourier.dlines.positions);	//water	
-		circlesFourier.draw();
+		//circlesFourier.draw();
 
 		glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
 		circlesWS.createCircles(newWettedSurface.positions);
-		circlesWS.draw();
+		//circlesWS.draw();
 
 		glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
 		circles0.createCircles({ polygon2.positions[0],polygon2.positions[1] });
-		circles0.draw();
+		//circles0.draw();
 
 
 

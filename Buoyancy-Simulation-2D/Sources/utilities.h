@@ -17,6 +17,7 @@ extern float windowWidth = 1920;
 //for (int i = 0; i < positions.size(); i += 2) {
 //	cout << positions[i] << ", " << positions[i + 1] << "," << endl;
 //}cout << endl;
+
 //cout << "indices" << endl;
 //for (unsigned int i = 0; i < indices.size(); i++) {
 //	cout << indices[i] << ", ";

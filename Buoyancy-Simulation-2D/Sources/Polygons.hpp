@@ -8,7 +8,7 @@ struct Polygons {
 	DLines dlines;
 
 	vector<float> positions;
-	vector <unsigned int> indices; //old triangleIndices
+	vector <unsigned int> indices; //indices of each triangle, do not mistake with the indices
 	vector <unsigned int> indicesAll;
 	vector <unsigned int> indicesRemaining;
 
@@ -24,7 +24,7 @@ struct Polygons {
 	// Si en circles no funciona aquí tampoco lo hará
 	/////////////////////////////////////////////////////////////////////////////////////////////
 
-	Polygons(/*vector <float> miau*/) /*:positions(positions_)*/ {
+	Polygons()  {
 		genBuffers();
 
 		
@@ -152,6 +152,8 @@ struct Polygons {
 
 	}
 
+	//Si usas esto literalmente no estás usando dlines para nada, lo mimso interesa tener un caso para tener sincronizado con dlines
+		//Creo la decisión correcta es no depender de dlines, si tanto quieres a dlines usalo en addset
 	void addSet(vector<float> items) {
 
 		positions.insert(positions.end(), items.begin(), items.end());
@@ -182,7 +184,7 @@ struct Polygons {
 
 		dlines.clear();
 		dlines.addSet(positions);
-		//dlines.draw();	//you don't want to draw its lines
+		//dlines.draw();	
 
 
 

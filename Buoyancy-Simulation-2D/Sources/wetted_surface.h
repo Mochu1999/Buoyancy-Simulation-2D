@@ -1,62 +1,8 @@
 #pragma once
 
 
-bool calculateIntersectionPoints(float Ax, float Ay, float Bx, float By, float Cx, float Cy, float Dx, float Dy, float& ix, float& iy) {	//AB the waves, CD the polygon
-	//It assumes AB,CD are not 0	//what if they are?
-
-	float ABx = Bx - Ax;
-	float ABy = By - Ay;
-	float CDx = Dx - Cx;
-	float CDy = Dy - Cy;
-
-	float ACx = Cx - Ax;
-	float ACy = Cy - Ay;
-
-	/*
-	In 2d geometry the cross product is a scalar value, not a vector, it represents the area of their parallelogram
-	t = 0: Intersection at point A.
-	0 < t < 1: Intersection between A and B (on the line segment).
-	t = 1: Intersection at point B.
-	t < 0: Intersection lies before A
-	t > 1: Intersection lies beyond B
-	*/
-	float precalculate = ABx * CDy - ABy * CDx;
-	if (!precalculate) { // They are parallel
-		// Check if C is on the line segment AB
-		float scalarProjection = ((ACx * ABx) + (ACy * ABy)) / (ABx * ABx + ABy * ABy);
-		float crossProduct = ACx * ABy - ACy * ABx;
-
-		if (scalarProjection >= 0 && scalarProjection <= 1 && crossProduct == 0) {
-			ix = Cx;
-			iy = Cy;
-			return true;
-		}
-		return false;
-	}
-
-	float t = (ACx * CDy - ACy * CDx) / precalculate; //(AC×CD)/(AB×CD)
-	float u = (ACx * ABy - ACy * ABx) / precalculate;//(AC×AB)/(AB×CD)
 
 
-
-	if (t >= 0 && t <= 1 && u >= 0 && u < 1) {	//Return false for intersection in D
-		ix = Ax + t * ABx;
-		iy = Ay + t * ABy;
-		return true;
-	}
-
-	return false;
-}
-
-//the advantage of not returning a bool is that you can compare if it is 0 (right on the line)
-inline float isRightOfLine(float& Ax, float& Ay, float& Bx, float& By, float& Px, float& Py) {		 //is P to the right of AB?
-	float AB[2] = { Bx - Ax,  By - Ay };
-	float AP[2] = { Px - Ax, Py - Ay };
-
-	float crossProductZ = AB[0] * AP[1] - AB[1] * AP[0];
-
-	return crossProductZ;	//if negative it is to its right, if 0, P is on the infinite line of AB
-}
 
 struct WettedSurface {
 
@@ -66,11 +12,11 @@ struct WettedSurface {
 
 
 	vector<float>& polygonPositions;
-	vector<unsigned int>& polygonIndices;
+
 	vector<float>& positionsFourier;
 
-	WettedSurface(vector<float>& polygonPositions_, vector<unsigned int>& polygonIndices_, vector<float>& positionsFourier_)
-		: polygonPositions(polygonPositions_), polygonIndices(polygonIndices_), positionsFourier(positionsFourier_) {
+	WettedSurface(vector<float>& polygonPositions_, vector<float>& positionsFourier_)
+		: polygonPositions(polygonPositions_), positionsFourier(positionsFourier_) {
 	}
 
 	float area=0;

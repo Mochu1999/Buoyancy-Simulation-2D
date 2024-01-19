@@ -1,7 +1,8 @@
 #pragma once
 
 #include "Polygons.hpp"
-#include "wetted_surface.h"
+
+#include "NewWettedSurface.h"
 #include "Lines.hpp"
 #include "Text.h"
 #include "Circles.hpp"
@@ -137,7 +138,7 @@ struct Data {
 	Graph graph2;
 
 	Polygons& polygon; //instead of passing by reference consider passing by pointer (things get nasty when one of the instances is deleted otherwise)
-	WettedSurface& wettedSurface;
+	NewWettedSurface& wettedSurface;
 
 	int& colorLocation; int& renderTypeLocation;
 	float& elapsedTimeFloat;
@@ -150,7 +151,7 @@ struct Data {
 
 
 	Data(int& colorLocation_, int& renderTypeLocation_, float& elapsedTimeFloat_
-		, float& deltaTime_, Polygons& polygon_, WettedSurface& wettedSurface_)
+		, float& deltaTime_, Polygons& polygon_, NewWettedSurface& wettedSurface_)
 
 		:colorLocation(colorLocation_), renderTypeLocation(renderTypeLocation_)
 		, deltaTime(deltaTime_), elapsedTimeFloat(elapsedTimeFloat_), cheese(150)
@@ -191,7 +192,7 @@ struct Data {
 
 
 		text.addText(1050, 920, "Downward force: ", polygon.force[1] / 9.81);
-		text.addText(1400, 920, "Upward force: ", wettedSurface.force[1] / 9.81);
+		//text.addText(1400, 920, "Upward force: ", wettedSurface.force[1] / 9.81);
 
 
 		glUniform1i(renderTypeLocation, 0);
