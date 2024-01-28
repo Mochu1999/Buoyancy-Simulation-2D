@@ -2,7 +2,7 @@
 
 #include "Polygons.hpp"
 
-#include "NewWettedSurface.h"
+#include "Wetted_Surface.hpp"
 #include "Lines.hpp"
 #include "Text.h"
 #include "Circles.hpp"
@@ -138,7 +138,7 @@ struct Data {
 	Graph graph2;
 
 	Polygons& polygon; //instead of passing by reference consider passing by pointer (things get nasty when one of the instances is deleted otherwise)
-	NewWettedSurface& wettedSurface;
+	WettedSurface& wettedSurface;
 
 	int& colorLocation; int& renderTypeLocation;
 	float& elapsedTimeFloat;
@@ -151,7 +151,7 @@ struct Data {
 
 
 	Data(int& colorLocation_, int& renderTypeLocation_, float& elapsedTimeFloat_
-		, float& deltaTime_, Polygons& polygon_, NewWettedSurface& wettedSurface_)
+		, float& deltaTime_, Polygons& polygon_, WettedSurface& wettedSurface_)
 
 		:colorLocation(colorLocation_), renderTypeLocation(renderTypeLocation_)
 		, deltaTime(deltaTime_), elapsedTimeFloat(elapsedTimeFloat_), cheese(150)

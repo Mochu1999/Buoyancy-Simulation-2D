@@ -145,7 +145,6 @@
   <ItemGroup>
     <ClInclude Include="Sources\Circles.hpp" />
     <ClInclude Include="Sources\Data.hpp" />
-    <ClInclude Include="Sources\FloatingObject.h" />
     <ClInclude Include="Sources\FourierMesh.h" />
     <ClInclude Include="Sources\glm\common.hpp" />
     <ClInclude Include="Sources\glm\detail\func_common.hpp" />
@@ -292,14 +291,12 @@
     <ClInclude Include="Sources\glm\vec4.hpp" />
     <ClInclude Include="Sources\glm\vector_relational.hpp" />
     <ClInclude Include="Sources\Lines.hpp" />
-    <ClInclude Include="Sources\NewWettedSurface.h" />
+    <ClInclude Include="Sources\Wetted_Surface.hpp" />
     <ClInclude Include="Sources\Polygons.hpp" />
-    <ClInclude Include="Sources\borrar.h" />
     <ClInclude Include="Sources\shader.h" />
     <ClInclude Include="Sources\Text.h" />
     <ClInclude Include="Sources\utilities.h" />
     <ClInclude Include="Sources\vector_operations.h" />
-    <ClInclude Include="Sources\wetted_surface.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

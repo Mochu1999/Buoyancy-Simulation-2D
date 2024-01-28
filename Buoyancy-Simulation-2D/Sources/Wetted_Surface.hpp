@@ -1,5 +1,6 @@
 #pragma once
 #include "FourierMesh.h"
+#include "utilities.h"
 bool calculateIntersectionPoints(float Ax, float Ay, float Bx, float By, float Cx, float Cy, float Dx, float Dy, float& ix, float& iy) {	//AB the waves, CD the polygon
 	//It assumes AB,CD are not 0	//what if they are?
 
@@ -47,17 +48,9 @@ bool calculateIntersectionPoints(float Ax, float Ay, float Bx, float By, float C
 	return false;
 }
 
-//the advantage of not returning a bool is that you can compare if it is 0 (right on the line)
-inline float isRightOfLine(float& Ax, float& Ay, float& Bx, float& By, float& Px, float& Py) {		 //is P to the right of AB?
-	float AB[2] = { Bx - Ax,  By - Ay };
-	float AP[2] = { Px - Ax, Py - Ay };
 
-	float crossProductZ = AB[0] * AP[1] - AB[1] * AP[0];
 
-	return crossProductZ;	//if negative it is to its right, if 0, P is on the infinite line of AB
-}
-
-struct NewWettedSurface {
+struct WettedSurface {
 
 	vector<float>positions;
 
@@ -78,7 +71,7 @@ struct NewWettedSurface {
 	FourierMesh& fourier;
 	vector<float>& fourierPositions = fourier.dlines.positions; //for reducing the overhead of dereferencing the member each time
 
-	NewWettedSurface(Polygons& inputPolygon_, FourierMesh& fourier_)
+	WettedSurface(Polygons& inputPolygon_, FourierMesh& fourier_)
 		: inputPolygon(inputPolygon_), fourier(fourier_)
 	{}
 

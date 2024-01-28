@@ -6,30 +6,33 @@
 #include <sstream>
 #include <string>
 
-#include <vector>
-#include <array>
 #include <cmath>
-#include <set>
 #include <algorithm>
+
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
-#include "utilities.h"
 
+
+
+#include <array>
+#include <vector>
 #include <unordered_set>
+#include <set>
 #include <unordered_map>
+#include <list>
+#include <deque>
 
+#include "utilities.h"
+#include "Lines.hpp"
 #include "Polygons.hpp"
-
-
-#include "NewWettedSurface.h"
+#include "Wetted_Surface.hpp"
 
 #include "FourierMesh.h"
 #include "Circles.hpp"
 
 #include "Text.h"
 #include "Data.hpp"
-#include "Lines.hpp"
 
 #include <chrono>
 
@@ -56,13 +59,13 @@ using namespace std::chrono;
 
 #include <CGAL/Partition_traits_2.h>
 #include <CGAL/partition_2.h>
-#include <list>
+
 
 typedef CGAL::Simple_cartesian<float> K;
 typedef CGAL::Triangulation_2<K> Triangulation;
 typedef K::Point_2 Point;
-//typedef CGAL::Partition_traits_2<K>::Polygon_2 Polygon;
-//typedef std::vector<Polygon> PolygonVector;
+typedef CGAL::Partition_traits_2<K>::Polygon_2 Polygon_2;
+typedef std::vector<Polygon_2> PolygonVector;
 
 
 
@@ -121,19 +124,22 @@ vector<float> polygonPositions =
 
 ;
 
+int counterI = 0;
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	Polygons* polygon2 = static_cast<Polygons*>(glfwGetWindowUserPointer(window));
+	Polygons* polygon = static_cast<Polygons*>(glfwGetWindowUserPointer(window));
+
+	
 
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 	{
 		changePositions(polygonPositions);
 	}
 
-	if (key == GLFW_KEY_C && action == GLFW_PRESS && continueRunning)
+	if (key == GLFW_KEY_P && action == GLFW_PRESS && continueRunning)
 	{
 		continueRunning = false;
 	}
-	else if (key == GLFW_KEY_C && action == GLFW_PRESS && !continueRunning)
+	else if (key == GLFW_KEY_P && action == GLFW_PRESS && !continueRunning)
 	{
 		continueRunning = true;
 	}
@@ -143,7 +149,28 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	{
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 	}
+	if (key == GLFW_KEY_C && action == GLFW_PRESS)
+	{
+		
+
+		if (counterI < polygon->sortedPoints.size() )
+		{
+			polygon->stepTriangulation(counterI);
+			counterI++;
+		}
+		
+	}
+	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+	{
+
+		for (size_t i = 0; i < polygon->sortedPoints.size(); ++i)
+		{
+			polygon->stepTriangulation(i);
+		}
+	}
 }
+
+
 
 int main(void)
 {
@@ -154,15 +181,65 @@ int main(void)
 
 
 
-	vector<float> truePoints = { 100,100,200,100,200,200,100,200,100,100 };
+
+
+
+
+
+	vector<float> truePoints =
+	{ 100,100,150,50,300,50,350,100,275,150,175,150,100,100 }
+	//{200,200,600,100,500,400,450,250,400,200,200,200}
+	//{ 100,400,150,350,250,350,300,300,250,250,150,250,100,200,150,150,250,150,500,300,250,450,150,450,100,400 }
+	//{ 100,400,150,200,250,225,175,175,500,300,200,400,400,500,450,450,520,520, 450,540,530,580,400,580,430,550,150,600,100,400 }
+	;
+
 	Polygons truePolygon;
 	truePolygon.addSet(truePoints);
-	truePolygon.draw();
+	truePolygon.newMethod();
+
+
+
+
+
+
+
+	
+
+	
+
+	
+	
+	
+
+
+
 	cout << "truePolygon.indices" << endl;
 	for (unsigned int i = 0; i < truePolygon.indices.size(); i++) {
+		if (i % 3 == 0 && i != 0)cout << endl;
 		cout << truePolygon.indices[i] << ", ";
 	}cout << endl;
-	
+
+
+
+
+
+
+
+
+
+
+
+	truePolygon.draw();
+
+
+
+
+
+
+	//cgal
+	std::vector<Point> points = { Point(100,100), Point(200,100), Point(200,200), Point(150,150), Point(100,200) };
+
+
 	//std::vector<Point> points = { Point(0,0), Point(10,0), Point(10,10), Point(0,10) };
 
 	//Triangulation t;
@@ -174,37 +251,35 @@ int main(void)
 	//}
 
 
-	/*
-	std::vector<Point> points = { Point(0,0), Point(10,0),Point(5,5), Point(10,10), Point(0,10) };
-	Polygon polygon_2;
-	for (const Point& p : points) {
-		polygon_2.push_back(p);
-	}
 
-	PolygonVector partitionedPolygons;
-	CGAL::greene_approx_convex_partition_2(polygon_2.vertices_begin(), polygon_2.vertices_end(), std::back_inserter(partitionedPolygons));
+	//std::vector<Point> points = { Point(0,0), Point(10,0),Point(5,5), Point(10,10), Point(0,10) };
+	//Polygon_2 polygon_2;
+	//for (const Point& p : points) {
+	//	polygon_2.push_back(p);
+	//}
 
-	// Triangulate each convex sub-polygon
-	int polygonCounter = 0;
-	for (const auto& subPolygon : partitionedPolygons) {
-		std::vector<Point> subPolygonPoints(subPolygon.container().begin(), subPolygon.container().end());
+	//PolygonVector partitionedPolygons;
+	//CGAL::approx_convex_partition_2(polygon_2.vertices_begin(), polygon_2.vertices_end(), std::back_inserter(partitionedPolygons));
 
-		// Perform triangulation
-		Triangulation triangulation;
-		triangulation.insert(subPolygonPoints.begin(), subPolygonPoints.end());
+	//// Triangulate each convex sub-polygon
+	//int polygonCounter = 0;
+	//for (const auto& subPolygon : partitionedPolygons) {
+	//	std::vector<Point> subPolygonPoints(subPolygon.container().begin(), subPolygon.container().end());
 
-		// Output the triangles
-		cout << "polygonCounter: " << polygonCounter << endl;
-		polygonCounter++;
+	//	// Perform triangulation
+	//	Triangulation triangulation;
+	//	triangulation.insert(subPolygonPoints.begin(), subPolygonPoints.end());
 
-		for (auto it = triangulation.finite_faces_begin(); it != triangulation.finite_faces_end(); ++it) {
-			Triangulation::Triangle tr = triangulation.triangle(it);
-			std::cout << "Triangle: " << tr[0] << ", " << tr[1] << ", " << tr[2] << std::endl;
-		}
-		cout << endl;
-	}
-	*/
+	//	// Output the triangles
+	//	cout << "polygonCounter: " << polygonCounter << endl;
+	//	polygonCounter++;
 
+	//	for (auto it = triangulation.finite_faces_begin(); it != triangulation.finite_faces_end(); ++it) {
+	//		Triangulation::Triangle tr = triangulation.triangle(it);
+	//		std::cout << "Triangle: " << tr[0] << ", " << tr[1] << ", " << tr[2] << std::endl;
+	//	}
+	//	cout << endl;
+	//}
 
 
 
@@ -214,34 +289,36 @@ int main(void)
 
 
 
-	Polygons background;
-	background.addSet({ 0,0,windowWidth,0,windowWidth,windowHeight,0,windowHeight,0,0 }); //is outside the while because is static
-
-	Polygons polygon;
-	Polygons polygon2;
 
 
+	//Polygons background;
+	//background.addSet({ 0,0,windowWidth,0,windowWidth,windowHeight,0,windowHeight,0,0 }); //is outside the while because is static
 
 
-	FourierMesh fourier;
-	fourier.createWavePositions();
+	//Polygons polygon;
 
 
-	Circles circlesPolygon(2);
 
 
-	Circles circlesFourier(3);
+	//FourierMesh fourier;
+	//fourier.createWavePositions();
 
 
-	Circles circlesWS(5);
-
-	Circles circles0(3);
+	//Circles circlesPolygon(2);
 
 
-	NewWettedSurface newWettedSurface(polygon2, fourier);
+	//Circles circlesFourier(3);
 
 
-	glfwSetWindowUserPointer(window, &polygon2);
+	//Circles circlesWS(5);
+
+	//Circles circles0(3);
+
+
+	//WettedSurface wettedSurface(polygon, fourier);	
+
+
+	glfwSetWindowUserPointer(window, &truePolygon);
 	glfwSetKeyCallback(window, keyCallback);
 
 
@@ -274,8 +351,9 @@ int main(void)
 	//make a struct for time
 	float elapsedTimeFloat = 0, fps = 0;
 
-
-	Data data(colorLocation, renderTypeLocation, elapsedTimeFloat, fps, polygon, newWettedSurface);
+	//Es un coñazo que esto dependa todo el rato de wettersurface o lo que sea, haz que el constructor solo meta colorLocation, renderTypeLocation
+	// y lo demás que se meta con funciones a parte
+	//Data data(colorLocation, renderTypeLocation, elapsedTimeFloat, fps, polygon, wettedSurface);
 
 
 
@@ -323,7 +401,7 @@ int main(void)
 		glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0);
 
 
-		background.draw();
+		//background.draw();
 
 
 
@@ -331,61 +409,45 @@ int main(void)
 
 
 		glUniform4f(colorLocation, 195.0f / 255.0f, 130.0f / 255.0f, 49.0f / 255.0f, 1.0f);
-		//polygon.clear();
-		//polygon.addSet({ 600, 500, 600, 700, 400, 700, 400, 300, 600, 500 });
-		//polygon.draw();
+
 
 
 
 		truePolygon.draw();
 
 
-		polygon2.clear();
-		//polygon2.addSet({ 400, 600, 350, 600, 350, 350, 650, 350, 650, 750, 250, 750, 250, 250, 750, 250, 750, 600, 700, 600, 700, 300, 300, 300, 300, 700, 600, 700, 600, 400, 400, 400, 400, 600 });
-		polygon2.addSet(
-
-			polygonPositions
-
-		);
-		//polygon2.draw();
+		//polygon.clear();
+		//polygon.addSet(polygonPositions);
+		//polygon.draw();
 
 
+		//glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
 
 
-
-
-
-
-
-
-
-		glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-
-
-		if (continueRunning)
-		{
-			fourier.createWavePositions();
-			//newWettedSurface.draw();
-		}
-		glUniform4f(colorLocation, 40.0f / 255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
+		//if (continueRunning)
+		//{
+		//	fourier.createWavePositions();
+		//	wettedSurface.draw();
+		//}
+		//glUniform4f(colorLocation, 40.0f / 255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
 		//fourier.draw();
 
-		glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
-		circlesPolygon.createCircles(polygon2.positions);
+		//glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
+		//circlesPolygon.createCircles(polygon.positions);
 		//circlesPolygon.draw();
 
-		glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-		circlesFourier.createCircles(fourier.dlines.positions);	//water	
+		//glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
+		//circlesFourier.createCircles(fourier.dlines.positions);	//water	
 		//circlesFourier.draw();
 
-		glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
-		circlesWS.createCircles(newWettedSurface.positions);
+		//glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
+		//circlesWS.createCircles(wettedSurface.positions);
 		//circlesWS.draw();
 
-		glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-		circles0.createCircles({ polygon2.positions[0],polygon2.positions[1] });
+		//glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+		//circles0.createCircles({ polygon.positions[0],polygon.positions[1] });
 		//circles0.draw();
-
+		//
 
 
 
@@ -442,7 +504,7 @@ int main(void)
 		////debug centroid position with arrows ///////////////
 		//polygon.rotate(polygon.centroid[0]*1e3+ newPositionX, polygon.centroid[1] * 1e3+ newPositionY, 0.01);
 
-		data.draw();
+		//data.draw();
 
 
 

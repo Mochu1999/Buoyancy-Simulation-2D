@@ -456,16 +456,10 @@
     <ClInclude Include="Sources\glm\vector_relational.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\borrar.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Sources\FourierMesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Sources\Text.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Sources\wetted_surface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Sources\Data.hpp">
@@ -480,10 +474,7 @@
     <ClInclude Include="Sources\Polygons.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\FloatingObject.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Sources\NewWettedSurface.h">
+    <ClInclude Include="Sources\Wetted_Surface.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
