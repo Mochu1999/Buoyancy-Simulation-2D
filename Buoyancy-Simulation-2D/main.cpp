@@ -33,16 +33,20 @@
 
 #include "Text.h"
 #include "Data.hpp"
+#include "BinariesManager.h"
 
 #include <chrono>
 
 using namespace std::chrono;
 
 
+struct AllPointers {
+	Polygons* polygon;
+	BinariesManager* binariesManager;
+};
 
 
-
-
+/*
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/Triangulation_2.h>
 
@@ -66,7 +70,7 @@ typedef CGAL::Triangulation_2<K> Triangulation;
 typedef K::Point_2 Point;
 typedef CGAL::Partition_traits_2<K>::Polygon_2 Polygon_2;
 typedef std::vector<Polygon_2> PolygonVector;
-
+*/
 
 
 //Preincremented for loops?
@@ -126,9 +130,10 @@ vector<float> polygonPositions =
 
 int counterI = 0;
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	Polygons* polygon = static_cast<Polygons*>(glfwGetWindowUserPointer(window));
-
-	
+	 
+	AllPointers* allpointers = static_cast<AllPointers*>(glfwGetWindowUserPointer(window));
+	Polygons* polygon = allpointers->polygon;
+	BinariesManager* binariesManager = allpointers->binariesManager;
 
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 	{
@@ -147,28 +152,49 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 	{
-		glfwSetWindowShouldClose(window, GLFW_TRUE);
+		//glfwSetWindowShouldClose(window, GLFW_TRUE);
+		polygon->addSet(binariesManager->readModel());
+		counterI = 0;
 	}
 	if (key == GLFW_KEY_C && action == GLFW_PRESS)
 	{
-		
 
-		if (counterI < polygon->sortedPoints.size() )
+
+		if (counterI < polygon->sortedPoints.size())
 		{
-			polygon->stepTriangulation(counterI);
+			polygon->sweepTriangulation(counterI);
 			counterI++;
 		}
-		
+
 	}
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 	{
 
 		for (size_t i = 0; i < polygon->sortedPoints.size(); ++i)
 		{
-			polygon->stepTriangulation(i);
+			polygon->sweepTriangulation(i);
 		}
 	}
+
+	if(glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS &&
+		key == GLFW_KEY_N && action == GLFW_PRESS) {
+		
+		binariesManager->writeConfig();
+
+		if (binariesManager->currentProgramType == 1)
+		{
+			polygon->addSet(binariesManager->readModel());
+		}
+		
+	}
+
+	if (key == GLFW_KEY_O && action == GLFW_PRESS)
+	{
+
+		binariesManager->readConfig();
+	}
 }
+
 
 
 
@@ -179,23 +205,52 @@ int main(void)
 	glEnable(GL_DEBUG_OUTPUT);*/
 
 
+	//vector<float> truePoints =
+	//	//{200,200,600,100,500,400,450,250,400,200,200,200}
+	//	//{ 100,400,150,350,250,350,300,300,250,250,150,250,100,200,150,150,250,150,500,300,250,450,150,450,100,400 }
+	//{ 100,400,150,200,250,225,175,175,500,300,200,400,400,500,450,450,520,520,450,540,530,580,400,580,430,550,150,600,100,400 }
+	//;
+
+
+
+	
+
+
+	
+
+
+	
+
+
+
+	
 
 
 
 
+	BinariesManager binariesManager;
+	//binariesManager.writeConfig();
+	//binariesManager.readConfig();
+
+	std::vector<float> modelPositions = binariesManager.readModel();
 
 
 
-	vector<float> truePoints =
-	{ 100,100,150,50,300,50,350,100,275,150,175,150,100,100 }
-	//{200,200,600,100,500,400,450,250,400,200,200,200}
-	//{ 100,400,150,350,250,350,300,300,250,250,150,250,100,200,150,150,250,150,500,300,250,450,150,450,100,400 }
-	//{ 100,400,150,200,250,225,175,175,500,300,200,400,400,500,450,450,520,520, 450,540,530,580,400,580,430,550,150,600,100,400 }
-	;
+	//cout << "modelPositions: " << endl;
+	//for (int val : modelPositions) {
+	//	std::cout << val << " ";
+	//}
+	//std::cout << std::endl;
+
 
 	Polygons truePolygon;
-	truePolygon.addSet(truePoints);
-	truePolygon.newMethod();
+	truePolygon.addSet(modelPositions);
+	//truePolygon.sweepTriangulation();
+
+
+
+
+	//return 0;
 
 
 
@@ -203,21 +258,12 @@ int main(void)
 
 
 
-	
 
-	
-
-	
-	
-	
-
-
-
-	cout << "truePolygon.indices" << endl;
+	/*cout << "truePolygon.indices" << endl;
 	for (unsigned int i = 0; i < truePolygon.indices.size(); i++) {
 		if (i % 3 == 0 && i != 0)cout << endl;
 		cout << truePolygon.indices[i] << ", ";
-	}cout << endl;
+	}cout << endl;*/
 
 
 
@@ -237,43 +283,32 @@ int main(void)
 
 
 	//cgal
+	/*
 	std::vector<Point> points = { Point(100,100), Point(200,100), Point(200,200), Point(150,150), Point(100,200) };
-
-
 	//std::vector<Point> points = { Point(0,0), Point(10,0), Point(10,10), Point(0,10) };
-
 	//Triangulation t;
 	//t.insert(points.begin(), points.end()); //triangulation occurs here
-
 	//for (Triangulation::Finite_faces_iterator it = t.finite_faces_begin(); it != t.finite_faces_end(); ++it) {
 	//	Triangulation::Triangle tr = t.triangle(it); //tr is each triangle
 	//	std::cout << "Triangle: " << tr[0] << ", " << tr[1] << ", " << tr[2] << std::endl;
 	//}
-
-
-
 	//std::vector<Point> points = { Point(0,0), Point(10,0),Point(5,5), Point(10,10), Point(0,10) };
 	//Polygon_2 polygon_2;
 	//for (const Point& p : points) {
 	//	polygon_2.push_back(p);
 	//}
-
 	//PolygonVector partitionedPolygons;
 	//CGAL::approx_convex_partition_2(polygon_2.vertices_begin(), polygon_2.vertices_end(), std::back_inserter(partitionedPolygons));
-
 	//// Triangulate each convex sub-polygon
 	//int polygonCounter = 0;
 	//for (const auto& subPolygon : partitionedPolygons) {
 	//	std::vector<Point> subPolygonPoints(subPolygon.container().begin(), subPolygon.container().end());
-
 	//	// Perform triangulation
 	//	Triangulation triangulation;
 	//	triangulation.insert(subPolygonPoints.begin(), subPolygonPoints.end());
-
 	//	// Output the triangles
 	//	cout << "polygonCounter: " << polygonCounter << endl;
 	//	polygonCounter++;
-
 	//	for (auto it = triangulation.finite_faces_begin(); it != triangulation.finite_faces_end(); ++it) {
 	//		Triangulation::Triangle tr = triangulation.triangle(it);
 	//		std::cout << "Triangle: " << tr[0] << ", " << tr[1] << ", " << tr[2] << std::endl;
@@ -282,7 +317,7 @@ int main(void)
 	//}
 
 
-
+	*/
 
 
 
@@ -317,8 +352,12 @@ int main(void)
 
 	//WettedSurface wettedSurface(polygon, fourier);	
 
+	AllPointers allpointers;
+	allpointers.polygon = &truePolygon;
+	allpointers.binariesManager = &binariesManager;
 
-	glfwSetWindowUserPointer(window, &truePolygon);
+	glfwSetWindowUserPointer(window, &allpointers);
+
 	glfwSetKeyCallback(window, keyCallback);
 
 

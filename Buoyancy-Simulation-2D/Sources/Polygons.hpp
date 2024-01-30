@@ -40,53 +40,6 @@ struct Polygons {
 	}
 
 
-	void newMethod(){
-		float counter = 0;
-
-		//Esta lógica te está quitando el punto repetido, pero tendrás que cambiar el metodo cuando empieces a trabajar con nested poligonos
-		//	Lo que tendrías que hacer es quitar lo de tener el punto front en el back e implementar logíca de que al final meta indice 0 siempre
-		for (int i = 0; i < positions.size() - 2; i += 2)
-		{
-			Points.insert(Points.end(), { counter,positions[i],positions[i + 1],0 });
-			counter++;
-		}
-
-
-		sortedPoints = Points;
-
-
-		std::sort(sortedPoints.begin(), sortedPoints.end()
-			, [](const std::array<float, 4 >& a, const std::array<float, 4 >& b)
-			{
-				if (a[1] == b[1])
-					return a[2] > b[2];
-				return a[1] < b[1];
-			});
-
-		for (int i = 0; i < sortedPoints.size(); ++i) {
-			Points[sortedPoints[i][0]][3] = i;
-		}
-
-
-		cout << "Points:" << endl;
-		for (const auto& entry : Points) {
-			for (unsigned int value : entry) {
-				std::cout << value << " ";
-			}
-			std::cout << std::endl;
-		}std::cout << std::endl;
-
-		cout << "sortedPoints:" << endl;
-		for (const auto& entry : sortedPoints) {
-			for (unsigned int value : entry) {
-				std::cout << value << " ";
-			}
-			std::cout << std::endl;
-		}std::cout << std::endl;
-
-
-		
-	}
 
 
 
@@ -105,7 +58,7 @@ struct Polygons {
 	std::vector<std::deque<unsigned int>> chain;
 
 
-	void stepTriangulation(int i) {
+	void sweepTriangulation(int i) {
 		/*for (size_t i = 0; i < sortedPoints.size(); ++i)
 		{*/
 			////
@@ -447,6 +400,7 @@ struct Polygons {
 				std::cout << value << " ";
 			}cout << endl << endl;
 
+
 			//cout <<  "    abc: " << a[0] << " " << b[0] << " " << c[0] << "    tipo:" << type << endl << endl;
 		//}
 	}
@@ -584,16 +538,61 @@ struct Polygons {
 
 	void addSet(vector<float> items) {
 
-		
-
-
-		
-
-
-
-
+		edges.clear();
+		chain.clear();
 		dlines.clear();
 		dlines.addSet(items);
+		indices.clear();
+		Points.clear();
+		sortedPoints.clear();
+
+		//esta lógica no permite varios addSet, pero bueno,cuando puedas hacer sweeptriangulation de una cambia esto a ahí
+		//Y cambiale el nombre a points
+		float counter = 0;
+
+		//Esta lógica te está quitando el punto repetido, pero tendrás que cambiar el metodo cuando empieces a trabajar con nested poligonos
+		//	Lo que tendrías que hacer es quitar lo de tener el punto front en el back e implementar logíca de que al final meta indice 0 siempre
+		for (int i = 0; i < positions.size() - 2; i += 2)
+		{
+			Points.insert(Points.end(), { counter,positions[i],positions[i + 1],0 });
+			counter++;
+		}
+
+
+		sortedPoints = Points;
+
+
+		std::sort(sortedPoints.begin(), sortedPoints.end()
+			, [](const std::array<float, 4 >& a, const std::array<float, 4 >& b)
+			{
+				if (a[1] == b[1])
+					return a[2] > b[2];
+				return a[1] < b[1];
+			});
+
+		for (int i = 0; i < sortedPoints.size(); ++i) {
+			Points[sortedPoints[i][0]][3] = i;
+		}
+
+
+		/*cout << "Points:" << endl;
+		for (const auto& entry : Points) {
+			for (unsigned int value : entry) {
+				std::cout << value << " ";
+			}
+			std::cout << std::endl;
+		}std::cout << std::endl;
+
+		cout << "sortedPoints:" << endl;
+		for (const auto& entry : sortedPoints) {
+			for (unsigned int value : entry) {
+				std::cout << value << " ";
+			}
+			std::cout << std::endl;
+		}std::cout << std::endl;*/
+
+
+
 
 		/*cout << "dlines.indices" << endl;
 		for (unsigned int i = 0; i < dlines.indices.size(); i++) {

@@ -143,6 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Sources\BinariesManager.h" />
     <ClInclude Include="Sources\Circles.hpp" />
     <ClInclude Include="Sources\Data.hpp" />
     <ClInclude Include="Sources\FourierMesh.h" />
