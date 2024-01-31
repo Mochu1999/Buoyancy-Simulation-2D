@@ -8,7 +8,7 @@ using namespace chrono;
 
 #pragma once
 #define PI 3.14159265358979323846	//constexpr?
-
+extern float cursorX = 0, cursorY = 0;
 extern float windowHeight = 1080;
 extern float windowWidth = 1920;
 
@@ -20,15 +20,15 @@ extern float windowWidth = 1920;
 		}
 		cout << endl;*/
 
-		//cout << "positions: " << endl;
-		//for (int i = 0; i < positions.size(); i += 2) {
-		//	cout << positions[i] << ", " << positions[i + 1] << "," << endl;
-		//}cout << endl;
+//cout << "positions: " << endl;
+//for (int i = 0; i < positions.size(); i += 2) {
+//	cout << positions[i] << ", " << positions[i + 1] << "," << endl;
+//}cout << endl;
 
-		//cout << "indices" << endl;
-		//for (unsigned int i = 0; i < indices.size(); i++) {
-		//	cout << indices[i] << ", ";
-		//}cout << endl;
+//cout << "indices" << endl;
+//for (unsigned int i = 0; i < indices.size(); i++) {
+//	cout << indices[i] << ", ";
+//}cout << endl;
 
 
 //the advantage of not returning a bool is that you can compare if it is 0 (right on the line)
@@ -43,7 +43,7 @@ inline float isRightOfLine(float& Ax, float& Ay, float& Bx, float& By, float& Px
 }
 
 
-		//Esto es de old polygons
+//Esto es de old polygons
 float absoluteAngle(float x, float y) {
 	/*if (x == 0 && y == 0) {
 		std::cout << "Error triggered: 0/0 is undefined" << std::endl;
@@ -154,7 +154,7 @@ bool checkBarycentric(float x, float y, float x1, float y1, float x2, float y2, 
 }
 std::set<std::string> printedErrors;
 
-void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) { //Only adds errors once
+void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar * message, const void* userParam) { //Only adds errors once
 	std::string errorMsg(message);
 
 	if (printedErrors.find(errorMsg) == printedErrors.end()) {
@@ -165,6 +165,13 @@ void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum se
 }
 
 
+void getCursorPos(GLFWwindow * window) {
+	double intermX, intermY;
+	glfwGetCursorPos(window, &intermX, &intermY);
+	intermY = windowHeight - intermY;
+	cursorX = static_cast<float>(intermX);
+	cursorY = static_cast<float>(intermY);
+}
 GLFWwindow* initialize() {
 	glfwInit();
 
@@ -188,7 +195,7 @@ GLFWwindow* initialize() {
 }
 
 
-void displayMatrix(const std::vector<float>& matrix, int rows, int cols) {
+void displayMatrix(const std::vector<float>&matrix, int rows, int cols) {
 	for (int row = 0; row < rows; ++row) {
 		for (int col = 0; col < cols; ++col) {
 			std::cout << matrix[row * cols + col] << "\t";
@@ -197,7 +204,7 @@ void displayMatrix(const std::vector<float>& matrix, int rows, int cols) {
 	}
 }
 
-void printMatrix(const std::vector<float>& matrix, const std::string& matrixName, int rows, int cols) {
+void printMatrix(const std::vector<float>&matrix, const std::string & matrixName, int rows, int cols) {
 	if (matrix.size() != rows * cols) {
 		std::cout << "Invalid matrix size. Should be " << rows * cols << " elements for a " << rows << "x" << cols << " matrix." << std::endl;
 		return;
@@ -215,7 +222,7 @@ void printMatrix(const std::vector<float>& matrix, const std::string& matrixName
 
 
 //this is in my weird format
-int binarySearchX(float& indexToFind, vector<float>& range) {
+int binarySearchX(float& indexToFind, vector<float>&range) {
 	int start = 0, end = range.size() / 2 - 1;//-1 to be an x coordinate
 	//defines the current search range, they define all the possible range at the start
 
@@ -247,3 +254,8 @@ void timeMeThis()
 }
 
 
+//vector<float> truePoints =
+	//	//{200,200,600,100,500,400,450,250,400,200,200,200}
+	//	//{ 100,400,150,350,250,350,300,300,250,250,150,250,100,200,150,150,250,150,500,300,250,450,150,450,100,400 }
+	//{ 100,400,150,200,250,225,175,175,500,300,200,400,400,500,450,450,520,520,450,540,530,580,400,580,430,550,150,600,100,400 }
+	//;

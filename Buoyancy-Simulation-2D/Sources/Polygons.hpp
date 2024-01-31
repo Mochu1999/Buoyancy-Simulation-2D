@@ -53,7 +53,7 @@ struct Polygons {
 
 
 
-
+	//mete esto dentro cuando acabes
 	std::vector<float> edges; //mejor un vector de pairs?
 	std::vector<std::deque<unsigned int>> chain;
 
@@ -405,7 +405,16 @@ struct Polygons {
 		//}
 	}
 
+	void createNewPolygon() {
+		edges.clear();
+		chain.clear();
+		dlines.clear();
 
+		indices.clear();
+		Points.clear();
+		sortedPoints.clear();
+
+	}
 
 
 
@@ -531,8 +540,14 @@ struct Polygons {
 	}
 
 	void clear() {
-		positions.clear(); //el clear de los indices está en generate indices y lo que quieres es que se borre al principio antes de recalcularse, mover(? 
+		edges.clear(); 
+		chain.clear();
 
+		dlines.clear();
+
+		indices.clear();
+		Points.clear();
+		sortedPoints.clear();
 	}
 
 
@@ -540,12 +555,13 @@ struct Polygons {
 
 		edges.clear();
 		chain.clear();
-		dlines.clear();
-		dlines.addSet(items);
+		//dlines.clear();
+		
 		indices.clear();
 		Points.clear();
 		sortedPoints.clear();
 
+		dlines.addSet(items);
 		//esta lógica no permite varios addSet, pero bueno,cuando puedas hacer sweeptriangulation de una cambia esto a ahí
 		//Y cambiale el nombre a points
 		float counter = 0;
@@ -623,7 +639,17 @@ struct Polygons {
 		//polarAreaMomentOfInertia();
 	}
 
+	//locks cursor in place
+	void hop() {
 
+		if (abs(cursorX - positions[0]) <= 20 && abs(cursorY - positions[1]) <= 20) {
+			cursorX = positions[0];
+			cursorY = positions[1];
+		}
+		positions[positions.size() - 2] = cursorX;
+		positions.back() = cursorY;
+
+	}
 	void draw() {
 
 		
@@ -667,6 +693,7 @@ struct Polygons {
 		}
 	}
 
+	//renombrar a earclipping
 	void createIndices() {	//grouping indices
 		indices.clear(); indicesAll.clear(); indicesRemaining.clear();
 

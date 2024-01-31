@@ -21,17 +21,25 @@ struct DLines {	//D for dynamic, constanly updated
 		positions.clear(); indices.clear(); setOffset = 0; setCount = 0;
 	}
 
-
+	//creo que he roto esta lógica jejeje
+		//ya no puedes meter más de una surface, o no deberías
 	int setOffset = 0;	//the offset that let multiple indices be over the past ones
 	int setCount = 0;	//to avoid the fact that the last index of each set is not being counted
 	void addSet(vector<float> items) {
-		
+		int setOffset = 0;
+		int setCount = 0;
 
 		positions.insert(positions.end(), items.begin(), items.end());
-
-		for (unsigned int i = 0; i < items.size() / 2 - 1; i++) {
+		
+		indices.clear();
+		
+		for (unsigned int i = 0; i < positions.size() / 2 - 1; i++) {
 			indices.insert(indices.end(), { i + setOffset,i + setOffset + 1 });
 		}
+		
+		/*for (unsigned int i = 0; i < items.size() / 2 - 1; i++) {
+			indices.insert(indices.end(), { i + setOffset,i + setOffset + 1 });
+		}*/
 		setCount++;
 		setOffset = indices.size() / 2 + setCount;
 
@@ -84,6 +92,7 @@ struct DLines {	//D for dynamic, constanly updated
 		
 	}
 
+	
 
 	~DLines() {
 		

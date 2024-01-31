@@ -25,10 +25,10 @@ cout << "MODELPATH " << modelPath << endl;*/
 
 	std::string basePath = "Resources/2D models/";
 
-	enum programType { creation, running };
+	enum programType { CAD, RUNNING };
 
 	//these two are read from config
-	//programType currentProgramType = running;
+	//programType currentProgramType = RUNNING;
 	//std::string modelPath = "1-goliath.bin";
 	programType currentProgramType;
 	std::string modelPath;
@@ -50,51 +50,51 @@ cout << "MODELPATH " << modelPath << endl;*/
 		bool foundModelPath = false;
 
 
-		std::ofstream outFile("Resources/config.bin", std::ios::binary);
-		if (outFile)
+
+
+		cout << "set currentProgramType { CAD, RUNNING }: ";
+		std::cin >> input;
+		if (input == "CAD" || input == "0")
 		{
+			currentProgramType = CAD;
+		}
+		else if (input == "RUNNING" || input == "1")
+		{
+			currentProgramType = RUNNING;
+		}
+		else
+		{
+			cout << "error invalid programType name" << endl;
+			return;
+		}
 
 
-			cout << "set currentProgramType { creation, running }: ";
-			std::cin >> input;
-			if (input == "creation" || input == "0")
-			{
-				currentProgramType = creation;
+
+		if (currentProgramType == RUNNING)
+		{
+			std::string possibleModelPath;
+			cout << "set model path to one of these: " << endl;
+			for (const auto& entry : fs::directory_iterator(basePath)) {
+				std::cout << "     " << entry.path().filename() << std::endl;
 			}
-			else if (input == "running" || input == "1")
-			{
-				currentProgramType = running;
-			}
-			else
-			{
-				cout << "error invalid programType name" << endl;
-				return;
-			}
+			std::cin >> possibleModelPath;
 
 
-
-			if (currentProgramType == running)
-			{
-				std::string possibleModelPath;
-				cout << "set model path to one of these: " << endl;
-				for (const auto& entry : fs::directory_iterator(basePath)) {
-					std::cout << "     " << entry.path().filename() << std::endl;
-				}
-				std::cin >> possibleModelPath;
-
-
-				for (const auto& entry : fs::directory_iterator(basePath)) {
-					if (possibleModelPath == entry.path().filename())
-					{
-						foundModelPath = true;
-						break;
-					}
-				}
-				if (foundModelPath)
+			for (const auto& entry : fs::directory_iterator(basePath)) {
+				if (possibleModelPath == entry.path().filename())
 				{
+					foundModelPath = true;
+					break;
+				}
+			}
+			if (foundModelPath)
+			{
 
-					modelPath = possibleModelPath;
+				modelPath = possibleModelPath;
 
+				std::ofstream outFile("Resources/config.bin", std::ios::binary);
+				if (outFile)
+				{
 
 					//now that we have the values of programType and modelPath, we set indexEntries and write it all
 					indexEntries[0] = { IndexEntry::ProgramType, sizeof(indexEntries), sizeof(programType) };
@@ -107,18 +107,35 @@ cout << "MODELPATH " << modelPath << endl;*/
 					outFile.write(reinterpret_cast<const char*>(&currentProgramType), sizeof(currentProgramType));
 					outFile.write(modelPath.data(), modelPath.size());
 
-
 				}
-				else
-					cout << "file not found" << endl;
+				outFile.close();
+			}
+			else
+				cout << "file not found" << endl;
 
-			}
-			else if (currentProgramType == creation)
-			{
-				cout << "estas en creation crack" << endl;
-			}
 		}
-		outFile.close();
+		else if (currentProgramType == CAD)
+		{
+			cout << "CAD" << endl;
+
+			std::ofstream outFile("Resources/config.bin", std::ios::binary);
+			if (outFile)
+			{
+
+				//now that we have the values of programType and modelPath, we set indexEntries and write it all
+				indexEntries[0] = { IndexEntry::ProgramType, sizeof(indexEntries), sizeof(programType) };
+				indexEntries[1] = { IndexEntry::ModelPath, sizeof(indexEntries) + sizeof(programType), modelPath.size() };
+
+				for (const auto& entry : indexEntries)
+				{
+					outFile.write(reinterpret_cast<const char*>(&entry), sizeof(entry));
+				}
+				outFile.write(reinterpret_cast<const char*>(&currentProgramType), sizeof(currentProgramType));
+			}
+			outFile.close();
+			
+		}
+
 
 	}
 
@@ -156,8 +173,15 @@ cout << "MODELPATH " << modelPath << endl;*/
 	}
 
 	void writeModel(std::vector<float> model) {
-		std::ofstream outFile("Resources/2D models/2-improper-start.bin", std::ios::binary);
+		cout << "save you model, currently if the file the are these ones:" << endl;
+		for (const auto& entry : fs::directory_iterator(basePath)) {
+			std::cout << "     " << entry.path().filename() << std::endl;
+		}
+		std::cin >> modelPath;
+		std::string path = basePath + modelPath;
+		cout << "setting model in: " << path << endl;
 
+		std::ofstream outFile(path, std::ios::binary);
 		if (outFile)
 		{
 			size_t size = model.size();
@@ -165,6 +189,8 @@ cout << "MODELPATH " << modelPath << endl;*/
 			outFile.write(reinterpret_cast<const char*>(model.data()), size * sizeof(int));
 		}
 		outFile.close();
+
+		//tendrías que escribir esto en config (y cambiar a modo 1?)
 	}
 
 	std::vector<float> readModel()
