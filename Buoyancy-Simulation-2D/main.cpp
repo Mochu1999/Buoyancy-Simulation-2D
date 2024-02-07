@@ -46,32 +46,6 @@ struct AllPointers {
 };
 
 
-/*
-#include <CGAL/Simple_cartesian.h>
-#include <CGAL/Triangulation_2.h>
-
-#include <CGAL/Delaunay_triangulation_2.h>
-#include <CGAL/Constrained_Delaunay_triangulation_2.h>
-
-
-//typedef CGAL::Triangulation_2<K>         Triangulation;
-
-//typedef CGAL::Delaunay_triangulation_2<K> Triangulation;
-
-
-
-
-#include <CGAL/Partition_traits_2.h>
-#include <CGAL/partition_2.h>
-
-
-typedef CGAL::Simple_cartesian<float> K;
-typedef CGAL::Triangulation_2<K> Triangulation;
-typedef K::Point_2 Point;
-typedef CGAL::Partition_traits_2<K>::Polygon_2 Polygon_2;
-typedef std::vector<Polygon_2> PolygonVector;
-*/
-
 
 //Preincremented for loops?
 //que pasa con los const macho
@@ -82,51 +56,63 @@ typedef std::vector<Polygon_2> PolygonVector;
 
 
 
-//coño es esto?
-void changePositions(vector<float>& polygonPositions) {
-	polygonPositions.erase(polygonPositions.begin(), polygonPositions.begin() + 2);
-
-	polygonPositions.insert(polygonPositions.end(), { polygonPositions[0],polygonPositions[1] });
-}
-
 
 bool continueRunning = false;
 
-/*
-	vector<float> polygonPositions =
 
-
-		//gato
-	{ 100,100,900,100,950,350,820,460,700,350,800,200,600,400,800,600,500,800, 150,600, 400,400,500,200,100,100 }
-
-		//espiral
-		//{ 400, 600, 350, 600, 350, 350, 650, 350, 650, 750, 250, 750, 250, 250, 750, 250, 750, 600, 700, 600, 700, 300, 300, 300, 300, 700, 600, 700, 600, 400, 400, 400, 400, 600 }
-
-		//semi espiral
-		//{  350, 600, 350, 350, 650, 350, 650, 750, 600, 700, 600, 400, 400, 400, 400, 600 ,350, 600 }
-
-		//complejidad
-		//{ 100,700,100,400,300,400,350,350,400,400,400,600,600,600,600,400,650,350,700,400,700,700,360,700,360,450,340,450,340,700,330,700,330,440,370,440,370,520,380,520,380,430,320,430,320,700,300,700,300,450,200,450,200,700,175,700,175,480,125,480,125,700,100,700 }
-
-		//catamaran
-		//{ 200,200,300,400,300,600,700,600,700,400,800,200,900,400,900,600,800,800,200,800,100,600,100,400,200,200 }
-
-		//cuadrado pico
-		//{ 300,600,300,300,450,100,600,300,600,600,300,600}
-
-		//tridente
-		//{ 350, 600, 350, 350, 650, 350, 650, 750, 600, 700, 600, 400,550,400,550,600,500,600,500,400, 400, 400, 400, 600 ,350, 600 }
-
-		//{100,900,100,400,900,400,900,900,100,900}
-		//{ 300,600,300,300, 600,300,600,600,300,600 }
-
-	;
-	*/
 
 
 
 #include "KeyMouseInputs.h"
 
+struct p
+{
+	float x;
+	float y;
+};
+std::vector<p> convertPositions(const std::vector<float>& modelPositions) {
+	std::vector<p> output;
+
+
+	for (size_t i = 0; i < modelPositions.size(); i += 2) {
+		p point;
+		point.x = modelPositions[i];
+		point.y = modelPositions[i + 1];
+		output.push_back(point);
+	}
+
+	return output;
+}
+
+
+vector<float> convexTriangulation(vector<float> input) {
+
+	vector<float> indices;
+
+	for (float i = 1; i < input.size() / 2 - 2; i++)
+	{
+		indices.insert(indices.end(), { 0,i,i + 1 });
+	}
+
+	return indices;
+}
+
+struct tIndices {
+	int a;
+	int b;
+	int c;
+};
+
+vector<tIndices> newConvexTriangulation(vector<p> input) {
+	vector<tIndices> indices;
+
+
+	for (int i = 1; i < input.size() - 2; i++) {
+		indices.push_back({ 0, i, i + 1 });
+	}
+
+	return indices;
+}
 
 int main(void)
 {
@@ -138,120 +124,66 @@ int main(void)
 	BinariesManager binariesManager;
 
 
+	/*vector<float> polygonPositions = {300,300,600,300,600,600,300,600,300,300};
+	binariesManager.writeModel(polygonPositions);*/
+
+	//binariesManager.writeConfig();
 
 	std::vector<float> modelPositions = binariesManager.readModel();
 
 
 
-	//cout << "modelPositions: " << endl;
-	//for (int val : modelPositions) {
-	//	std::cout << val << " ";
-	//}
-	//std::cout << std::endl;
 
 
-	Polygons truePolygon;
+	Polygons polygon;
 	if (binariesManager.currentProgramType == binariesManager.RUNNING)
 	{
 
-		truePolygon.addSet(modelPositions);
+		polygon.addSet(modelPositions);
 	}
 	else
 	{
-		truePolygon.dlines.addSet({ cursorX, cursorY, });
+		polygon.dlines.addSet({ cursorX, cursorY, });
 	}
-	//truePolygon.sweepTriangulation();
+	//polygon.sweepTriangulation();
 
 
-
-	/*cout << "truePolygon.indices" << endl;
-	for (unsigned int i = 0; i < truePolygon.indices.size(); i++) {
-		if (i % 3 == 0 && i != 0)cout << endl;
-		cout << truePolygon.indices[i] << ", ";
-	}cout << endl;*/
-
-
-
-
-
-	truePolygon.draw();
-
-
-
-	//cgal
-	/*
-	std::vector<Point> points = { Point(100,100), Point(200,100), Point(200,200), Point(150,150), Point(100,200) };
-	//std::vector<Point> points = { Point(0,0), Point(10,0), Point(10,10), Point(0,10) };
-	//Triangulation t;
-	//t.insert(points.begin(), points.end()); //triangulation occurs here
-	//for (Triangulation::Finite_faces_iterator it = t.finite_faces_begin(); it != t.finite_faces_end(); ++it) {
-	//	Triangulation::Triangle tr = t.triangle(it); //tr is each triangle
-	//	std::cout << "Triangle: " << tr[0] << ", " << tr[1] << ", " << tr[2] << std::endl;
-	//}
-	//std::vector<Point> points = { Point(0,0), Point(10,0),Point(5,5), Point(10,10), Point(0,10) };
-	//Polygon_2 polygon_2;
-	//for (const Point& p : points) {
-	//	polygon_2.push_back(p);
-	//}
-	//PolygonVector partitionedPolygons;
-	//CGAL::approx_convex_partition_2(polygon_2.vertices_begin(), polygon_2.vertices_end(), std::back_inserter(partitionedPolygons));
-	//// Triangulate each convex sub-polygon
-	//int polygonCounter = 0;
-	//for (const auto& subPolygon : partitionedPolygons) {
-	//	std::vector<Point> subPolygonPoints(subPolygon.container().begin(), subPolygon.container().end());
-	//	// Perform triangulation
-	//	Triangulation triangulation;
-	//	triangulation.insert(subPolygonPoints.begin(), subPolygonPoints.end());
-	//	// Output the triangles
-	//	cout << "polygonCounter: " << polygonCounter << endl;
-	//	polygonCounter++;
-	//	for (auto it = triangulation.finite_faces_begin(); it != triangulation.finite_faces_end(); ++it) {
-	//		Triangulation::Triangle tr = triangulation.triangle(it);
-	//		std::cout << "Triangle: " << tr[0] << ", " << tr[1] << ", " << tr[2] << std::endl;
-	//	}
-	//	cout << endl;
-	//}
-
-
-	*/
-
-
-	{
+	polygon.draw();
 
 
 
 
 
 
-		//Polygons background;
-		//background.addSet({ 0,0,windowWidth,0,windowWidth,windowHeight,0,windowHeight,0,0 }); //is outside the while because is static
+	Polygons background;
+	background.addSet({ 0,0,windowWidth,0,windowWidth,windowHeight,0,windowHeight,0,0 }); //is outside the while because is static
 
 
-		//Polygons polygon;
+	//Polygons polygon;
 
 
 
 
-		//FourierMesh fourier;
-		//fourier.createWavePositions();
+	//FourierMesh fourier;
+	//fourier.createWavePositions();
 
 
-		//Circles circlesPolygon(2);
+	//Circles circlesPolygon(2);
 
 
-		//Circles circlesFourier(3);
+	//Circles circlesFourier(3);
 
 
-		//Circles circlesWS(5);
+	//Circles circlesWS(5);
 
-		//Circles circles0(3);
+	//Circles circles0(3);
 
 
-		//WettedSurface wettedSurface(polygon, fourier);	
-	}
+	//WettedSurface wettedSurface(polygon, fourier);	
+
 
 	AllPointers allpointers;
-	allpointers.polygon = &truePolygon;
+	allpointers.polygon = &polygon;
 	allpointers.binariesManager = &binariesManager;
 
 	glfwSetWindowUserPointer(window, &allpointers);
@@ -261,6 +193,90 @@ int main(void)
 
 
 
+
+
+
+
+
+
+
+	std::vector<p> newPositions = convertPositions(modelPositions);
+
+
+
+
+	/*
+	cout << "modelPositions: " << endl;
+	for (int i = 0; i < modelPositions.size(); i += 2) {
+		cout << modelPositions[i] << ", " << modelPositions[i + 1] << "," << endl;
+	}cout << endl;
+
+	for (auto& pos : newPositions) {
+		std::cout << "x: " << pos.x << ", y: " << pos.y << std::endl;
+	}cout << endl;
+
+
+	high_resolution_clock::time_point currentTime;
+	high_resolution_clock::time_point lastTime;
+	float elapsedTime;
+
+	//warm up
+	for (size_t i = 0; i < 10000; i++)
+	{
+		vector<float> indices = convexTriangulation(modelPositions);
+	}
+
+
+
+
+	currentTime = high_resolution_clock::now();
+
+
+	for (size_t i = 0; i < 10e+7; i++)
+	{
+		//vector<tIndices> indices = newConvexTriangulation(newPositions);
+		float thirdElement = newPositions[2].y;
+
+	}
+
+	lastTime = high_resolution_clock::now();
+	elapsedTime = duration_cast<duration<float>>(lastTime - currentTime).count();
+
+	cout << "new format, time: " << elapsedTime << endl;
+
+
+	currentTime = high_resolution_clock::now();
+
+	for (size_t i = 0; i < 10e+7; i++)
+	{
+		//vector<float> indices = convexTriangulation(modelPositions);
+		float thirdElement = modelPositions[5];
+	}
+
+	lastTime = high_resolution_clock::now();
+	elapsedTime = duration_cast<duration<float>>(lastTime-currentTime).count();
+
+	cout << "old format, time: " << elapsedTime << endl;
+
+
+
+
+
+
+	*/
+
+	/*for (auto& pos : indices) {
+		std::cout << "a: " << pos.a << ", b: " << pos.b << ", c: " << pos.c << std::endl;
+	}*/
+
+
+	/*cout << "indices:" << endl;
+	for (int i = 0; i < indices.size(); i += 3) {
+		cout << indices[i] << " ";
+		cout << indices[i + 1] << " ";
+		cout << indices[i + 2] << endl;
+	}
+	cout << endl;*/
 
 
 
@@ -294,7 +310,7 @@ int main(void)
 
 
 
-
+	/**/
 
 	high_resolution_clock::time_point lastFrameTime = high_resolution_clock::now();	//overkill, depends on the pc clock and it might be nanoseconds
 	high_resolution_clock::time_point startElapsedTime = lastFrameTime;
@@ -338,7 +354,7 @@ int main(void)
 		glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0);
 
 
-		//background.draw();
+		background.draw();
 
 
 
@@ -347,7 +363,7 @@ int main(void)
 
 
 
-
+		glUniform4f(colorLocation, 195.0f / 255.0f, 130.0f / 255.0f, 49.0f / 255.0f, 1.0f);
 
 		if (binariesManager.currentProgramType == binariesManager.RUNNING)
 		{
@@ -356,24 +372,24 @@ int main(void)
 		else if (binariesManager.currentProgramType == binariesManager.CAD)
 		{
 
-			
+			//He roto el modo CAD, no sé porque no crea
 
 			if (isCreating)
 			{
-				truePolygon.hop();
+				polygon.hop();
 
-				truePolygon.positions.pop_back();
-				truePolygon.positions.pop_back();
+				polygon.positions.pop_back();
+				polygon.positions.pop_back();
 
 
 
-				truePolygon.addSet({ cursorX,cursorY });
+				polygon.addSet({ cursorX,cursorY });
 			}
 
 		}
-		glUniform4f(colorLocation, 195.0f / 255.0f, 130.0f / 255.0f, 49.0f / 255.0f, 1.0f);
+		
 
-		truePolygon.draw();
+		polygon.draw();
 
 		{
 
@@ -398,7 +414,7 @@ int main(void)
 			//circlesPolygon.draw();
 
 			//glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-			//circlesFourier.createCircles(fourier.dlines.positions);	//water	
+			//circlesFourier.createCircles(fourier.dlines.positions);	//water
 			//circlesFourier.draw();
 
 			//glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
@@ -474,6 +490,8 @@ int main(void)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+
+
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;

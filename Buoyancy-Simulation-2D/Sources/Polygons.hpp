@@ -17,7 +17,7 @@ struct Polygons {
 	unsigned int vertexArray;
 	unsigned int indexBuffer;
 
-	
+
 
 	size_t currentBufferSize = 100000 * sizeof(float);
 	/////////////////////////////////////////////////////////////////////////////////////////////
@@ -25,18 +25,18 @@ struct Polygons {
 	/////////////////////////////////////////////////////////////////////////////////////////////
 
 	std::vector<std::array<float, 4>> Points;
-	std::vector<std::array<float, 4>> sortedPoints ;
+	std::vector<std::array<float, 4>> sortedPoints;
 
-	Polygons()  {
+	Polygons() {
 		genBuffers();
 
-		
+
 		/*oldPositions = positions_;*/
 
 
 
 
-		
+
 	}
 
 
@@ -45,376 +45,700 @@ struct Polygons {
 
 
 
-	
-
-	
 
 
 
+
+
+	////////////////////////////////////////
+	// El orden después es. Formato de puntos, terminar la camara, terminar el mar, crear un cubo, exportar superficies mojadas
+	// a 3d, arreglar bug de físicas y exportar físicas a 3d. Hacia las estrellas
+	//
 
 
 	//mete esto dentro cuando acabes
 	std::vector<float> edges; //mejor un vector de pairs?
 	std::vector<std::deque<unsigned int>> chain;
+	std::vector<unsigned int> rm; //rightmost
+	std::unordered_set<int> elementsToAvoid;
 
+	///It can produce triangles of 0 area (collinear points), it may be important in the future
+	void sweepTriangulation(/*int i*/) {
+		for (size_t i = 0; i < sortedPoints.size(); ++i)
+		{
+		
 
-	void sweepTriangulation(int i) {
-		/*for (size_t i = 0; i < sortedPoints.size(); ++i)
-		{*/
-			////
-			/*if (i == 14)
-				break;*/
-
-
-			size_t size = sortedPoints.size();
-
-			std::array<float, 4> b = sortedPoints[i];
-
-			std::array<float, 4> a = Points[(static_cast<int>(b[0]) + size - 1) % size]; //for i=0, a=size-1 (.back), size-1 % size = size-1
-			std::array<float, 4> c = Points[(static_cast<int>(b[0]) + 1) % size];        //for i=size-1 (.back), size % size = 0
-
-
-			cout << endl << "**** b[0] = " << b[0] << endl;
-
-			size_t n_chain = 0;
-
-
-			//START
-			if (a[1] > b[1] && c[1] > b[1])
+			if (elementsToAvoid.find(sortedPoints[i][0]) == elementsToAvoid.end())  //element is not inside elementsToAvoid
 			{
-				bool isProper = true;
 
 
-				int endEdgeTop = 0;
+				int size = sortedPoints.size();
 
-				for (int e = 0; e < edges.size(); e += 2)
+				//b is the current point. a is the one that is before b and c the one that is after in cc
+				std::array<float, 4> b = sortedPoints[i];
+				std::deque<float> bContainer;
+
+				std::array<float, 4> a;
+				std::array<float, 4> c;
+
+
+
+
+
+				int bcounter = 1;
+				while (true)
 				{
-					float topCheck = isRightOfLine(Points[chain[e / 2].front()][1], Points[chain[e / 2].front()][2],
-						Points[edges[e]][1], Points[edges[e]][2],
-						Points[b[0]][1], Points[b[0]][2]);
+					//a = Points[(static_cast<int>(b[0]) - bcounter) % size];    //for i=0, a=size-1 (.back), size-1 % size = size-1
+					a = Points[(static_cast<int>(b[0]) - bcounter + size) % size]; //It had to be modified bc C++ doesn't deal with negative modulus
 
-					float bottomCheck = isRightOfLine(Points[chain[e / 2].back()][1], Points[chain[e / 2].back()][2],
-						Points[edges[e + 1]][1], Points[edges[e + 1]][2],
-						Points[b[0]][1], Points[b[0]][2]);
-
-					//cout << "WA " << topCheck << " " <<bottomCheck << endl;
-
-					if (topCheck < 0 && bottomCheck < 0)
+					if (a[1] == b[1])
 					{
-						endEdgeTop = e + 2;
-						//keep looping
+						elementsToAvoid.emplace(a[0]);
+						bContainer.push_front(a[0]);
+						bcounter++;
 					}
-					else if (topCheck < 0 && bottomCheck > 0)
+					else
 					{
-						isProper = false;
-
-						endEdgeTop = e;
-
-						break;
-
-					}
-					else if (topCheck > 0 && bottomCheck > 0)
-					{
-						endEdgeTop = e;
-						//es proper pero te me paras
 						break;
 					}
 				}
 
-
-
-
-				//Proper start
-				if (isProper)
+				bContainer.push_back(b[0]);
+				bcounter = 1;
+				while (true)
 				{
-					//chain.emplace_back(1, b[0]); //mal, no va necesariamente en back
-
-
-					chain.resize(chain.size() + 1);
-
-					for (size_t i = chain.size() - 1; i > endEdgeTop / 2; --i) {//esto se podría acortar si es al final
-						chain[i] = std::move(chain[i - 1]);
-					}
-
-					chain[endEdgeTop / 2].insert(chain[endEdgeTop / 2].end(), { static_cast<unsigned int>(b[0]) });
-
-
-					edges.insert(edges.begin() + endEdgeTop, { a[0],c[0] });
-
-				}
-				//Improper start, it breaks the chain in b[0]
-				else
-				{
-					for (size_t e = 0; e < chain[endEdgeTop / 2].size(); e++)
+					c = Points[(static_cast<int>(b[0]) + bcounter) % size];        //for i=size-1 (.back), size % size = 0
+					if (c[1] == b[1])
 					{
-						if (Points[chain[endEdgeTop / 2][e]][2] < Points[b[0]][2]) //it has found where to break
+						elementsToAvoid.emplace(c[0]);
+						bContainer.push_back(c[0]);
+						bcounter++;
+					}
+					else
+					{
+						break;
+					}
+				}
+
+				//Se ha testeado con: proper start, end, bend
+
+
+				int rmContainer; //picks the bottom one if shared x coordinates
+
+				/*cout << endl << "**** b[0] = " << b[0] << endl;
+
+				cout << "a[0]: " << a[0] << " c[0]: " << c[0] << endl;
+
+				cout << "bContainer: " << endl;
+				for (int i = 0; i < bContainer.size(); i++) {
+					cout << bContainer[i] << " ";
+				}cout << endl << endl;;*/
+
+
+				size_t currentChain = 0;
+
+
+				//START
+				if (a[1] > b[1] && c[1] > b[1])
+				{
+					bool isProper = true;
+
+					int currentEdge = 0;
+
+					//looking if it is proper or improper (depending on where do you insert the new edges)
+					//It passes through all edges and sees if b[0] is above, in between or below its current edges
+					for (int e = 0; e < edges.size(); e += 2)
+					{
+
+						//front of chain goes with the top edge, the back of the chain goes with the bottom edge
+						float topCheck = isRightOfLine(Points[chain[e / 2].front()][1], Points[chain[e / 2].front()][2],
+							Points[edges[e]][1], Points[edges[e]][2],
+							Points[b[0]][1], Points[b[0]][2]);
+
+						float bottomCheck = isRightOfLine(Points[chain[e / 2].back()][1], Points[chain[e / 2].back()][2],
+							Points[edges[e + 1]][1], Points[edges[e + 1]][2],
+							Points[b[0]][1], Points[b[0]][2]);
+
+
+						//above, proper in e
+						if (topCheck > 0 && bottomCheck > 0)
 						{
-							indices.insert(indices.end()
-								, { chain[endEdgeTop / 2][e - 1], static_cast<unsigned int>(b[0]),chain[endEdgeTop / 2][e] });
-
-
-
-
-							//inserting b[0] in the middle of the chain
-							chain[endEdgeTop / 2].insert(chain[endEdgeTop / 2].begin() + e
-								, { static_cast<unsigned int>(b[0]),static_cast<unsigned int>(b[0]) });
-
-							chain.resize(chain.size() + 1);
-
-
-
-							//moving next items one element down
-							for (size_t i = chain.size() - 1; i > endEdgeTop / 2 + 1; --i) {
-								chain[i] = std::move(chain[i - 1]);
-							}
-
-
-							chain[endEdgeTop / 2 + 1].insert(chain[endEdgeTop / 2 + 1].end(),
-								std::make_move_iterator(chain[endEdgeTop / 2].begin() + e + 1), std::make_move_iterator(chain[endEdgeTop / 2].end()));
-
-
-							//erasing the part of chain[endEdgeTop / 2] you have moved
-							chain[endEdgeTop / 2].erase(chain[endEdgeTop / 2].begin() + e + 1, chain[endEdgeTop / 2].end());
-
-
+							currentEdge = e;
 
 							break;
 						}
+						//between, improper
+						else if (topCheck < 0 && bottomCheck > 0)
+						{
+							isProper = false;
 
+							currentEdge = e;
+
+							break;
+
+						}
+						//below, keeps looping and if there are no more edges, the new ones are created at the bottom
+						else if (topCheck < 0 && bottomCheck < 0)
+						{
+							currentEdge = e + 2; //only used if it's the end of the for loop
+						}
 					}
+					int currentChain = currentEdge / 2;
+					int nextChain = currentChain + 1;
 
-
-
-
-					edges.insert(edges.begin() + endEdgeTop + 1, { c[0],a[0] });
-
-
-
-				}
-			}
-
-			//END
-			else if (b[1] > a[1] && b[1] > c[1])
-			{
-
-				//theorem, it is a proper end if the index belongs in both elements of a pair of edges. Improper 
-				// if they belong to two pairs of edges
-
-				int endEdges[2]; bool counter = 0;
-				for (int e = 0; e < edges.size(); e++)
-				{
-					if (edges[e] == b[0])
+					//Proper start
+					if (isProper)
 					{
-						endEdges[counter] = e;
+						chain.resize(chain.size() + 1);
+						rm.resize(rm.size() + 1);
 
-						if (counter == 1) break;
+						// moving the elemments greater than currentEdge its position + 1
+						for (size_t k = chain.size() - 1; k > currentChain; --k)
+						{
+							chain[k] = std::move(chain[k - 1]);
+							rm[k] = std::move(rm[k - 1]);
+						}
+						chain[currentChain].insert(chain[currentChain].end(), bContainer.begin(), bContainer.end());
+						//			/*chain[currentChain].insert(chain[currentChain].end(), { static_cast<unsigned int>(b[0]) });*/
+						rm[currentChain] = b[0];
 
-						counter = 1;
+						edges.insert(edges.begin() + currentEdge, { a[0],c[0] }); //in cc, a will be always above c for proper starts
+
 					}
-				}
+					//Improper start, it breaks the chain. The first one is currentChain+bContainer 
+					//  and the second one is a new one formed with bContainer.front and currentChain.back()
 
-				int endEdgeTop = endEdges[0] / 2; //tells what chain to take
-				int endEdgeBottom = endEdges[1] / 2;
-
-
-				//Si hubiera un circulo, no sería proper end, sería otra condición distinta donde se iría edge pero seguiría habiendo una chain
-
-				// proper end
-
-				if (endEdgeTop == endEdgeBottom)
-				{
-					chain[endEdgeTop].emplace_front(b[0]);
-
-					for (size_t i = 1; i < chain[endEdgeTop].size() - 1; i++)
+					else
 					{
-						indices.insert(indices.end(), { chain[endEdgeTop][0],chain[endEdgeTop][i],chain[endEdgeTop][i + 1] });
+						chain.resize(chain.size() + 1);
+						rm.resize(rm.size() + 1);
+
+						for (size_t j = chain.size() - 1; j > nextChain; --j)
+						{
+							chain[j] = std::move(chain[j - 1]);
+							rm[j] = std::move(rm[j - 1]);
+						}
+
+						int breakingPoint;
+						for (int j = 0; j < chain[currentChain].size(); j++)
+						{
+							if (chain[currentChain][j] == rm[currentChain])
+							{
+								breakingPoint = j;
+							}
+						}
+						chain[nextChain].insert(chain[nextChain].end(), chain[currentChain].begin() + breakingPoint, chain[currentChain].end());
+						chain[currentChain].erase(chain[currentChain].begin() + breakingPoint + 1, chain[currentChain].end());
+
+						chain[currentChain].insert(chain[currentChain].end(), bContainer.begin(), bContainer.end());
+
+						chain[nextChain].emplace_front(bContainer.front());
+
+
+						rm[currentChain] = b[0];
+						rm[nextChain] = b[0];
+
+
+
+						edges.insert(edges.begin() + currentEdge + 1, { c[0],a[0] }); //in cc, c will be always above a for improper starts
+
+						vector<int> elementsToErase; //separating them to remove them from in a backwards motion
+						elementsToErase.reserve(5);
+
+						//triangulation, one per each new chain
+						// It could be avoided if we were certain next element was a bend, but not knowing it could be an end
+
+						//top chain
+						if (chain[currentChain].size() > 2)
+						{
+							//from the nearests of b[0] till the start of chain
+							for (size_t k = chain[currentChain].size() - 2; k >= 1; k--)
+							{
+								if (crossProduct(Points[chain[currentChain].back()][1], Points[chain[currentChain].back()][2]
+									, Points[chain[currentChain][k]][1], Points[chain[currentChain][k]][2]
+									, Points[chain[currentChain][k - 1]][1], Points[chain[currentChain][k - 1]][2]) <= 0)
+									//<0 because order is clockwise (result still cc), =0 bc the area can be 0 in collinear and need to erase
+								{
+									indices.insert(indices.end()
+										, { chain[currentChain][k - 1],chain[currentChain][k],chain[currentChain].back() });
+
+									chain[currentChain].erase(chain[currentChain].begin() + k);
+									//I don't need elementsToErase if the order is from end to start in the for loop
+								}
+
+							}
+
+						}
+						//bottom chain
+						if (chain[nextChain].size() > 2)
+						{
+							//from the nearests of b[0] till the end of chain
+							for (size_t k = 1; k < chain[nextChain].size() - 1; k++)
+							{
+								if (crossProduct(Points[chain[nextChain].front()][1], Points[chain[nextChain].front()][2]
+									, Points[chain[nextChain][k]][1], Points[chain[nextChain][k]][2]
+									, Points[chain[nextChain][k + 1]][1], Points[chain[nextChain][k + 1]][2]) > 0)
+								{
+
+									indices.insert(indices.end()
+										, { chain[nextChain].front(),chain[nextChain][k],chain[nextChain][k + 1] });
+
+									elementsToErase.emplace_back(k);
+								}
+
+							}
+
+							for (int k = elementsToErase.size() - 1; k >= 0; k--)
+							{
+								chain[nextChain].erase(chain[nextChain].begin() + elementsToErase[k]);
+							}
+						}
 					}
-					chain.erase(chain.begin() + endEdgeTop); //erase the chain
-					edges.erase(edges.begin() + endEdges[0], edges.begin() + endEdges[1] + 1);
 				}
-				// improper end
+
+				//al final del circulo creo que no sería proper end
+				// , sería otra condición distinta donde se iría edge pero seguiría habiendo una chain
+
+				//END
+				else if (b[1] > a[1] && b[1] > c[1])
+				{
+					//theorem, it is a proper end if the index belongs in both elements of a pair of edges. Improper 
+					// if they belong to two pairs of edges
+
+					int currentEdge;
+					for (int e = 0; e < edges.size(); e++)
+					{
+						if (edges[e] == b[0])
+						{
+							currentEdge = e;
+							break;
+						}
+					}
+					currentChain = currentEdge / 2;
+					int possibleNextChain = (currentEdge + 1) / 2; //it can be the same as current chain or not
+
+
+					// Proper end, closes a chain
+					if (currentChain == possibleNextChain)
+					{
+						//if there is collinear first we need to "bend" the front of bContainer. And only then we apply convex triangulation
+						if (bContainer.size() > 1)
+						{
+							chain[currentChain].emplace_back(bContainer.front());
+
+							if (chain[currentChain].size() > 2)
+							{
+								for (size_t k = chain[currentChain].size() - 2; k >= 1; k--)
+								{
+									if (crossProduct(Points[chain[currentChain].back()][1], Points[chain[currentChain].back()][2]
+										, Points[chain[currentChain][k]][1], Points[chain[currentChain][k]][2]
+										, Points[chain[currentChain][k - 1]][1], Points[chain[currentChain][k - 1]][2]) < 0)
+									{ //<0 because order is clockwise (result still cc)
+										indices.insert(indices.end()
+											, { chain[currentChain][k - 1],chain[currentChain][k],chain[currentChain].back() });
+
+										chain[currentChain].erase(chain[currentChain].begin() + k);
+									}
+
+								}
+							}
+
+
+						}
+						//yes, I am deliverately ignoring possible points between bContainer.front and back; as I've must done for everything
+						chain[currentChain].emplace_back(bContainer.back());
+						//chain[currentChain].insert(chain[currentChain].end(), bContainer.begin(), bContainer.end());
+
+
+						//triangulating b[0] with all the other elements of the cain as if in a convex polygon
+						for (size_t k = 0; k < chain[currentChain].size() - 2; k++)
+						{
+							indices.insert(indices.end(), { static_cast<unsigned int>(b[0]),chain[currentChain][k],chain[currentChain][k + 1] });
+						}
+						chain.erase(chain.begin() + currentChain); //erase the entire chain
+
+						edges.erase(edges.begin() + currentEdge, edges.begin() + currentEdge + 2); //erase the edges
+
+
+						rm.erase(rm.begin() + currentChain);
+					}
+
+					// Improper end. Acts as a bend. Merges two chains into one and triangulates them. possibleNextChain here is equal to nextChain
+					else
+					{ //la formula para top edge aquí es la equivalente a bottom edge en bend, por que no coinciden?
+
+						//top chain
+
+						rm[currentChain] = b[0];
+						rm.erase(rm.begin() + possibleNextChain);
+
+
+						chain[currentChain].emplace_back(b[0]);
+						if (chain[currentChain].size() > 2)
+						{
+							for (size_t k = chain[currentChain].size() - 2; k >= 1; k--)
+							{
+								if (crossProduct(Points[chain[currentChain].back()][1], Points[chain[currentChain].back()][2]
+									, Points[chain[currentChain][k]][1], Points[chain[currentChain][k]][2]
+									, Points[chain[currentChain][k - 1]][1], Points[chain[currentChain][k - 1]][2]) < 0)
+									//<0 because order is clockwise (result still cc)
+								{
+									indices.insert(indices.end()
+										, { chain[currentChain][k - 1],chain[currentChain][k],chain[currentChain].back() });
+
+									chain[currentChain].erase(chain[currentChain].begin() + k);
+								}
+
+							}
+						}
+
+						//bottom chain
+
+						chain[possibleNextChain].insert(chain[possibleNextChain].begin(), bContainer.begin(), bContainer.end());
+
+						if (chain[possibleNextChain].size() > 2)
+						{
+							vector<int> elementsToErase; //separating them to remove them from in a backwards motion
+							elementsToErase.reserve(5);
+
+							for (size_t k = bContainer.size(); k < chain[possibleNextChain].size() - 1; k++)
+							{
+								if (crossProduct(Points[bContainer.back()][1], Points[bContainer.back()][2]
+									, Points[chain[possibleNextChain][k]][1], Points[chain[possibleNextChain][k]][2]
+									, Points[chain[possibleNextChain][k + 1]][1], Points[chain[possibleNextChain][k + 1]][2]) > 0)
+								{
+
+
+									indices.insert(indices.end()
+										, { static_cast<unsigned int>(bContainer.back())
+										,chain[possibleNextChain][k],chain[possibleNextChain][k + 1] });
+
+									elementsToErase.emplace_back(k);
+
+								}
+
+							}
+
+							for (int k = elementsToErase.size() - 1; k >= 0; k--)
+							{
+								chain[possibleNextChain].erase(chain[possibleNextChain].begin() + elementsToErase[k]);
+							}
+						}
+
+
+						//merging
+						chain[possibleNextChain].pop_front();
+
+						chain[currentChain].insert(chain[currentChain].end(),
+							std::make_move_iterator(chain[possibleNextChain].begin()),
+							std::make_move_iterator(chain[possibleNextChain].end()));
+
+						chain.erase(chain.begin() + possibleNextChain); //erase the chain
+
+						edges.erase(edges.begin() + currentEdge, edges.begin() + currentEdge + 2);
+					}
+
+
+
+
+				}
+
+
+				//BEND
 				else
 				{
-					//top part
+					int currentEdge;
 
-					chain[endEdgeTop].emplace_back(b[0]);
+					bool foundE = false;
 
-					for (size_t i = chain[endEdgeTop].size() - 2; i >= 1; i--)
+					//normal case
+					for (int e = 0; e < edges.size(); ++e)
 					{
-						/*cout << Points[chain.back()][1] << " " << Points[chain.back()][2] << " "
-							<< Points[chain[i]][1] << " " << Points[chain[i]][2] << " "
-							<< Points[chain[i - 1]][1] << " " << Points[chain[i - 1]][2] << " " << endl;*/
-
-
-						if (crossProduct(Points[chain[endEdgeTop].back()][1], Points[chain[endEdgeTop].back()][2]
-							, Points[chain[endEdgeTop][i]][1], Points[chain[endEdgeTop][i]][2]
-							, Points[chain[endEdgeTop][i - 1]][1], Points[chain[endEdgeTop][i - 1]][2]) < 0) //<0 because order is clockwise (result still cc)
+						if (bContainer.back() == edges[e] || bContainer.front() == edges[e])
 						{
-							indices.insert(indices.end()
-								, { chain[endEdgeTop][i - 1],chain[endEdgeTop][i],chain[endEdgeTop].back() });
-							chain[endEdgeTop].erase(chain[endEdgeTop].begin() + i);
+							currentEdge = e;
+							break;
 						}
-
 					}
 
 
-					//bottom part
-
-					chain[endEdgeBottom].emplace_front(b[0]);
+					int currentChain = currentEdge / 2;
 
 
-					for (size_t i = 1; i < chain[endEdgeBottom].size() - 1; i++)
+					// changing edges to the immediate of bigger x
+					if (a[1] > c[1])
+						edges[currentEdge] = a[0];
+					else
+						edges[currentEdge] = c[0];
+
+
+
+
+
+					//bend at a top edge
+					if (currentEdge % 2 == 0)
 					{
-						/*cout << Points[chain.front()][1] << " " << Points[chain.front()][2] << " "
-							<< Points[chain[i]][1] << " " << Points[chain[i]][2] << " "
-							<< Points[chain[i + 1]][1] << " " << Points[chain[i + 1]][2] << " " << endl;*/
-
-
-						if (crossProduct(Points[chain[endEdgeBottom].front()][1], Points[chain[endEdgeBottom].front()][2]
-							, Points[chain[endEdgeBottom][i]][1], Points[chain[endEdgeBottom][i]][2]
-							, Points[chain[endEdgeBottom][i + 1]][1], Points[chain[endEdgeBottom][i + 1]][2]) > 0)
+						//case where the bend goes downwards. First triangulates .back if applies, then .front
+						if (bContainer.size() > 1 && Points[bContainer.front()][2] < Points[bContainer.back()][2])
 						{
 
+							chain[currentChain].emplace_front(bContainer.back());
 
-							indices.insert(indices.end()
-								, { chain[endEdgeBottom].front(),chain[endEdgeBottom][i],chain[endEdgeBottom][i + 1] });
-							chain[endEdgeBottom].erase(chain[endEdgeBottom].begin() + i);
-
-						}
-
-					}
-
-
-					//merging
-					chain[endEdgeBottom].pop_front();
-
-					chain[endEdgeTop].insert(chain[endEdgeTop].end(),
-						std::make_move_iterator(chain[endEdgeBottom].begin()),
-						std::make_move_iterator(chain[endEdgeBottom].end()));
-
-					chain.erase(chain.begin() + endEdgeBottom); //erase the chain
-
-					edges.erase(edges.begin() + endEdges[0], edges.begin() + endEdges[1] + 1);
-				}
-
-
-
-
-			}
-
-			//BEND
-			else
-			{
-
-				for (int j = 0; j < edges.size(); ++j)
-				{
-
-					if (b[0] == edges[j])
-					{
-						int n_chain = j / 2;
-						//top edge
-						if (j % 2 == 0)
-						{
-
-							chain[n_chain].emplace_front(b[0]);
-
-
-							if (chain[n_chain].size() > 2)
+							if (chain[currentChain].size() > 2)
 							{
-								for (size_t i = 1; i < chain[n_chain].size() - 1; i++)
+								vector<int> elementsToErase; //separating them to remove them from in a backwards motion
+								elementsToErase.reserve(5);
+
+								//from the lowest point of bContainer to the end of chain
+								for (size_t k = 1; k < chain[currentChain].size() - 1; k++)
 								{
-									/*cout << Points[chain.front()][1] << " " << Points[chain.front()][2] << " "
-										<< Points[chain[i]][1] << " " << Points[chain[i]][2] << " "
-										<< Points[chain[i + 1]][1] << " " << Points[chain[i + 1]][2] << " " << endl;*/
-
-
-									if (crossProduct(Points[chain[n_chain].front()][1], Points[chain[n_chain].front()][2]
-										, Points[chain[n_chain][i]][1], Points[chain[n_chain][i]][2]
-										, Points[chain[n_chain][i + 1]][1], Points[chain[n_chain][i + 1]][2]) > 0)
+									if (crossProduct(Points[chain[currentChain].front()][1], Points[chain[currentChain].front()][2]
+										, Points[chain[currentChain][k]][1], Points[chain[currentChain][k]][2]
+										, Points[chain[currentChain][k + 1]][1], Points[chain[currentChain][k + 1]][2]) > 0)
 									{
-
-
 										indices.insert(indices.end()
-											, { chain[n_chain].front(),chain[n_chain][i],chain[n_chain][i + 1] });
-										chain[n_chain].erase(chain[n_chain].begin() + i);
+											, { chain[currentChain].front(),chain[currentChain][k],chain[currentChain][k + 1] });
 
+										elementsToErase.emplace_back(k);
 									}
 
 								}
+								for (int k = elementsToErase.size() - 1; k >= 0; k--)
+								{
+									chain[currentChain].erase(chain[currentChain].begin() + elementsToErase[k]);
+								}
 							}
 
-						}
-						//bottom edge
-						else
-						{
+							chain[currentChain].emplace_front(bContainer.front());
 
-							chain[n_chain].emplace_back(b[0]);
-
-							if (chain[n_chain].size() > 2)
+							if (chain[currentChain].size() > 2)
 							{
-								for (size_t i = chain[n_chain].size() - 2; i >= 1; i--)
+								vector<int> elementsToErase; //separating them to remove them from in a backwards motion
+								elementsToErase.reserve(5);
+
+								//from the lowest point of bContainer to the end of chain
+								for (size_t k = 1; k < chain[currentChain].size() - 1; k++)
 								{
-									/*cout << Points[chain.back()][1] << " " << Points[chain.back()][2] << " "
-										<< Points[chain[i]][1] << " " << Points[chain[i]][2] << " "
-										<< Points[chain[i - 1]][1] << " " << Points[chain[i - 1]][2] << " " << endl;*/
-
-
-
-									if (crossProduct(Points[chain[n_chain].back()][1], Points[chain[n_chain].back()][2]
-										, Points[chain[n_chain][i]][1], Points[chain[n_chain][i]][2]
-										, Points[chain[n_chain][i - 1]][1], Points[chain[n_chain][i - 1]][2]) < 0) //<0 because order is clockwise (result still cc)
+									if (crossProduct(Points[chain[currentChain].front()][1], Points[chain[currentChain].front()][2]
+										, Points[chain[currentChain][k]][1], Points[chain[currentChain][k]][2]
+										, Points[chain[currentChain][k + 1]][1], Points[chain[currentChain][k + 1]][2]) > 0)
 									{
 										indices.insert(indices.end()
-											, { chain[n_chain][i - 1],chain[n_chain][i],chain[n_chain].back() });
-										chain[n_chain].erase(chain[n_chain].begin() + i);
+											, { chain[currentChain].front(),chain[currentChain][k],chain[currentChain][k + 1] });
+
+										elementsToErase.emplace_back(k);
 									}
 
 								}
+								for (int k = elementsToErase.size() - 1; k >= 0; k--)
+								{
+									chain[currentChain].erase(chain[currentChain].begin() + elementsToErase[k]);
+								}
+							}
+
+							rm[currentChain] = bContainer.front();
+
+							/*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							chain[currentChain].insert(chain[currentChain].begin(), bContainer.begin(), bContainer.end());
+
+							if (chain[currentChain].size() > 2)
+							{
+								vector<int> elementsToErase; //separating them to remove them from in a backwards motion
+								elementsToErase.reserve(5);
+
+								//from the lowest point of bContainer to the end of chain
+								for (size_t k = 1; k < chain[currentChain].size() - 1; k++)
+								{
+									if (crossProduct(Points[chain[currentChain].front()][1], Points[chain[currentChain].front()][2]
+										, Points[chain[currentChain][k]][1], Points[chain[currentChain][k]][2]
+										, Points[chain[currentChain][k + 1]][1], Points[chain[currentChain][k + 1]][2]) > 0)
+									{
+										indices.insert(indices.end()
+											, { chain[currentChain].front(),chain[currentChain][k],chain[currentChain][k + 1] });
+
+										elementsToErase.emplace_back(k);
+									}
+
+								}
+								for (int k = elementsToErase.size() - 1; k >= 0; k--)
+								{
+									chain[currentChain].erase(chain[currentChain].begin() + elementsToErase[k]);
+								}
+							}
+							rm[currentChain] = bContainer.front();
+							*/
+						}
+						//case where there's no bend or it goes upwards
+						else
+						{
+							chain[currentChain].emplace_front(bContainer.back());
+
+
+							if (chain[currentChain].size() > 2)
+							{
+								vector<int> elementsToErase; //separating them to remove them from in a backwards motion
+								elementsToErase.reserve(5);
+
+								//from the b[0] to the end of chain
+								for (size_t k = 1; k < chain[currentChain].size() - 1; k++)
+								{
+
+									if (crossProduct(Points[chain[currentChain].front()][1], Points[chain[currentChain].front()][2]
+										, Points[chain[currentChain][k]][1], Points[chain[currentChain][k]][2]
+										, Points[chain[currentChain][k + 1]][1], Points[chain[currentChain][k + 1]][2]) > 0)
+									{
+										indices.insert(indices.end()
+											, { chain[currentChain].front(),chain[currentChain][k],chain[currentChain][k + 1] });
+
+										elementsToErase.emplace_back(k);
+									}
+
+								}
+								for (int k = elementsToErase.size() - 1; k >= 0; k--)
+								{
+									chain[currentChain].erase(chain[currentChain].begin() + elementsToErase[k]);
+								}
+							}
+
+							//adding the rest of the container if applies
+							if (bContainer.size() > 1)
+							{
+								chain[currentChain].insert(chain[currentChain].begin(), bContainer.begin(), bContainer.end() - 1);
+							}
+							rm[currentChain] = bContainer.back();
+						}
+
+
+
+
+
+					}
+					//bend at a bottom edge
+					else //Aquí claramente todas las triangulaciones se pueden despejar en una funcion
+					{
+						//case where the bend goes upwards. First triangulates .front, then .back bContainer is >1 always here
+						if (bContainer.size() > 1 && Points[bContainer.back()][2] > Points[bContainer.front()][2])
+						{
+
+							chain[currentChain].emplace_back(bContainer.front());
+
+							for (size_t k = chain[currentChain].size() - 2; k >= 1; k--)
+							{
+								if (crossProduct(Points[chain[currentChain].back()][1], Points[chain[currentChain].back()][2]
+									, Points[chain[currentChain][k]][1], Points[chain[currentChain][k]][2]
+									, Points[chain[currentChain][k - 1]][1], Points[chain[currentChain][k - 1]][2]) < 0)
+								{ //<0 because order is clockwise (result still cc)
+									indices.insert(indices.end()
+										, { chain[currentChain][k - 1],chain[currentChain][k],chain[currentChain].back() });
+
+									chain[currentChain].erase(chain[currentChain].begin() + k);
+								}
+							}
+
+
+							chain[currentChain].emplace_back(bContainer.back());
+
+							//from the top point of bContainer to the end of chain
+							for (size_t k = chain[currentChain].size() - 2; k >= 1; k--)
+							{
+								if (crossProduct(Points[chain[currentChain].back()][1], Points[chain[currentChain].back()][2]
+									, Points[chain[currentChain][k]][1], Points[chain[currentChain][k]][2]
+									, Points[chain[currentChain][k - 1]][1], Points[chain[currentChain][k - 1]][2]) < 0)
+								{ //<0 because order is clockwise (result still cc)
+									indices.insert(indices.end()
+										, { chain[currentChain][k - 1],chain[currentChain][k],chain[currentChain].back() });
+
+									chain[currentChain].erase(chain[currentChain].begin() + k);
+								}
+
+							}
+
+						}
+						//case where there's no bend or it goes downwards. Only b[0] is to triangulate
+						else
+						{
+							chain[currentChain].emplace_back(bContainer.front());
+
+
+							//from the nearests of b[0] till the start of chain
+							for (size_t k = chain[currentChain].size() - 2; k >= 1; k--)
+							{
+								if (crossProduct(Points[chain[currentChain].back()][1], Points[chain[currentChain].back()][2]
+									, Points[chain[currentChain][k]][1], Points[chain[currentChain][k]][2]
+									, Points[chain[currentChain][k - 1]][1], Points[chain[currentChain][k - 1]][2]) < 0)
+								{ //<0 because order is clockwise (result still cc)
+									indices.insert(indices.end()
+										, { chain[currentChain][k - 1],chain[currentChain][k],chain[currentChain].back() });
+
+									chain[currentChain].erase(chain[currentChain].begin() + k);
+								}
+
+							}
+
+
+							if (bContainer.size() > 1)
+							{
+								chain[currentChain].insert(chain[currentChain].end(), bContainer.begin() + 1, bContainer.end());
 							}
 						}
-						//cout << " i: " << i << ", sustituyendo edge[j] = " << j << ", por " << max(a[0], c[0]) << endl;
-						if (a[1] > c[1])
-							edges[j] = a[0];
-						else
-							edges[j] = c[0];
-
-
-						break;
+						rm[currentChain] = bContainer.back();
 					}
+
+
 
 				}
 
+				//cout << "chain:" << endl;
+				//for (const auto& row : chain) {
+				//	for (const auto& value : row) {
+				//		std::cout << value << " ";
+				//	}cout << endl;
+				//}cout << endl;
 
+				//cout << "rm:" << endl;
+				//for (const auto& value : rm) {
+				//	std::cout << value << " ";
+				//}cout << endl << endl;
+
+				//cout << "edges:" << endl;
+				//for (const auto& value : edges) {
+				//	std::cout << value << " ";
+				//}cout << endl << endl;
+
+				/*cout << "elementsToAvoid:" << endl;
+				for (int elem : elementsToAvoid) {
+					std::cout << elem << " ";
+				}
+				std::cout << std::endl << endl;*/
+
+				/*cout << "indices:" << endl;
+				for (int i = 0; i < indices.size(); i += 3) {
+					cout << indices[i] << " ";
+					cout << indices[i + 1] << " ";
+					cout << indices[i + 2] << endl;
+				}
+				cout << endl;*/
 
 			}
-
-			cout << "chain:" << endl;
-			for (const auto& row : chain) {
-				for (const auto& value : row) {
-					std::cout << value << " ";
-				}cout << endl;
-			}cout << endl;
-
-			cout << "edges:" << endl;
-			for (const auto& value : edges) {
-				std::cout << value << " ";
-			}cout << endl << endl;
-
-
-			//cout <<  "    abc: " << a[0] << " " << b[0] << " " << c[0] << "    tipo:" << type << endl << endl;
-		//}
+		}
 	}
 
-	void createNewPolygon() {
-		edges.clear();
-		chain.clear();
-		dlines.clear();
-
-		indices.clear();
-		Points.clear();
-		sortedPoints.clear();
-
-	}
 
 
 
@@ -487,7 +811,7 @@ struct Polygons {
 		centroid[1] /= (6.0 * area);
 	}
 
-	
+
 	void polarAreaMomentOfInertia() {
 
 		totalPolarInertia = 0;
@@ -540,14 +864,16 @@ struct Polygons {
 	}
 
 	void clear() {
-		edges.clear(); 
+		edges.clear();
 		chain.clear();
-
+		rm.clear();
+		elementsToAvoid.clear();
 		dlines.clear();
 
 		indices.clear();
 		Points.clear();
 		sortedPoints.clear();
+
 	}
 
 
@@ -555,13 +881,18 @@ struct Polygons {
 
 		edges.clear();
 		chain.clear();
+		rm.clear();
+		elementsToAvoid.clear();
 		//dlines.clear();
-		
+
 		indices.clear();
 		Points.clear();
 		sortedPoints.clear();
 
 		dlines.addSet(items);
+
+		
+
 		//esta lógica no permite varios addSet, pero bueno,cuando puedas hacer sweeptriangulation de una cambia esto a ahí
 		//Y cambiale el nombre a points
 		float counter = 0;
@@ -589,6 +920,10 @@ struct Polygons {
 		for (int i = 0; i < sortedPoints.size(); ++i) {
 			Points[sortedPoints[i][0]][3] = i;
 		}
+
+
+
+		sweepTriangulation();
 
 
 		/*cout << "Points:" << endl;
@@ -626,7 +961,7 @@ struct Polygons {
 
 		//areaCalculation();
 
-		
+
 		/*if (area < 0) {
 			for (int i = 0; i < positions.size() / 2; i += 2) {
 				std::swap(positions[i], positions[positions.size() - 2 - i]);
@@ -652,8 +987,9 @@ struct Polygons {
 	}
 	void draw() {
 
+		//indices.clear();
 		
-
+		
 		dlines.draw();
 
 		//newcreateIndices();
@@ -686,7 +1022,7 @@ struct Polygons {
 
 	void newcreateIndices() {
 		indices.clear();
-		
+
 		for (unsigned int i = 1; i < dlines.indices.size() / 2 - 1; i++)
 		{
 			indices.insert(indices.end(), { 0,i,i + 1 });
@@ -697,36 +1033,36 @@ struct Polygons {
 	void createIndices() {	//grouping indices
 		indices.clear(); indicesAll.clear(); indicesRemaining.clear();
 
-		indices.reserve(positions.size()/2);
+		indices.reserve(positions.size() / 2);
 
 		indicesAll.reserve(positions.size() / 2);
-		for (unsigned int i = 0; i < positions.size() / 2 - 1; i++) 
+		for (unsigned int i = 0; i < positions.size() / 2 - 1; i++)
 		{
-			indicesAll.emplace_back( i );
+			indicesAll.emplace_back(i);
 		}
 		indicesRemaining = indicesAll;
 
 
 		//when there are no more indices remaining, the surface has closed
-		while (!indicesRemaining.empty()) 
+		while (!indicesRemaining.empty())
 		{
 
 			//will try to triangulate indicesRemaining[i] with its nearest indices from indicesRemaining
-			for (int i = 0; i < indicesRemaining.size(); i++) 
+			for (int i = 0; i < indicesRemaining.size(); i++)
 			{
 				//ends while loop, closes polygon
-				if (indicesRemaining.size() == 3) 
-				{		
+				if (indicesRemaining.size() == 3)
+				{
 
 					indices.insert(indices.end(), { indicesRemaining[0],indicesRemaining[1],indicesRemaining[2] });
 					indicesRemaining.clear();
 					break;
 				}
 
-				else 
+				else
 				{
 					//current index is b, nearests indices a and c
-					unsigned int b = indicesRemaining[i];	
+					unsigned int b = indicesRemaining[i];
 					unsigned int a, c;
 
 					//contemplating the cases where b is at the start or at the end
@@ -742,13 +1078,13 @@ struct Polygons {
 
 
 					bool barycentricFlag = 0;
-					
-					for (int k = 0; k < indicesAll.size(); k++) 
-					{	
+
+					for (int k = 0; k < indicesAll.size(); k++)
+					{
 						//are there points inside abc
 						if (k != a && k != b && k != c) {
 							if (checkBarycentric(positions[k * 2], positions[k * 2 + 1], positions[a * 2], positions[a * 2 + 1]
-								, positions[b * 2], positions[b * 2 + 1], positions[c * 2], positions[c * 2 + 1])) 
+								, positions[b * 2], positions[b * 2 + 1], positions[c * 2], positions[c * 2 + 1]))
 							{
 								barycentricFlag = 1;
 								break;
@@ -756,14 +1092,14 @@ struct Polygons {
 						}
 					}
 
-					if (!barycentricFlag) 
+					if (!barycentricFlag)
 					{
 						//must be concave to be valid
 						if (isConcave(absoluteAngle(positions[b * 2] - positions[a * 2], positions[b * 2 + 1] - positions[a * 2 + 1]),
-							absoluteAngle(positions[c * 2] - positions[b * 2], positions[c * 2 + 1] - positions[b * 2 + 1]))) 
-						{	
+							absoluteAngle(positions[c * 2] - positions[b * 2], positions[c * 2 + 1] - positions[b * 2 + 1])))
+						{
 							//errasing b and adding the indices
-							indicesRemaining.erase(indicesRemaining.begin() + i);		
+							indicesRemaining.erase(indicesRemaining.begin() + i);
 							indices.insert(indices.end(), { a,b,c });
 							break;
 						}

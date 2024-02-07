@@ -1,8 +1,10 @@
 #pragma once
 
+
+
 //change to command pattern
 bool isCreating = true;
-int counterI = 0;
+int counterI = 0;	//counterI ahora no hace nada, pero voy a dejar la logic para cuando testee agujeros
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 
 	AllPointers* allpointers = static_cast<AllPointers*>(glfwGetWindowUserPointer(window));
@@ -31,8 +33,9 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 		if (binariesManager->currentProgramType == 1)
 		{
+			polygon->clear();
 			polygon->addSet(binariesManager->readModel());
-			counterI = 0;
+			
 		}
 		else if (binariesManager->currentProgramType == 0)
 		{
@@ -40,6 +43,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 			polygon->clear();
 			polygon->addSet({ cursorX,cursorY });
 		}
+		counterI = 0;
 	}
 	if (key == GLFW_KEY_C && action == GLFW_PRESS)
 	{
@@ -47,19 +51,20 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 		if (counterI < polygon->sortedPoints.size())
 		{
-			polygon->sweepTriangulation(counterI);
+			polygon->sweepTriangulation(/*counterI*/);
 			counterI++;
 
 
 		}
 
 	}
+	//SPACE
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 	{
 
 		for (size_t i = 0; i < polygon->sortedPoints.size(); ++i)
 		{
-			cout << "polygon->dlines.positions: " << endl;
+			/*cout << "polygon->dlines.positions: " << endl;
 			for (int i = 0; i < polygon->dlines.positions.size(); i += 2) {
 				cout << polygon->dlines.positions[i] << ", " << polygon->dlines.positions[i + 1] << "," << endl;
 			}cout << endl;
@@ -67,9 +72,10 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 			cout << "polygon->dlines.indices" << endl;
 			for (unsigned int i = 0; i < polygon->dlines.indices.size(); i++) {
 				cout << polygon->dlines.indices[i] << ", ";
-			}cout << endl;
+			}cout << endl;*/
 
-			polygon->sweepTriangulation(i);
+			polygon->sweepTriangulation();
+			
 		}
 	}
 	//CTRL+N
@@ -83,6 +89,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 			isCreating = false;
 			polygon->clear();
 			polygon->addSet(binariesManager->readModel());
+			//polygon->sweepTriangulation();
 		}
 		else if (binariesManager->currentProgramType == 0)
 		{
@@ -90,6 +97,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 			polygon->clear();
 			polygon->addSet({ cursorX,cursorY });
 		}
+		counterI = 0;
 
 	}
 	//CTRL+S

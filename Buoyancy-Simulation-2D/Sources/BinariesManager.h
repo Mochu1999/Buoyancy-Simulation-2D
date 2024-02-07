@@ -3,6 +3,8 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
+
+
 struct BinariesManager {
 
 	struct IndexEntry {
@@ -166,7 +168,7 @@ cout << "MODELPATH " << modelPath << endl;*/
 		}
 		else
 		{
-			std::cout << "file not found? This should not happen" << endl;
+			std::cout << "config not found? This should not happen" << endl;
 		}
 		inFileConfig.close();
 
