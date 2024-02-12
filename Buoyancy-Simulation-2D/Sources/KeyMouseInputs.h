@@ -3,11 +3,12 @@
 
 
 //change to command pattern
-bool isCreating = true;
+
 int counterI = 0;	//counterI ahora no hace nada, pero voy a dejar la logic para cuando testee agujeros
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 
 	AllPointers* allpointers = static_cast<AllPointers*>(glfwGetWindowUserPointer(window));
+	NewPolygons* newPolygon = allpointers->newPolygon;
 	Polygons* polygon = allpointers->polygon;
 	BinariesManager* binariesManager = allpointers->binariesManager;
 
@@ -35,13 +36,12 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		{
 			polygon->clear();
 			polygon->addSet(binariesManager->readModel());
-			
+
 		}
 		else if (binariesManager->currentProgramType == 0)
 		{
-			isCreating = true;
-			polygon->clear();
-			polygon->addSet({ cursorX,cursorY });
+			//newPolygon->clear();
+			//newPolygon->addSet({ cursorX,cursorY });
 		}
 		counterI = 0;
 	}
@@ -64,18 +64,8 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 		for (size_t i = 0; i < polygon->sortedPoints.size(); ++i)
 		{
-			/*cout << "polygon->dlines.positions: " << endl;
-			for (int i = 0; i < polygon->dlines.positions.size(); i += 2) {
-				cout << polygon->dlines.positions[i] << ", " << polygon->dlines.positions[i + 1] << "," << endl;
-			}cout << endl;
-
-			cout << "polygon->dlines.indices" << endl;
-			for (unsigned int i = 0; i < polygon->dlines.indices.size(); i++) {
-				cout << polygon->dlines.indices[i] << ", ";
-			}cout << endl;*/
-
 			polygon->sweepTriangulation();
-			
+
 		}
 	}
 	//CTRL+N
@@ -86,16 +76,21 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 		if (binariesManager->currentProgramType == 1)
 		{
-			isCreating = false;
+			newPolygon->dlines.cadMode = false;
 			polygon->clear();
-			polygon->addSet(binariesManager->readModel());
+			modelPositions = binariesManager->readModel();
+			polygon->addSet(modelPositions);
 			//polygon->sweepTriangulation();
 		}
 		else if (binariesManager->currentProgramType == 0)
 		{
-			isCreating = true;
-			polygon->clear();
-			polygon->addSet({ cursorX,cursorY });
+			newPolygon->dlines.clear();
+			newPolygon->dlines.cadAddSet(cursor);
+
+			newPolygon->dlines.cadMode = true;
+			modelPositions.clear();
+
+
 		}
 		counterI = 0;
 
@@ -119,26 +114,42 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
 	AllPointers* allpointers = static_cast<AllPointers*>(glfwGetWindowUserPointer(window));
+
+	NewPolygons* newPolygon = allpointers->newPolygon;
 	Polygons* polygon = allpointers->polygon;
 	BinariesManager* binariesManager = allpointers->binariesManager;
+
+	
+
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
 		if (binariesManager->currentProgramType == binariesManager->CAD)
 		{
-			if (polygon->positions.size() > 4 && polygon->positions[0] == polygon->positions[polygon->positions.size() - 2]
-				&& polygon->positions.back() == polygon->positions[1])
+			if (newPolygon->dlines.cadMode && newPolygon->positions.size() > 2
+				&& newPolygon->positions.front() == newPolygon->positions.back())
 			{
-				isCreating = false;
+				newPolygon->dlines.cadMode = false;
+
+
 			}
 			else
 			{
-				polygon->dlines.addSet({ cursorX, cursorY, });
+				if (newPolygon->dlines.cadMode == false)
+				{
+					newPolygon->dlines.cadMode = true;
+					newPolygon->dlines.cadAddSet(cursor);
+				}
 
+
+
+				newPolygon->dlines.cadAddSet(cursor);
+
+				
 			}
 
 			//cout << "cursorX: " << cursorX << ", cursorY: " << cursorY << endl;
-
-
+			printv2(newPolygon->dlines.positions);
+			printflat2(newPolygon->dlines.indices);
 
 
 		}

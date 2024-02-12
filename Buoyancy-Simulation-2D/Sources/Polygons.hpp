@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Lines.hpp"
-#include "utilities.h"
+#include "utilities.cpp"
 
 struct Polygons {
 
@@ -975,7 +975,7 @@ struct Polygons {
 	}
 
 	//locks cursor in place
-	void hop() {
+	/*void hop() {
 
 		if (abs(cursorX - positions[0]) <= 20 && abs(cursorY - positions[1]) <= 20) {
 			cursorX = positions[0];
@@ -984,7 +984,7 @@ struct Polygons {
 		positions[positions.size() - 2] = cursorX;
 		positions.back() = cursorY;
 
-	}
+	}*/
 	void draw() {
 
 		//indices.clear();

@@ -21,8 +21,7 @@ struct DLines {	//D for dynamic, constanly updated
 		positions.clear(); indices.clear(); setOffset = 0; setCount = 0;
 	}
 
-	//creo que he roto esta lógica jejeje
-		//ya no puedes meter más de una surface, o no deberías
+
 	int setOffset = 0;	//the offset that let multiple indices be over the past ones
 	int setCount = 0;	//to avoid the fact that the last index of each set is not being counted
 	void addSet(vector<float> items) {
@@ -93,7 +92,6 @@ struct DLines {	//D for dynamic, constanly updated
 	}
 
 	
-
 	~DLines() {
 		
 		glDeleteVertexArrays(1, &vertexArray);

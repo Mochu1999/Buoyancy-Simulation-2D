@@ -1,48 +1,39 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-
-#include <cmath>
-#include <algorithm>
-
+#include "Common.cpp"
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
 
 
-#include <array>
-#include <vector>
-#include <unordered_set>
-#include <set>
-#include <unordered_map>
-#include <list>
-#include <deque>
+#include "shader.h"
+#include "utilities.cpp"
 
-#include "utilities.h"
 #include "Lines.hpp"
+#include "newLines.hpp"
+
+
 #include "Polygons.hpp"
-#include "Wetted_Surface.hpp"
+#include "newPolygons.h"
 
 #include "FourierMesh.h"
+
+#include "Wetted_Surface.hpp"
+#include "newWetted_Surface.hpp"
+
+
 #include "Circles.hpp"
 
 #include "Text.h"
 #include "Data.hpp"
 #include "BinariesManager.h"
 
-#include <chrono>
 
-using namespace std::chrono;
 
 
 struct AllPointers {
 	Polygons* polygon;
 	BinariesManager* binariesManager;
+	NewPolygons* newPolygon;
 };
 
 
@@ -56,20 +47,16 @@ struct AllPointers {
 
 
 
-
+//Para parar wetted surface? Vaya nombre de mierda
 bool continueRunning = false;
 
-
+std::vector<float> modelPositions;
 
 
 
 #include "KeyMouseInputs.h"
 
-struct p
-{
-	float x;
-	float y;
-};
+
 std::vector<p> convertPositions(const std::vector<float>& modelPositions) {
 	std::vector<p> output;
 
@@ -121,6 +108,7 @@ int main(void)
 	glEnable(GL_DEBUG_OUTPUT);*/
 
 
+	NewPolygons newPolygon;
 	BinariesManager binariesManager;
 
 
@@ -129,8 +117,7 @@ int main(void)
 
 	//binariesManager.writeConfig();
 
-	std::vector<float> modelPositions = binariesManager.readModel();
-
+	modelPositions = binariesManager.readModel();
 
 
 
@@ -138,12 +125,11 @@ int main(void)
 	Polygons polygon;
 	if (binariesManager.currentProgramType == binariesManager.RUNNING)
 	{
-
 		polygon.addSet(modelPositions);
 	}
 	else
 	{
-		polygon.dlines.addSet({ cursorX, cursorY, });
+		newPolygon.dlines.cadMode = true;
 	}
 	//polygon.sweepTriangulation();
 
@@ -159,32 +145,37 @@ int main(void)
 	background.addSet({ 0,0,windowWidth,0,windowWidth,windowHeight,0,windowHeight,0,0 }); //is outside the while because is static
 
 
-	//Polygons polygon;
+	//newDLines socorro;
+	//socorro.addSet({ { 100,100 }, { 300, 100 }, { 300, 300 }, { 100, 300 },{ 100, 100 } });
+	//socorro.addSet({{ 500,500 }, { 600, 500 }, { 600, 600 }, { 500, 600 }, { 500, 500 } });
+	//printflat2(socorro.indices);
+	//printv2(socorro.positions);
 
 
 
-
-	//FourierMesh fourier;
+	FourierMesh fourier;
 	//fourier.createWavePositions();
 
 
-	//Circles circlesPolygon(2);
+	Circles circlesPolygon(2);
 
 
-	//Circles circlesFourier(3);
+	Circles circlesFourier(3);
 
 
-	//Circles circlesWS(5);
+	Circles circlesWS(5);
 
-	//Circles circles0(3);
+	Circles circles0(3);
 
 
-	//WettedSurface wettedSurface(polygon, fourier);	
+	WettedSurface wettedSurface(polygon, fourier);
+
 
 
 	AllPointers allpointers;
 	allpointers.polygon = &polygon;
 	allpointers.binariesManager = &binariesManager;
+	allpointers.newPolygon = &newPolygon;
 
 	glfwSetWindowUserPointer(window, &allpointers);
 	glfwSetMouseButtonCallback(window, mouseButtonCallback);
@@ -205,78 +196,30 @@ int main(void)
 
 
 
-	/*
-	cout << "modelPositions: " << endl;
-	for (int i = 0; i < modelPositions.size(); i += 2) {
-		cout << modelPositions[i] << ", " << modelPositions[i + 1] << "," << endl;
-	}cout << endl;
-
-	for (auto& pos : newPositions) {
-		std::cout << "x: " << pos.x << ", y: " << pos.y << std::endl;
-	}cout << endl;
-
-
-	high_resolution_clock::time_point currentTime;
-	high_resolution_clock::time_point lastTime;
-	float elapsedTime;
-
-	//warm up
-	for (size_t i = 0; i < 10000; i++)
-	{
-		vector<float> indices = convexTriangulation(modelPositions);
-	}
 
 
 
+	//high_resolution_clock::time_point currentTime;
+	//high_resolution_clock::time_point lastTime;
+	//float elapsedTime;
+	//currentTime = high_resolution_clock::now();
+	//for (size_t i = 0; i < static_cast<size_t>(10e+7); i++)
+	//{
+	// 
+	//}
+	//
+	//lastTime = high_resolution_clock::now();
+	//elapsedTime = duration_cast<duration<float>>(lastTime - currentTime).count();
+	//cout << "new format, time: " << elapsedTime << endl;
+	//currentTime = high_resolution_clock::now();
+	//for (size_t i = 0; i < static_cast<size_t>(10e+7); i++)
+	//{
+	//}
+	//
+	//lastTime = high_resolution_clock::now();
+	//elapsedTime = duration_cast<duration<float>>(lastTime-currentTime).count();
+	//cout << "old format, time: " << elapsedTime << endl;
 
-	currentTime = high_resolution_clock::now();
-
-
-	for (size_t i = 0; i < 10e+7; i++)
-	{
-		//vector<tIndices> indices = newConvexTriangulation(newPositions);
-		float thirdElement = newPositions[2].y;
-
-	}
-
-	lastTime = high_resolution_clock::now();
-	elapsedTime = duration_cast<duration<float>>(lastTime - currentTime).count();
-
-	cout << "new format, time: " << elapsedTime << endl;
-
-
-	currentTime = high_resolution_clock::now();
-
-	for (size_t i = 0; i < 10e+7; i++)
-	{
-		//vector<float> indices = convexTriangulation(modelPositions);
-		float thirdElement = modelPositions[5];
-	}
-
-	lastTime = high_resolution_clock::now();
-	elapsedTime = duration_cast<duration<float>>(lastTime-currentTime).count();
-
-	cout << "old format, time: " << elapsedTime << endl;
-
-
-
-
-
-
-	*/
-
-	/*for (auto& pos : indices) {
-		std::cout << "a: " << pos.a << ", b: " << pos.b << ", c: " << pos.c << std::endl;
-	}*/
-
-
-	/*cout << "indices:" << endl;
-	for (int i = 0; i < indices.size(); i += 3) {
-		cout << indices[i] << " ";
-		cout << indices[i + 1] << " ";
-		cout << indices[i + 2] << endl;
-	}
-	cout << endl;*/
 
 
 
@@ -365,51 +308,52 @@ int main(void)
 
 		glUniform4f(colorLocation, 195.0f / 255.0f, 130.0f / 255.0f, 49.0f / 255.0f, 1.0f);
 
-		if (binariesManager.currentProgramType == binariesManager.RUNNING)
+		//socorro.draw();
+
+		if (binariesManager.currentProgramType == binariesManager.CAD)
 		{
 
-		}
-		else if (binariesManager.currentProgramType == binariesManager.CAD)
-		{
 
-			//He roto el modo CAD, no sé porque no crea
-
-			if (isCreating)
+			if (newPolygon.dlines.cadMode==true)
 			{
-				polygon.hop();
 
-				polygon.positions.pop_back();
-				polygon.positions.pop_back();
+			//	//cout << "cursorX: " << cursorX << ", cursorY: " << cursorY << endl;
 
+				
 
+				if (newPolygon.dlines.positions.size() != 0)
+					newPolygon.dlines.positions.pop_back();
 
-				polygon.addSet({ cursorX,cursorY });
+				newPolygon.dlines.cadAddSet(cursor);
+				
+				//va aquí o antes de esto?
+				newPolygon.dlines.cadHover();
 			}
+			newPolygon.dlines.draw();
 
 		}
-		
-
-		polygon.draw();
-
+		else if (binariesManager.currentProgramType == binariesManager.RUNNING)
 		{
-
-			//polygon.clear();
-			//polygon.addSet(polygonPositions);
-			//polygon.draw();
-
-
-			//glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+			polygon.clear();
+			polygon.addSet(modelPositions);
+			polygon.draw();
 
 
-			//if (continueRunning)
-			//{
-			//	fourier.createWavePositions();
-			//	wettedSurface.draw();
-			//}
-			//glUniform4f(colorLocation, 40.0f / 255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
+			glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+
+
+			fourier.createWavePositions();
+
+
+
+			glUniform4f(colorLocation, 115.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 1.0f);
+			//wettedSurface.createWettedPositions();
+			//wettedSurface.draw();
+
+			glUniform4f(colorLocation, 40.0f / 255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
 			//fourier.draw();
 
-			//glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
+			glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
 			//circlesPolygon.createCircles(polygon.positions);
 			//circlesPolygon.draw();
 
@@ -424,8 +368,10 @@ int main(void)
 			//glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
 			//circles0.createCircles({ polygon.positions[0],polygon.positions[1] });
 			//circles0.draw();
-			//
 		}
+
+		;
+
 
 
 

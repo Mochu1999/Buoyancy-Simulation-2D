@@ -2,15 +2,12 @@
 
 
 
-#include "shader.h"
-#include <chrono>
-using namespace chrono;
 
-#pragma once
-#define PI 3.14159265358979323846	//constexpr?
-extern float cursorX = 0, cursorY = 0;
-extern float windowHeight = 1080;
-extern float windowWidth = 1920;
+
+
+
+
+
 
 /*
 cout << "triangleIndices:" << endl;
@@ -166,13 +163,7 @@ void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum se
 }
 
 
-void getCursorPos(GLFWwindow * window) {
-	double intermX, intermY;
-	glfwGetCursorPos(window, &intermX, &intermY);
-	intermY = windowHeight - intermY;
-	cursorX = static_cast<float>(intermX);
-	cursorY = static_cast<float>(intermY);
-}
+
 GLFWwindow* initialize() {
 	glfwInit();
 

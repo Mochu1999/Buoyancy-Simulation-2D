@@ -1,7 +1,7 @@
 
 
 #pragma once
-#include "utilities.h"
+#include "utilities.cpp"
 #include "GL/glew.h"
 #include <cmath>
 using namespace std;

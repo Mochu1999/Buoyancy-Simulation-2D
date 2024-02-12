@@ -15,10 +15,10 @@ struct FourierMesh {
 	float interval = (endXPosition - 0) / segments;
 	float intervalInverse = 1 / interval;
 
-	float period = 400;
+	float period = 1000;
 	float frecuency = 2 * PI / period;
-	float amplitude = 400;
-	float offset = 600;
+	float amplitude = 100;
+	float offset = 500;
 	float phase = 0.0f;		//Esto no deja de crecer
 	float phaseSpeed = 0.01;
 

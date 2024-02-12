@@ -1,7 +1,8 @@
 #pragma once
-#include "FourierMesh.h"
-#include "utilities.h"
-bool calculateIntersectionPoints(float Ax, float Ay, float Bx, float By, float Cx, float Cy, float Dx, float Dy, float& ix, float& iy) {	//AB the waves, CD the polygon
+
+
+bool calculateIntersectionPoints(const float Ax, const float Ay, const float Bx, const float By, const float Cx, const float Cy, const float Dx
+	, const float Dy, float& ix, float& iy) {	//AB the waves, CD the polygon
 	//It assumes AB,CD are not 0	//what if they are?
 
 	float ABx = Bx - Ax;
@@ -14,6 +15,7 @@ bool calculateIntersectionPoints(float Ax, float Ay, float Bx, float By, float C
 
 	/*
 	In 2d geometry the cross product is a scalar value, not a vector, it represents the area of their parallelogram
+	when:
 	t = 0: Intersection at point A.
 	0 < t < 1: Intersection between A and B (on the line segment).
 	t = 1: Intersection at point B.
@@ -80,11 +82,11 @@ struct WettedSurface {
 		createWettedPositions();
 
 
-		/*if (positions.size()) {
-			polygon.clear();
-			polygon.addSet(positions);
-			polygon.draw();
-		}*/
+		if (positions.size()) {
+			outputPolygon.clear();
+			outputPolygon.addSet(positions);
+			outputPolygon.draw();
+		}
 	}
 
 
@@ -488,7 +490,7 @@ struct WettedSurface {
 
 
 		// Collect points between firstIndex and secondIndex
-		for (int i = secondIndex; i > firstIndex; i -= 2) 
+		for (int i = secondIndex; i > firstIndex; i -= 2)
 		{
 			positions.emplace_back(fourierPositions[i]);
 			positions.emplace_back(fourierPositions[i + 1]);

@@ -18,7 +18,7 @@
     <ClInclude Include="Sources\shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\utilities.h">
+    <ClInclude Include="Sources\utilities.cpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Sources\vector_operations.h">
@@ -483,12 +483,27 @@
     <ClInclude Include="Sources\KeyMouseInputs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Sources\newWetted_Surface.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Common.cpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\newLines.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\newPolygons.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Sources\glm\detail\glm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Wetted_Surface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
