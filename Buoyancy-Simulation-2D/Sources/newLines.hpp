@@ -126,8 +126,7 @@ struct newDLines {
 		isBufferUpdated = true;
 	}
 
-	// setOffset se tiene que hacer 0 cuando
-
+//está sin terminar
 	void cadAddSet(const p& item) {
 		indices.clear();
 
@@ -144,7 +143,6 @@ struct newDLines {
 		isBufferUpdated = true;
 	}
 
-	//////////////Hola, yo convertiría cursor en un p
 	void cadHover() {
 
 		if (abs(cursor.x - positions[0].x) <= 20 && abs(cursor.y - positions[0].y) <= 20) {

@@ -1,8 +1,8 @@
 #pragma once
 
 
-
-
+#include "Common.cpp"
+#include "newLines.hpp"
 
 // refactor to decordator pattern to include the functionality of CAD at runtime when triggered
 

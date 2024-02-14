@@ -17,13 +17,12 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		//changePositions(polygonPositions);
 	}
 
-	if (key == GLFW_KEY_P && action == GLFW_PRESS && continueRunning)
+	if (key == GLFW_KEY_P && action == GLFW_PRESS)
 	{
-		continueRunning = false;
-	}
-	else if (key == GLFW_KEY_P && action == GLFW_PRESS && !continueRunning)
-	{
-		continueRunning = true;
+		if(continueRunning)
+			continueRunning = false;
+		else
+			continueRunning = true;
 	}
 
 

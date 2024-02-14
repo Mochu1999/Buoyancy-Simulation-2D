@@ -1,15 +1,16 @@
 #pragma once
 
-#include "Lines.hpp"
+#include "Common.cpp"
+#include "newLines.hpp"
 
 
-struct FourierMesh {
+struct NewFourier {
 
-	DLines dlines;
+	newDLines dlines;
 
-	vector<float> intermVector;
+	vector<p> intermVector;
 
-	int xn =20;
+	int xn = 20;
 	int segments = xn - 1;
 	float endXPosition = 1000;
 	float interval = (endXPosition - 0) / segments;
@@ -19,37 +20,39 @@ struct FourierMesh {
 	float frecuency = 2 * PI / period;
 	float amplitude = 100;
 	float offset = 400;
-	float phase = 0.0f;	
+	float phase = 0.0f;
 	float phaseSpeed = 0.01;
 
 
-	void createWavePositions() {
+	void createPositions() {
 		float segmentsLength = endXPosition / segments;
-		float interm = 0;
+		float x = 0;
 
 		dlines.clear();
 		intermVector.clear();
 
-		intermVector.reserve(2 * xn);
-		for (int i = 0; i < xn; ++i, interm += segmentsLength) {
-			intermVector.emplace_back(interm);
-			intermVector.emplace_back(amplitude * sin(frecuency * interm + phase) + offset);
+		intermVector.reserve( xn);
+		for (int i = 0; i < xn; ++i ) 
+		{
+			intermVector.emplace_back(x, amplitude * sin(frecuency * x + phase) + offset);
+
+			x += segmentsLength;
 		}
 
 
-		dlines.addSet(intermVector);	//it would be ideal that it could take a reference
+		dlines.addSet(intermVector);
 
 		//phase += phaseSpeed;
 		//cout << "phase: "<<phase << endl;
 		//offset++;
 		//cout << offset << endl;
-		
+
 	}
 
 
 
 	void draw() {
-		
+
 		dlines.draw();
 
 

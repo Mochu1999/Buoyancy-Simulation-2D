@@ -294,6 +294,8 @@
     <ClInclude Include="Sources\glm\vector_relational.hpp" />
     <ClInclude Include="Sources\KeyMouseInputs.h" />
     <ClInclude Include="Sources\Lines.hpp" />
+    <ClInclude Include="Sources\newCircles.hpp" />
+    <ClInclude Include="Sources\newFourier.hpp" />
     <ClInclude Include="Sources\newLines.hpp" />
     <ClInclude Include="Sources\newPolygons.h" />
     <ClInclude Include="Sources\newWetted_Surface.hpp" />

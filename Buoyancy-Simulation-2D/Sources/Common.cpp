@@ -106,3 +106,21 @@ void printflat2_without_macro(const string& name, const vector<T>& items) {
     }
     cout << ss.str() << endl << endl;
 }
+
+#define printp(var) printp_without_macro(#var, var)
+template<typename T>
+void printp_without_macro(const string& name, const T& items) {
+    stringstream ss;
+    ss << name << endl;
+    ss << "{" << items.x << "," << items.y << "}";
+
+    cout << ss.str() << endl << endl;
+}
+
+//consts, cambiale el nombre y deja el nombre "is" para bools
+inline float newisRightOfLine(p& A, p& B, p& P) {		 //is P to the right of AB?
+    p AB = { B.x - A.x,  B.y - A.y };
+    p AP = { P.x - A.x, P.y - A.y };
+
+    return AB.x * AP.y - AB.y * AP.x;	//if negative it is to its right, if 0, P is on the infinite line of AB
+}

@@ -82,11 +82,11 @@ struct WettedSurface {
 		createWettedPositions();
 
 
-		if (positions.size()) {
+		/*if (positions.size()) {
 			outputPolygon.clear();
 			outputPolygon.addSet(positions);
 			outputPolygon.draw();
-		}
+		}*/
 	}
 
 
@@ -101,25 +101,22 @@ struct WettedSurface {
 
 		positions.clear();
 
+		cout << "intersections:" << endl;
+		for (const auto& entry : intersections) 
+		{
+			std::cout << "{ " << entry[0] << ", " << entry[1] << ", " << entry[2] << ", " << entry[3] << "}" << endl;
+		}std::cout << std::endl;
 
 
 
 		//If there are intersections, it creates the positions of the wetted surface
 		if (intersections.size())
 		{
-			/////Check this is true with the Cherno video
-			int aproximatingFourierRange =
+			
+			/*int aproximatingFourierRange =
 				(intersections[intersections.size() - 1][0] - intersections[0][0]) * fourier.intervalInverse + 2;
-			positions.reserve(polygonPositions.size() + aproximatingFourierRange);
+			positions.reserve(polygonPositions.size() + aproximatingFourierRange);*/
 
-			//cout << "intersections:" << endl;
-			//for (const auto& entry : intersections) {
-			//	std::cout << "{ " << entry[2] << ", { ";
-			//	for (float value : entry.second) {
-			//		std::cout << value << " ";
-			//	}
-			//	std::cout << "}}" << std::endl;
-			//}std::cout << std::endl;
 
 
 
@@ -279,7 +276,6 @@ struct WettedSurface {
 			}
 
 		}
-
 		else //no intersections, we will check if a random index is under or over the water
 		{
 			float centroidX = inputPolygon.centroid[0] * 1000;
@@ -304,10 +300,7 @@ struct WettedSurface {
 		}
 
 
-		/*cout << "positions: " << endl;
-			for (int i = 0; i < positions.size(); i += 2) {
-				cout << positions[i] << " " << positions[i + 1] << endl;
-			}cout << endl;*/
+		
 
 	}
 
@@ -503,6 +496,7 @@ struct WettedSurface {
 	void calculateIntersections() { //fills intersections with intersections, segments and immediates 
 
 		float Px, Py;
+		
 
 		for (int i = 0; i < fourierPositions.size() - 2; i += 2)
 		{
