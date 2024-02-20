@@ -2,7 +2,18 @@
 
 
 
+vector<float> inverseTransforming(vector<p> newPositions) {
+	vector<float> output;
+	for (p item :newPositions )
+	{
+		output.insert(output.end(), { item.x,item.y });
+	}
+	return output;
+}
+
 //change to command pattern
+
+vector<p>currentModel;
 
 int counterI = 0;	//counterI ahora no hace nada, pero voy a dejar la logic para cuando testee agujeros
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -25,7 +36,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 			continueRunning = true;
 	}
 
-
+	//SCAPE
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 	{
 		//glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -33,24 +44,37 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 		if (binariesManager->currentProgramType == 1)
 		{
-			polygon->clear();
-			polygon->addSet(binariesManager->readModel());
+
+			newPolygon->clear();
+			newPolygon->addSet(model);
 
 		}
 		else if (binariesManager->currentProgramType == 0)
 		{
-			//newPolygon->clear();
-			//newPolygon->addSet({ cursorX,cursorY });
+			
+			if (newPolygon->indices.size())
+			{
+				newPolygon->clear();
+				newPolygon->addSet(currentModel);
+
+			}
+			else
+			{
+				newPolygon->clear();
+			}
 		}
 		counterI = 0;
 	}
+	//C
 	if (key == GLFW_KEY_C && action == GLFW_PRESS)
 	{
 
 
-		if (counterI < polygon->sortedPoints.size())
+		if (counterI < newPolygon->Points.size())
 		{
-			polygon->sweepTriangulation(/*counterI*/);
+			//polygon->sweepTriangulation(/*counterI*/);
+
+			newPolygon->sweepTriangulation(/*counterI*/);
 			counterI++;
 
 
@@ -61,11 +85,17 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 	{
 
-		for (size_t i = 0; i < polygon->sortedPoints.size(); ++i)
+		for (size_t i = 0; i < newPolygon->Points.size(); ++i)
 		{
 			polygon->sweepTriangulation();
+			
 
 		}
+		newPolygon->sweepTriangulation(/*i*/);
+
+		printv2(newPolygon->positions);
+		printflat3(newPolygon->indices);
+		continueRunning = true;
 	}
 	//CTRL+N
 	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS &&
@@ -78,12 +108,19 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 			newPolygon->dlines.cadMode = false;
 			polygon->clear();
 			modelPositions = binariesManager->readModel();
+
 			polygon->addSet(modelPositions);
 			//polygon->sweepTriangulation();
+			
+			newPolygon->clear();
+			model = convertPositions(modelPositions);
+			newPolygon->addSet(model);
+			
+			continueRunning = true;
 		}
 		else if (binariesManager->currentProgramType == 0)
 		{
-			newPolygon->dlines.clear();
+			newPolygon->clear();
 			newPolygon->dlines.cadAddSet(cursor);
 
 			newPolygon->dlines.cadMode = true;
@@ -98,7 +135,10 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS &&
 		key == GLFW_KEY_S && action == GLFW_PRESS) {
 
-		binariesManager->writeModel(polygon->positions);
+		auto oldFormatPositions = inverseTransforming(newPolygon->positions);
+
+		printflat2(oldFormatPositions);
+		binariesManager->writeModel(oldFormatPositions);
 
 
 
@@ -127,9 +167,14 @@ void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
 			if (newPolygon->dlines.cadMode && newPolygon->positions.size() > 2
 				&& newPolygon->positions.front() == newPolygon->positions.back())
 			{
+				
 				newPolygon->dlines.cadMode = false;
 
+				currentModel = newPolygon->positions;
 
+				newPolygon->clear();
+
+				newPolygon->addSet(currentModel);
 			}
 			else
 			{

@@ -20,9 +20,6 @@ struct Polygons {
 
 
 	size_t currentBufferSize = 100000 * sizeof(float);
-	/////////////////////////////////////////////////////////////////////////////////////////////
-	// Si en circles no funciona aquí tampoco lo hará
-	/////////////////////////////////////////////////////////////////////////////////////////////
 
 	std::vector<std::array<float, 4>> Points;
 	std::vector<std::array<float, 4>> sortedPoints;
@@ -61,6 +58,102 @@ struct Polygons {
 	std::vector<std::deque<unsigned int>> chain;
 	std::vector<unsigned int> rm; //rightmost
 	std::unordered_set<int> elementsToAvoid;
+
+
+	void addSet(vector<float> items) {
+
+		edges.clear();
+		chain.clear();
+		rm.clear();
+		elementsToAvoid.clear();
+		//dlines.clear();
+
+		indices.clear();
+		Points.clear();
+		sortedPoints.clear();
+
+		dlines.addSet(items);
+
+
+
+		//esta lógica no permite varios addSet, pero bueno,cuando puedas hacer sweeptriangulation de una cambia esto a ahí
+		//Y cambiale el nombre a points
+		float counter = 0;
+
+
+		for (int i = 0; i < positions.size() - 2; i += 2)
+		{
+			Points.insert(Points.end(), { counter,positions[i],positions[i + 1],0 });
+			counter++;
+		}
+
+
+		sortedPoints = Points;
+
+
+		std::sort(sortedPoints.begin(), sortedPoints.end()
+			, [](const std::array<float, 4 >& a, const std::array<float, 4 >& b)
+			{
+				if (a[1] == b[1])
+					return a[2] > b[2];
+				return a[1] < b[1];
+			});
+
+
+
+
+
+
+		sweepTriangulation();
+
+
+		cout << "old Points:" << endl;
+		for (const auto& entry : Points) {
+			for (unsigned int value : entry) {
+				std::cout << value << " ";
+			}
+			std::cout << std::endl;
+		}std::cout << std::endl;
+
+		cout << "old sortedPoints:" << endl;
+		for (const auto& entry : sortedPoints) {
+			for (unsigned int value : entry) {
+				std::cout << value << " ";
+			}
+			std::cout << std::endl;
+		}std::cout << std::endl;
+
+
+
+
+		/*cout << "dlines.indices" << endl;
+		for (unsigned int i = 0; i < dlines.indices.size(); i++) {
+			cout << dlines.indices[i] << ", ";
+		}cout << endl;*/
+
+
+
+
+		/////////////////////////////////////////////
+		//Esto no va a funcionar para multiples polígonos, los indices serían iguales
+		//////// area calculation y el resto tendrían que depender de items
+
+		//createIndices();
+
+		//areaCalculation();
+
+
+		/*if (area < 0) {
+			for (int i = 0; i < positions.size() / 2; i += 2) {
+				std::swap(positions[i], positions[positions.size() - 2 - i]);
+				std::swap(positions[i + 1], positions[positions.size() - 1 - i]);
+			}
+			areaCalculation();
+		}*/
+
+		//centroidCalculation();
+		//polarAreaMomentOfInertia();
+	}
 
 	///It can produce triangles of 0 area (collinear points), it may be important in the future
 	void sweepTriangulation(/*int i*/) {
@@ -877,102 +970,7 @@ struct Polygons {
 	}
 
 
-	void addSet(vector<float> items) {
-
-		edges.clear();
-		chain.clear();
-		rm.clear();
-		elementsToAvoid.clear();
-		//dlines.clear();
-
-		indices.clear();
-		Points.clear();
-		sortedPoints.clear();
-
-		dlines.addSet(items);
-
-		
-
-		//esta lógica no permite varios addSet, pero bueno,cuando puedas hacer sweeptriangulation de una cambia esto a ahí
-		//Y cambiale el nombre a points
-		float counter = 0;
-
-		//Esta lógica te está quitando el punto repetido, pero tendrás que cambiar el metodo cuando empieces a trabajar con nested poligonos
-		//	Lo que tendrías que hacer es quitar lo de tener el punto front en el back e implementar logíca de que al final meta indice 0 siempre
-		for (int i = 0; i < positions.size() - 2; i += 2)
-		{
-			Points.insert(Points.end(), { counter,positions[i],positions[i + 1],0 });
-			counter++;
-		}
-
-
-		sortedPoints = Points;
-
-
-		std::sort(sortedPoints.begin(), sortedPoints.end()
-			, [](const std::array<float, 4 >& a, const std::array<float, 4 >& b)
-			{
-				if (a[1] == b[1])
-					return a[2] > b[2];
-				return a[1] < b[1];
-			});
-
-		for (int i = 0; i < sortedPoints.size(); ++i) {
-			Points[sortedPoints[i][0]][3] = i;
-		}
-
-
-
-		sweepTriangulation();
-
-
-		/*cout << "Points:" << endl;
-		for (const auto& entry : Points) {
-			for (unsigned int value : entry) {
-				std::cout << value << " ";
-			}
-			std::cout << std::endl;
-		}std::cout << std::endl;
-
-		cout << "sortedPoints:" << endl;
-		for (const auto& entry : sortedPoints) {
-			for (unsigned int value : entry) {
-				std::cout << value << " ";
-			}
-			std::cout << std::endl;
-		}std::cout << std::endl;*/
-
-
-
-
-		/*cout << "dlines.indices" << endl;
-		for (unsigned int i = 0; i < dlines.indices.size(); i++) {
-			cout << dlines.indices[i] << ", ";
-		}cout << endl;*/
-
-
-
-
-		/////////////////////////////////////////////
-		//Esto no va a funcionar para multiples polígonos, los indices serían iguales
-		//////// area calculation y el resto tendrían que depender de items
-
-		//createIndices();
-
-		//areaCalculation();
-
-
-		/*if (area < 0) {
-			for (int i = 0; i < positions.size() / 2; i += 2) {
-				std::swap(positions[i], positions[positions.size() - 2 - i]);
-				std::swap(positions[i + 1], positions[positions.size() - 1 - i]);
-			}
-			areaCalculation();
-		}*/
-
-		//centroidCalculation();
-		//polarAreaMomentOfInertia();
-	}
+	
 
 	//locks cursor in place
 	/*void hop() {

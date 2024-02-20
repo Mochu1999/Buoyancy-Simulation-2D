@@ -114,13 +114,13 @@ struct newDLines {
 
 		positions.insert(positions.end(), items.begin(), items.end());
 
-
+		cout << items.size() << endl;
 		for (unsigned int i = 0; i < items.size() - 1; i++)
 		{
 			indices.emplace_back(i + setOffset);
 			indices.emplace_back(i + setOffset + 1);
 		}
-
+		
 		setOffset += items.size();
 
 		isBufferUpdated = true;

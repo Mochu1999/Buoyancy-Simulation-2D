@@ -284,14 +284,3 @@ void timeMeThis()
 	;
 	*/
 
-
-/*
-**Convex triangulation:
-old format, time: 0.0195738
-new format, time: 0.012357
-
-**data access
-new format, time: 0.21962
-old format, time: 0.218605
-
-*/

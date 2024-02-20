@@ -19,7 +19,7 @@ struct NewCircles {
 	unsigned int vertexArray;
 	unsigned int indexBuffer;
 
-	//Setting initial buffer size
+	//Setting initial buffers size
 	size_t currentPositionsBufferSize = 0;
 	size_t currentIndicesBufferSize = 0;
 	size_t currentPositionsDataSize = 0;
@@ -113,6 +113,8 @@ struct NewCircles {
 
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 			glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, currentIndicesDataSize, indices.data());
+
+			isBufferUpdated = false;
 		}
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
 

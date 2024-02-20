@@ -101,11 +101,11 @@ struct WettedSurface {
 
 		positions.clear();
 
-		cout << "intersections:" << endl;
+		/*cout << "intersections:" << endl;
 		for (const auto& entry : intersections) 
 		{
 			std::cout << "{ " << entry[0] << ", " << entry[1] << ", " << entry[2] << ", " << entry[3] << "}" << endl;
-		}std::cout << std::endl;
+		}std::cout << std::endl;*/
 
 
 
@@ -120,7 +120,7 @@ struct WettedSurface {
 
 
 
-			//stores distances
+			//stores distances. Will be used to find InitialIt
 			std::unordered_set<int> usedDistances;
 			usedDistances.reserve(intersections.size());
 
@@ -150,7 +150,7 @@ struct WettedSurface {
 
 
 
-			//outer loop, stays here untill all surfaces are closed
+			//outer loop, stays here until all surfaces are closed
 			while (usedDistances.size() < intersections.size())
 			{
 
@@ -481,7 +481,6 @@ struct WettedSurface {
 		firstIndex -= firstIndex % 2;
 		secondIndex -= secondIndex % 2;
 
-
 		// Collect points between firstIndex and secondIndex
 		for (int i = secondIndex; i > firstIndex; i -= 2)
 		{
@@ -490,7 +489,32 @@ struct WettedSurface {
 		}
 	}
 
+	//It adds the immediates and those in-between to the positions
+	void getImmediates(int firstImm, int secondImm)
+	{
+		if (firstImm <= secondImm)
+		{
+			for (int i = firstImm; i <= secondImm; i += 2)
+			{
+				positions.emplace_back(polygonPositions[i]);
+				positions.emplace_back(polygonPositions[i + 1]);
+			}
+		}
+		else if (secondImm < firstImm)
+		{
+			for (int i = firstImm; i < polygonIndices.size(); i += 2)
+			{
+				positions.emplace_back(polygonPositions[i]);
+				positions.emplace_back(polygonPositions[i + 1]);
+			}
+			for (int i = 0; i <= secondImm; i += 2)
+			{
+				positions.emplace_back(polygonPositions[i]);
+				positions.emplace_back(polygonPositions[i + 1]);
+			}
+		}
 
+	}
 
 
 	void calculateIntersections() { //fills intersections with intersections, segments and immediates 
@@ -595,32 +619,6 @@ struct WettedSurface {
 
 	}
 
-	//It adds the immediates and those in-between to the positions
-	void getImmediates(int firstImm, int secondImm)
-	{
-
-		if (firstImm <= secondImm)
-		{
-			for (int i = firstImm; i <= secondImm; i += 2)
-			{
-				positions.emplace_back(polygonPositions[i]);
-				positions.emplace_back(polygonPositions[i + 1]);
-			}
-		}
-		else if (secondImm < firstImm)
-		{
-			for (int i = firstImm; i < polygonIndices.size(); i += 2)
-			{
-				positions.emplace_back(polygonPositions[i]);
-				positions.emplace_back(polygonPositions[i + 1]);
-			}
-			for (int i = 0; i <= secondImm; i += 2)
-			{
-				positions.emplace_back(polygonPositions[i]);
-				positions.emplace_back(polygonPositions[i + 1]);
-			}
-		}
-
-	}
+	
 
 };

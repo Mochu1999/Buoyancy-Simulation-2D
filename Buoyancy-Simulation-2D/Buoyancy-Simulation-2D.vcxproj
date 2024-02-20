@@ -309,6 +309,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Sources\glm\detail\glm.cpp" />
+    <ClCompile Include="Sources\Polygons.cpp" />
     <ClCompile Include="Sources\Wetted_Surface.cpp" />
   </ItemGroup>
   <ItemGroup>

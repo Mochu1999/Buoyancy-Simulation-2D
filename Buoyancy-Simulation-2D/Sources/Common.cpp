@@ -12,6 +12,7 @@
 #include <string>
 
 #include <cmath>
+#include <numeric> 
 #include <algorithm>
 
 #include <array>
@@ -97,15 +98,33 @@ template<typename T>
 void printflat2_without_macro(const string& name, const vector<T>& items) {
     stringstream ss;
     ss << name << endl;
-    for (size_t i = 0; i < items.size(); ++i) {
-        ss << items[i];
+    for (size_t i = 0; i < items.size(); i+=2) {
+        ss << "{" << items[i] << "," << items[i+1] << "}";
+        //ss << items[i];
 
-        if (i != items.size() - 1) { // Check if it's not the last element
+        if (i != items.size() - 2) { // Check if it's not the last element
             ss << ",";
         }
     }
     cout << ss.str() << endl << endl;
 }
+
+#define printflat3(var) printflat3_without_macro(#var, var)
+template<typename T>
+void printflat3_without_macro(const string& name, const vector<T>& items) {
+    stringstream ss;
+    ss << name << endl;
+    for (size_t i = 0; i < items.size(); i += 3) {
+        ss << "{" << items[i] << "," << items[i + 1]<<"," << items[i + 2] << "}";
+        //ss << items[i];
+
+        if (i != items.size() - 3) { // Check if it's not the last element
+            ss << ",";
+        }
+    }
+    cout << ss.str() << endl << endl;
+}
+
 
 #define printp(var) printp_without_macro(#var, var)
 template<typename T>
@@ -123,4 +142,12 @@ inline float newisRightOfLine(p& A, p& B, p& P) {		 //is P to the right of AB?
     p AP = { P.x - A.x, P.y - A.y };
 
     return AB.x * AP.y - AB.y * AP.x;	//if negative it is to its right, if 0, P is on the infinite line of AB
+}
+
+//aun con p chatgpt sigue diciendo que referencia podría no ser lo mejor. También sigue diciendo que un valor positivo es que p2 está a la derecha
+inline float newcrossProduct(const p& p0, const p& p1, const p& p2) {
+    p v01 = { p1.x - p0.x, p1.y - p0.y };
+    p v12 = { p2.x - p1.x, p2.y - p1.y };
+
+    return v01.x * v12.y - v01.y * v12.x;
 }

@@ -48,6 +48,7 @@ bool NewWettedSurface::calculateIntersectionPoints(const p& A, const p& B, const
 
 //hay que evitar el nested loop solo mirando si positions está en las condiciones de tener intersección
 //testear el nuevo indexMinus, cambiar el nombre a isJrightOfWater, quizás? y entender y comentar la lógica de los cross products
+//Tío, el algoritmo no funciona para concave arrow
 void NewWettedSurface::calculateIntersections() {
 	p point;
 	intersections.clear();
@@ -55,7 +56,7 @@ void NewWettedSurface::calculateIntersections() {
 
 	for (int i = 0; i < fourierPositions.size() - 1; i++)
 	{
-		
+
 		for (unsigned int j = 0; j < polygonPositions.size() - 1; j++)
 		{
 
@@ -65,7 +66,7 @@ void NewWettedSurface::calculateIntersections() {
 			{
 				Intersections possibleIntersection = { point,j,j };
 
-				
+
 				float isJrightOfWater = newisRightOfLine(fourierPositions[i], fourierPositions[i + 1], polygonPositions[j]);
 
 
@@ -85,25 +86,10 @@ void NewWettedSurface::calculateIntersections() {
 				{
 					int indexMinus, indexPlus;
 
-					//unsigned int size = polygonPositions.size() - 1;
-					//indexMinus = (j - 1 + size) % size;
-					//indexPlus = (j + 1) % size;
+					unsigned int size = polygonPositions.size() - 1;
+					indexMinus = (j - 1 + size) % size;
+					indexPlus = (j + 1) % size;
 
-					if (j == 0)
-					{
-						indexMinus = polygonPositions.size() - 1;
-						indexPlus = j + 1;
-					}
-					else if (j == polygonPositions.size() - 2)
-					{
-						indexMinus = j - 1;
-						indexPlus = 0;
-					}
-					else
-					{
-						indexMinus = j - 1;
-						indexPlus = j + 1;
-					}
 
 					float crossProductInmMinus = newisRightOfLine(fourierPositions[i], fourierPositions[i + 1], polygonPositions[indexMinus]);
 
@@ -151,7 +137,7 @@ void NewWettedSurface::calculateIntersections() {
 }
 
 
-//positions reserve
+//positions reserve. Estoy convencido que los iterators y distancias son redundantes
 
 //For each surface of the wetted surface it jumps a first imm into a second one till it closes. 
 void NewWettedSurface::calculatePositions() {
@@ -169,7 +155,8 @@ void NewWettedSurface::calculatePositions() {
 
 
 
-		//stores distances
+		//stores distances. Distances are used to move through the vector that is intersection
+		///////Es literalmente el uso de [index], no me creo que haga falta el uso de iteradores
 		std::unordered_set<int> usedDistances;
 		usedDistances.reserve(intersections.size());
 
@@ -224,8 +211,7 @@ void NewWettedSurface::calculatePositions() {
 
 
 
-			positions.emplace_back((*firstIt).point.x);
-			positions.emplace_back((*firstIt).point.y);
+			positions.emplace_back((*firstIt).point);
 
 			//Premise: no distance in a surface will be higher than that of the first secondImm
 			unsigned int distancefirstSecondImm = std::numeric_limits<unsigned int>::max();
@@ -253,7 +239,7 @@ void NewWettedSurface::calculatePositions() {
 					distanceSecondImm = calculateSecondIt_Initial(areImmediates, distancefirstSecondImm
 						, mapSharedSegments, distanceInitialImm, firstImm, initialImm);
 
-					secondImm = intersections[distanceSecondImm][3];
+					secondImm = intersections[distanceSecondImm].imm;
 					secondIt = intersections.begin() + distanceSecondImm;
 
 					distancefirstSecondImm = distanceSecondImm;
@@ -267,7 +253,7 @@ void NewWettedSurface::calculatePositions() {
 						, mapSharedSegments, distanceFirstImm, distanceInitialImm, firstImm, initialImm);
 
 
-					secondImm = intersections[distanceSecondImm][3];
+					secondImm = intersections[distanceSecondImm].imm;
 					secondIt = intersections.begin() + distanceSecondImm;
 				}
 
@@ -279,8 +265,7 @@ void NewWettedSurface::calculatePositions() {
 				if (areImmediates) {
 					getImmediates(firstImm, secondImm);
 				}
-				positions.emplace_back((*secondIt)[0]);
-				positions.emplace_back((*secondIt)[1]);
+				positions.emplace_back((*secondIt).point);
 
 
 
@@ -302,14 +287,13 @@ void NewWettedSurface::calculatePositions() {
 
 				//for the next iteration
 				firstIt = intersections.begin() + distanceFirstImm;
-				firstImm = (*firstIt)[3];
+				firstImm = (*firstIt).imm;
 
 
-				getWavePoints((*firstIt)[0], (*secondIt)[0]);
+				getWavePoints((*firstIt).point.x, (*secondIt).point.x);
 
 
-				positions.emplace_back((*firstIt)[0]);
-				positions.emplace_back((*firstIt)[1]);
+				positions.emplace_back((*firstIt).point);
 
 				distanceCheck = distanceInitialImm - distanceFirstImm; //if 0 you have arrived to initialIt again and the loop ends
 
@@ -327,24 +311,24 @@ void NewWettedSurface::calculatePositions() {
 	}
 	else //no intersections, we will check if a random index is under or over the water
 	{
-		float centroidX = inputPolygon.centroid[0] * 1000;
-		float centroidY = inputPolygon.centroid[1] * 1000;
+		//float centroidX = inputPolygon.centroid[0] * 1000;
+		//float centroidY = inputPolygon.centroid[1] * 1000;
 
-		int firstIndex = (centroidX - fourierPositions[0]) / fourier.interval * 2;
+		//int firstIndex = (centroidX - fourierPositions[0]) / fourier.interval * 2;
 
 
-		// Ensure even indices
-		firstIndex -= firstIndex % 2;
+		//// Ensure even indices
+		//firstIndex -= firstIndex % 2;
 
-		int secondIndex = firstIndex + 2;
+		//int secondIndex = firstIndex + 2;
 
-		if (isRightOfLine(fourierPositions[firstIndex], fourierPositions[firstIndex + 1]
-			, fourierPositions[secondIndex], fourierPositions[secondIndex + 1], centroidX, centroidY) < 0)
-		{
-			positions.reserve(polygonPositions.size());
-			positions = polygonPositions;
+		//if (newisRightOfLine(fourierPositions[firstIndex], fourierPositions[firstIndex + 1]
+		//	, fourierPositions[secondIndex], fourierPositions[secondIndex + 1], centroidX, centroidY) < 0)
+		//{
+		//	positions.reserve(polygonPositions.size());
+		//	positions = polygonPositions;
 
-		}
+		//}
 
 	}
 
@@ -354,5 +338,215 @@ void NewWettedSurface::calculatePositions() {
 
 
 
+unsigned int NewWettedSurface::calculateSecondIt_Initial(bool& areImmediates, unsigned int& distancefirstSecondImm
+	, std::unordered_map<int, vector<int>>& mapSharedSegments, unsigned int& distanceInitialImm, unsigned int& firstImm, unsigned int& initialImm) {
+
+	unsigned int distanceSecondImm;
+
+	unsigned int segmentFirstImm = intersections[distanceInitialImm].segment;
+
+	
+	bool foundThirdCase = false;
+	//third case. When first and second intersection share same segment
+	//if there is a third case it will be from initial+1 to the end
+	if (mapSharedSegments[segmentFirstImm].size() > 1)
+	{
+		for (unsigned int j : mapSharedSegments[segmentFirstImm])
+		{
+			if (j > distanceInitialImm)
+			{
+				//// UFF... NO SÉ PORQUE ESTO ES VERDAD
+				if (polygonPositions[firstImm].x > polygonPositions[intersections[j].imm].x)
+				{
+					foundThirdCase = true;
+
+					distanceSecondImm = j;
+
+					break;
+				}
+			}
+		}
+	}
+	if (foundThirdCase)
+	{
+		areImmediates = 0;
+	}
+
+	else
+	{
 
 
+		//First case, looks for the imm closest to initial imm
+		//If multiple share the same imms it takes the nearest in distance												
+
+		//checks all valid distances and saves here the current one for the next check
+		int currentMinImm = std::numeric_limits<int>::max();
+
+		////LO DEJO POR AHORA, PERO INDICES.BACK() ES POSITIONS.SIZE(), NO? //HE QUITADO UN X2 DESPUES DE .BACK()
+		unsigned int summingDistance = polygonIndices.back() - initialImm;//for later
+
+		//Checking from the firt valid distance till the end of the distances
+		for (unsigned int j = distanceInitialImm + 1; j < intersections.size(); j++)
+		{
+			//We use a corrected "j" that is relative to initialImm instead of the original indices
+			unsigned int correctedImmJ;
+			if (intersections[j].imm < initialImm)
+			{
+				//if the original index of secondImm was between 0 and initialImm, now it will by larger by a factor
+				//that is totalIndices-initialImm
+				correctedImmJ = intersections[j].imm + summingDistance;
+			}
+			else
+			{
+				//if secondImm is greater than initial imm (therefor less than max index), and initialImm has 
+				// become 0, its difference will be the relative distance to initialImm
+				correctedImmJ = intersections[j].imm - initialImm;
+			}
+
+
+			if (correctedImmJ < currentMinImm)
+			{
+				//j can't be on the same segment as i unless it is dist+1 (otherwise it will take the one that is in the same
+				// segment instead of the one that it should be because is correctedImmJ=0 although is farther)
+				if ((intersections[j].segment != intersections[distanceInitialImm].segment) || j == distanceInitialImm + 1)
+				{
+					currentMinImm = correctedImmJ;
+					distanceSecondImm = j; //iterative process
+				}///can this be removed when it exists a case for only 2 intersection.size()==2?
+			}
+		}
+	}
+
+
+	//we end with the correct distanceSecondImm
+
+	return distanceSecondImm;
+
+
+}
+
+
+
+unsigned int NewWettedSurface::calculateSecondIt_notInitial(bool& areImmediates, unsigned int& distancefirstSecondImm
+	, std::unordered_map<int, vector<int>>& mapSharedSegments, unsigned int& distanceFirstImm
+	, unsigned int& distanceInitialImm, unsigned int& firstImm, unsigned int& initialImm)
+{
+	unsigned int distanceSecondImm;
+
+	unsigned int segmentFirstImm = intersections[distanceFirstImm].segment;
+	//reverse third case
+	bool foundThirdCase = false;
+	if (mapSharedSegments[segmentFirstImm].size() > 1)
+	{
+		for (auto it = mapSharedSegments[segmentFirstImm].end(); it != mapSharedSegments[segmentFirstImm].begin();)
+		{
+			it--;//this is here to cover .begin() (and not specifying end()+1
+			size_t j = *it;
+			if (j < distanceFirstImm)
+			{
+				if (polygonPositions[firstImm].x < polygonPositions[intersections[j].imm].x)
+				{
+					foundThirdCase = true;
+
+					distanceSecondImm = j;
+
+					break;
+				}
+			}
+
+		}
+	}
+	if (foundThirdCase)
+	{
+		areImmediates = 0;
+	}
+
+
+	else
+	{
+
+		//reverse first case 
+		unsigned int summingDistance = polygonIndices.back() - initialImm;
+
+
+		int currentMinImm = std::numeric_limits<int>::max();
+
+
+
+
+		 
+		for (size_t j = distanceFirstImm - 1; j > distanceInitialImm; j--)
+		{
+
+			//for initial case I was changing correctedImmJ to be relative to initialImm, not everything is relative to firstImm
+			unsigned int correctedImmJ;
+			if (intersections[j].imm < firstImm)
+			{
+				//if the original index of secondImm was between 0 and firstImm, now it will by larger by a factor
+				//that is totalIndices-initialImm
+				correctedImmJ = intersections[j].imm + summingDistance;
+			}
+			else
+			{
+				//if secondImm is greater than initial imm (therefor less than max index), and firstImm has 
+				// become 0, its difference will be the relative distance to firstImm
+				correctedImmJ = intersections[j].imm - firstImm;
+			}
+
+
+
+
+			if (correctedImmJ <= currentMinImm)
+			{
+				currentMinImm = correctedImmJ;
+				distanceSecondImm = j;
+			}
+
+
+		}
+	}
+	return distanceSecondImm;
+}
+
+
+void NewWettedSurface::getImmediates(int firstImm, int secondImm)
+{
+	if (firstImm <= secondImm)
+	{
+		for (int i = firstImm; i <= secondImm; i ++)
+		{
+			positions.emplace_back(polygonPositions[i]);
+		}
+	}
+	else if (secondImm < firstImm)
+	{
+		for (int i = firstImm; i < polygonPositions.size()-1; i ++)
+		{
+			positions.emplace_back(polygonPositions[i]);
+		}
+		for (int i = 0; i <= secondImm; i ++)
+		{
+			positions.emplace_back(polygonPositions[i]);
+		}
+	}
+
+}
+
+void NewWettedSurface::getWavePoints(float firstX, float secondX) {//imputs are the positions of the intersections. Will go from secondX to firstX
+
+
+	int firstIndex = (firstX - fourierPositions[0].x) * fourier.intervalInverse *2;
+	int secondIndex = (secondX - fourierPositions[0].x) * fourier.intervalInverse *2;
+
+
+	// Ensure even indices
+	firstIndex -= firstIndex % 2;
+	secondIndex -= secondIndex % 2;
+
+	// Collect points between firstIndex and secondIndex
+	for (int i = secondIndex/2; i > firstIndex/2; i --)
+	{
+		
+		positions.emplace_back(fourierPositions[i]);
+	}
+}
