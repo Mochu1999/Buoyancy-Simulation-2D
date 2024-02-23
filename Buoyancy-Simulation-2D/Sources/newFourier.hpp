@@ -16,11 +16,11 @@ struct NewFourier {
 	float interval = (endXPosition - 0) / segments;
 	float intervalInverse = 1 / interval;
 
-	float period = 1000;
+	float period = 300;
 	float frecuency = 2 * PI / period;
-	float amplitude = 100;
-	float offset = 400;
-	float phase = 0.0f;
+	float amplitude = 200;
+	float offset = 300;
+	float phase = 0;
 	float phaseSpeed = 0.01;
 
 
@@ -42,9 +42,9 @@ struct NewFourier {
 
 		dlines.addSet(intermVector);
 
-		//phase += phaseSpeed;
-		//cout << "phase: "<<phase << endl;
-		//offset++;
+		phase += phaseSpeed;
+		cout << "phase: "<<phase << endl;
+		//offset--;
 		//cout << offset << endl;
 
 	}

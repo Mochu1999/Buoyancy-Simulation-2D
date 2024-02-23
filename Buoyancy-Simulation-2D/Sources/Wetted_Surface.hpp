@@ -101,11 +101,11 @@ struct WettedSurface {
 
 		positions.clear();
 
-		/*cout << "intersections:" << endl;
+		cout << "old intersections:" << endl;
 		for (const auto& entry : intersections) 
 		{
 			std::cout << "{ " << entry[0] << ", " << entry[1] << ", " << entry[2] << ", " << entry[3] << "}" << endl;
-		}std::cout << std::endl;*/
+		}std::cout << std::endl;
 
 
 
@@ -521,14 +521,12 @@ struct WettedSurface {
 
 		float Px, Py;
 		
-
 		for (int i = 0; i < fourierPositions.size() - 2; i += 2)
 		{
 
 			//polygonIndices j values will be twice as big because indices has repeated layout, convenient to avoid multiplying
 			for (int j = 0; j < polygonIndices.size(); j += 2)
 			{
-
 				if (calculateIntersectionPoints(fourierPositions[i], fourierPositions[i + 1], fourierPositions[i + 2]
 					, fourierPositions[i + 3], polygonPositions[polygonIndices[j] * 2], polygonPositions[polygonIndices[j] * 2 + 1]
 					, polygonPositions[(polygonIndices[j] + 1) * 2], polygonPositions[(polygonIndices[j] + 1) * 2 + 1], Px, Py))

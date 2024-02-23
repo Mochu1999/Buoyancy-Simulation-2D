@@ -28,9 +28,9 @@ using namespace std;
 using namespace std::chrono;
 
 
+#include <cstdlib> // For std::abort
 
-
-
+inline bool continueRunning = true;
 
 template<typename T>
 struct vec2 {

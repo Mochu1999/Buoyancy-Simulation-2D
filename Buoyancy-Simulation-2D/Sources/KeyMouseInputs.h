@@ -1,6 +1,13 @@
 #pragma once
 
+void switchOnePosition(vector<p>& positions) {
 
+	printv2(positions);
+	positions.erase(positions.begin());
+	positions.insert(positions.end(), { positions.front() });
+	printv2(positions);
+	cout << endl;
+}
 
 vector<float> inverseTransforming(vector<p> newPositions) {
 	vector<float> output;
@@ -81,6 +88,12 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		}
 
 	}
+	//Q
+	if (key == GLFW_KEY_Q && action == GLFW_PRESS)
+	{
+		switchOnePosition(model);
+	}
+
 	//SPACE
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 	{

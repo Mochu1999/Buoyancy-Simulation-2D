@@ -162,7 +162,7 @@ cout << "MODELPATH " << modelPath << endl;*/
 			modelPath.resize(indexEntries[1].size);
 
 			if (inFileConfig.read(&modelPath[0], modelPath.size())) {
-				std::cout << endl << "modelPath: " << modelPath << std::endl;
+				std::cout << endl << "modelPath: " << modelPath << std::endl << std::endl;
 			}
 
 		}

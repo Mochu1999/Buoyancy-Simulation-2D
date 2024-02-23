@@ -110,7 +110,7 @@ struct NewPolygons {
 
 
 
-		cout << "new Points:" << endl;
+		/*cout << "new Points:" << endl;
 		for (const auto& entry : Points) {
 			cout << entry.index << " " << entry.point.x << " " << entry.point.y << endl;
 		}std::cout << std::endl;
@@ -118,7 +118,7 @@ struct NewPolygons {
 		cout << "sortedIndices:" << endl;
 		for (auto entry : sortedIndices) {
 			cout << entry << " ";
-		}cout << endl;
+		}cout << endl;*/
 
 
 
@@ -127,7 +127,7 @@ struct NewPolygons {
 		indices.clear(); //quitar de aquí cuando esté terminado sweep
 		//sweepTriangulation();
 
-		printflat3(indices);
+		//printflat3(indices);
 		
 
 

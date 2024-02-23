@@ -20,7 +20,6 @@ void NewPolygons::genBuffers() {
 }
 
 void NewPolygons::draw() {
-
 	dlines.draw();
 
 

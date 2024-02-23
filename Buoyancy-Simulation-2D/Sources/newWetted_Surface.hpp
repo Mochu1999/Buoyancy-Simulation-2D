@@ -1,5 +1,7 @@
 #pragma once
 
+
+
 #include "Common.cpp"
 
 #include "newPolygons.h"
@@ -26,8 +28,7 @@ struct NewWettedSurface
 
 	NewPolygons& inputPolygon;
 
-	vector<p>& polygonPositions = inputPolygon.positions;
-	vector<unsigned int>& polygonIndices = inputPolygon.dlines.indices;
+	vector<p>& polygonPositions = inputPolygon.dlines.positions;
 
 
 	NewPolygons outputPolygon;
@@ -55,13 +56,11 @@ struct NewWettedSurface
 
 	void getImmediates(int firstImm, int secondImm);
 
-	unsigned int calculateSecondIt_Initial(bool& areImmediates, unsigned int& distancefirstSecondImm
-		, std::unordered_map<int, vector<int>>& mapSharedSegments, unsigned int& distanceInitialImm, unsigned int& firstImm, unsigned int& initialImm);
 
-	unsigned int calculateSecondIt_notInitial(bool& areImmediates, unsigned int& distancefirstSecondImm
-		, std::unordered_map<int, vector<int>>& mapSharedSegments, unsigned int& distanceFirstImm
-		, unsigned int& distanceInitialImm, unsigned int& firstImm, unsigned int& initialImm);
+	unsigned int calculateSecondIt_Initial(std::vector<Intersections>::iterator& initialIt, unsigned int& distanceInitialImm);
 
+	unsigned int calculateSecondIt_notInitial(std::vector<Intersections>::iterator& firstIt
+		, unsigned int& distanceFirstImm, unsigned int& distanceInitialImm);
 
 };
 
