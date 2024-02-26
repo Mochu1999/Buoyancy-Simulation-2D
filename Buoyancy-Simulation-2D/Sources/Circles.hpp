@@ -1,135 +1,134 @@
-
-
 #pragma once
-#include "utilities.cpp"
-#include "GL/glew.h"
-#include <cmath>
-using namespace std;
 
+#include "Common.cpp"
 
-
-
-
-
+//instance rendering for the future
 
 struct Circles {
+	GLenum usageHint = GL_DYNAMIC_DRAW;
 
-	vector<float> positions;
+	bool isBufferUpdated = false;
+
+	vector<p> positions;
 	vector <unsigned int> indices;
 	int r;
 
-	int segments = 40;	//there's a bug where small circles aren't shown if segments is set to high (80 for r=5)
+	int segments;
 
-	unsigned int vertexArray;
 	unsigned int vertexBuffer;
+	unsigned int vertexArray;
 	unsigned int indexBuffer;
 
-	size_t currentBufferSize = 100000 * sizeof(float);
-	/////////////////////////////////////////////////////////////////////////////////////////////
-	// Efectivamente no funciona, si metes 200 circulos por ejemplo en fourier, se va a la mierda
-	/////////////////////////////////////////////////////////////////////////////////////////////
+	//Setting initial buffers size
+	size_t currentPositionsBufferSize = 0;
+	size_t currentIndicesBufferSize = 0;
+	size_t currentPositionsDataSize = 0;
+	size_t currentIndicesDataSize = 0;
 
 	float fraction_circle; //theta increased by each segments
 
 
 
 	Circles(int r_) :r(r_) {
-		
-		//segments = r_ * 3;	//this also bugs for cheese in data
+
+		segments = r_ * 3;
 		fraction_circle = 2 * PI / segments;
 
 		genBuffers();
 	}
 
-
-	void createCircles(vector<float> centerPositions) {
+	//only one set of per object for now
+	void addSet(vector<p> centerPositions) {
 
 		positions.clear(); indices.clear();
 
+		positions.reserve((segments + 1) * centerPositions.size());
 
 		//creates positions
-		for (int i = 0; i < centerPositions.size(); i += 2) {
-			createPositions(centerPositions[i], centerPositions[i + 1]);
+		for (p center : centerPositions) {
+			createCircle(center);
 		}
 
 
 		//creates indices
-		unsigned int circleCount = 0; //increased after indexing each circle
-		unsigned int segmentCount = 1;//increased after indexing each segment
-		for (int j = 0; j < centerPositions.size() / 2; j++) {
+		unsigned int startIndex = 0; // center of each triangle
+		for (size_t j = 0; j < centerPositions.size(); ++j) {
+			for (unsigned int i = 0; i < segments; ++i) {
 
-			for (int i = 0; i < segments * 3; i += 3)	//outputs the indices for one circle
-			{
-				indices.insert(indices.end(), { circleCount,circleCount + segmentCount,circleCount + segmentCount + 1 });
-				segmentCount++;
+				indices.emplace_back(startIndex);
+				indices.push_back(startIndex + i + 1);
+				indices.emplace_back(startIndex + ((i + 1) % segments) + 1);
 			}
-			segmentCount = 1;
-			circleCount+= segments + 2;
+			startIndex += segments + 1; // Move to the next circle's starting index
 		}
-		
 
+		isBufferUpdated = true;
 	}
 
-	void createPositions(float centerx, float centery) {	//calculates positions
-		//interts the center, then each precision point and then the second point to close the triangles
+	void createCircle(const p& center) {
+		//interts the center, then each segment point and then the second point to close the triangles
 
 		float theta;
 
 
-		positions.insert(positions.end(), { centerx, centery });
+		positions.emplace_back(center);
 
 		for (int i = 0; i < segments; i++) {
 			theta = (fraction_circle * i);
-			positions.insert(positions.end(), { centerx + r * cos(theta), centery + r * sin(theta) });
+			positions.insert(positions.end(), { center.x + r * cos(theta), center.y + r * sin(theta) });
 
 		}
-		positions.insert(positions.end(), positions.end() - segments * 2, positions.end() - segments * 2 + 2);
 
 	}
 
 
-
-	
 
 
 	void draw() {
 
 		glBindVertexArray(vertexArray);
 
-		if (positions.size() * sizeof(float) > currentBufferSize) {		//Sin testear //se sigue manteniendo que currentBufferSize va a ser mayor para positions en vez de para indices?
+		//flag activates only when an addSet is Called, otherwise the buffer remains the same
+		if (isBufferUpdated)
+		{
+			currentPositionsDataSize = positions.size() * sizeof(p);
+			currentIndicesDataSize = indices.size() * sizeof(unsigned int);
 
-			currentBufferSize += positions.size() * sizeof(float);
+			//buffers are not equal
+			if (currentPositionsDataSize > currentPositionsBufferSize)
+			{
+			currentPositionsBufferSize = currentPositionsDataSize * 2;
+			currentIndicesBufferSize = currentIndicesDataSize * 2;
+
 			glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-			glBufferData(GL_ARRAY_BUFFER, currentBufferSize, positions.data(), GL_DYNAMIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, currentPositionsBufferSize, nullptr, usageHint);
 
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, currentBufferSize, nullptr, GL_DYNAMIC_DRAW);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, currentIndicesBufferSize, nullptr, usageHint);
+			}
+
+			glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, currentPositionsDataSize, positions.data());
+
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+			glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, currentIndicesDataSize, indices.data());
+
+			isBufferUpdated = false;
 		}
-
-		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, positions.size() * sizeof(float), positions.data());
-
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indices.size() * sizeof(unsigned int), indices.data());
-
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
 
 	}
 
 
 	void genBuffers() {
-
 		glGenVertexArrays(1, &vertexArray);
 		glBindVertexArray(vertexArray);
 
 		glGenBuffers(1, &vertexBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-		glBufferData(GL_ARRAY_BUFFER, currentBufferSize, /* data.data() */ nullptr, GL_DYNAMIC_DRAW);
-
 		glGenBuffers(1, &indexBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, currentBufferSize, nullptr, GL_DYNAMIC_DRAW);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
 
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);

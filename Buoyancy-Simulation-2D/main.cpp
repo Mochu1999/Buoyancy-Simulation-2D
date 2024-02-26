@@ -9,21 +9,16 @@
 #include "utilities.cpp"
 
 #include "Lines.hpp"
-#include "newLines.hpp"
 
 
 
 #include "Polygons.hpp"
-#include "newPolygons.h"
 
-#include "FourierMesh.h"
-#include "newFourier.hpp"
+#include "Fourier.hpp"
 
 #include "Wetted_Surface.hpp"
-#include "newWetted_Surface.hpp"
 
 #include "Circles.hpp"
-#include "newCircles.hpp"
 
 #include "Text.h"
 #include "Data.hpp"
@@ -33,20 +28,20 @@
 
 
 struct AllPointers {
-	Polygons* polygon;
 	BinariesManager* binariesManager;
-	NewPolygons* newPolygon;
+	Polygons* polygon;
 };
 
 
 
 //Preincremented for loops?
 //que pasa con los const macho
-//un único dlines?
+//un único lines?
 //switch statements are much faster than if statements
 //Hola, vas a tener que testear de una vez si insert es comparable a emplace_back
 //Mirar triangulation hierarchy para un locate más rápido O(sqrtN) en vez de O(n) https://doc.cgal.org/latest/Triangulation_2/index.html#Section_2D_Triangulations_Hierarchy
 
+//cambiar i++ a ++i, date una vuelta por todos lados buscando ++ y cambiandolos
 
 
 //Para parar wetted surface? Vaya nombre de mierda
@@ -90,7 +85,7 @@ int main(void)
 	BinariesManager binariesManager;
 
 
-	/*vector<float> polygonPositions = {100,300,900,300,900,600,100,600,100,300};
+	/*vector<float> polygonPositions = { 150,200,200,150,250,200,150,200, 750,200,800,150,850,200,750,200 };
 	binariesManager.writeModel(polygonPositions);*/
 
 	//binariesManager.writeConfig();
@@ -102,9 +97,8 @@ int main(void)
 
 
 
-	Polygons polygon;
 
-	NewPolygons newPolygon;
+	Polygons polygon;
 	model = convertPositions(modelPositions);
 	//model = { {300,600},{300,300},{450,300}, {600,300},{600,600},{300,600} };
 
@@ -120,17 +114,12 @@ int main(void)
 
 	if (binariesManager.currentProgramType == binariesManager.RUNNING)
 	{
-		//polygon.dlines.addSet(modelPositions); //está con dlines para hacer debug a sweep en el while
-		//newPolygon.dlines.addSet(model);
 
-		newPolygon.clear();
-		newPolygon.addSet(model);
-		newPolygon.sweepTriangulation();
 
 	}
 	else
 	{
-		newPolygon.dlines.cadMode = true;
+		polygon.lines.cadMode = true;
 	}
 
 
@@ -141,7 +130,7 @@ int main(void)
 
 
 
-	Polygons background;
+	//Polygons background;
 	//background.addSet({ 0,0,windowWidth,0,windowWidth,windowHeight,0,windowHeight,0,0 }); //is outside the while because is static
 
 
@@ -149,26 +138,19 @@ int main(void)
 
 
 
-	FourierMesh fourier;
-	NewFourier newFourier;
+	Fourier fourier;
 
-	Circles circlesPolygon(2);
-	Circles circlesFourier(3);
+	Circles circlesFourier(2);
 	Circles circlesWS(5);
 	Circles circles0(3);
-
-	NewCircles newcirclesFourier(2);
-	NewCircles newCirclesWS(5);
-	NewCircles newcircles0(3);
+	Circles circlesDEBUG(5);
 
 	WettedSurface wettedSurface(polygon, fourier);
-	NewWettedSurface newWettedSurface(newPolygon, newFourier);
 
 
 	AllPointers allpointers;
-	allpointers.polygon = &polygon;
 	allpointers.binariesManager = &binariesManager;
-	allpointers.newPolygon = &newPolygon;
+	allpointers.polygon = &polygon;
 
 	glfwSetWindowUserPointer(window, &allpointers);
 	glfwSetMouseButtonCallback(window, mouseButtonCallback);
@@ -222,6 +204,10 @@ int main(void)
 
 
 
+	
+
+
+
 
 
 	//make a struct for time
@@ -233,7 +219,7 @@ int main(void)
 
 
 
-	
+
 
 	high_resolution_clock::time_point lastFrameTime = high_resolution_clock::now();	//overkill, depends on the pc clock and it might be nanoseconds
 	high_resolution_clock::time_point startElapsedTime = lastFrameTime;
@@ -265,8 +251,6 @@ int main(void)
 
 
 
-
-
 		if (continueRunning)
 		{
 
@@ -274,49 +258,9 @@ int main(void)
 			glUniform1i(renderTypeLocation, 0); //0 for geometry
 
 
-			glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0);
-
-
+			//glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0);
 			//background.draw();
 
-
-
-			glUniform4f(colorLocation, 195.0f / 255.0f, 130.0f / 255.0f, 49.0f / 255.0f, 1.0f);
-			//newPolygon.sweepTriangulation();
-			newPolygon.dlines.draw();
-			newPolygon.draw();
-
-
-
-
-
-
-
-			if (binariesManager.currentProgramType == binariesManager.CAD)
-			{
-
-
-				if (newPolygon.dlines.cadMode == true)
-				{
-
-					//	//cout << "cursorX: " << cursorX << ", cursorY: " << cursorY << endl;
-
-
-
-					if (newPolygon.dlines.positions.size() != 0)
-						newPolygon.dlines.positions.pop_back();
-
-					newPolygon.dlines.cadAddSet(cursor);
-
-					//va aquí o antes de esto?
-					newPolygon.dlines.cadHover();
-				}
-				newPolygon.dlines.draw();
-
-			}
-			else if (binariesManager.currentProgramType == binariesManager.RUNNING)
-			{
-			}
 
 
 
@@ -324,7 +268,7 @@ int main(void)
 
 
 			//fourier.createWavePositions();
-			//newFourier.createPositions();
+			//fourier.createPositions();
 			//
 			//
 			//high_resolution_clock::time_point currentTime;
@@ -332,7 +276,7 @@ int main(void)
 			//float elapsedTime;
 			//for (size_t i = 0; i < static_cast<size_t>(1); i++)
 			//{
-			//	newWettedSurface.calculatePositions();
+			//	wettedSurface.calculatePositions();
 			//}
 			//currentTime = high_resolution_clock::now();
 			//for (size_t i = 0; i < static_cast<size_t>(1); i++)
@@ -345,125 +289,63 @@ int main(void)
 			//currentTime = high_resolution_clock::now();
 			//for (size_t i = 0; i < static_cast<size_t>(1); i++)
 			//{
-			//	newWettedSurface.calculatePositions();
+			//	wettedSurface.calculatePositions();
 			//}
 			//lastTime = high_resolution_clock::now();
 			//elapsedTime = duration_cast<duration<float>>(lastTime - currentTime).count();
 			//cout << "new format, time: " << elapsedTime << endl;
 
 
-			//cout << "newWettedSurface.positions.size(): " << newWettedSurface.positions.size() << ", wettedSurface.positions.size(): " 
-			//	<< wettedSurface.positions.size() << endl;
 
-			/*cout << "newWettedSurface.intersections.size(): " << newWettedSurface.intersections.size() << ", wettedSurface.intersections.size(): "
-				<< wettedSurface.intersections.size() << endl;*/
 
-				//printv2(newWettedSurface.positions);
-				//printflat2(wettedSurface.positions);
+
+			polygon.clear();
+			polygon.lines.clear();
+			polygon.lines.addSet(model);
+
+
+			polygon.interm();
+			polygon.sweepTriangulation();
+
+			fourier.createPositions();
+			wettedSurface.calculatePositions();
+
+
+			circlesWS.addSet(wettedSurface.positions);
+			circlesFourier.addSet(fourier.lines.positions);
+			circles0.addSet({ polygon.positions[0] });
+			//circlesDEBUG.addSet({ { 413.793,275.415 } });
 
 
 
 			glUniform4f(colorLocation, 195.0f / 255.0f, 130.0f / 255.0f, 49.0f / 255.0f, 1.0f);
+			polygon.lines.draw();
+			polygon.draw();
 
-			/*newPolygon.clear();
-			model = convertPositions(modelPositions);
-			newPolygon.addSet(model);
-			newPolygon.draw();*/
+			glUniform4f(colorLocation, 115.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 1.0f);
+			wettedSurface.draw();
 
-			/*polygon.clear();
-			polygon.addSet(modelPositions);
-			polygon.draw();*/
+			glUniform4f(colorLocation, 40.0f / 255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
+			fourier.draw();
 
+			glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+			circlesWS.draw();
 
+			glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
+			circlesFourier.draw();
 
+			glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
+			circles0.draw();
 
-			bool newFormat = 1;
-			if (!newFormat)// Old format
-			{
-				cout << "old format" << endl;
-				
-
-				glUniform4f(colorLocation, 195.0f / 255.0f, 130.0f / 255.0f, 49.0f / 255.0f, 1.0f);
-				polygon.clear();
-				polygon.addSet(modelPositions);
-				polygon.draw();
-
-				fourier.createWavePositions();
-				wettedSurface.createWettedPositions();
-
-				glUniform4f(colorLocation, 115.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 1.0f);
-				//wettedSurface.draw();
-
-				glUniform4f(colorLocation, 40.0f / 255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
-				fourier.draw();
-
-				glUniform4f(colorLocation, 0.0f, 0.5f, 0.0f, 1.0f);
-				circlesPolygon.createCircles(polygon.positions);
-				circlesPolygon.draw();
-
-				glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-				circlesFourier.createCircles(fourier.dlines.positions);	//water
-				circlesFourier.draw();
-
-				glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
-				circlesWS.createCircles(wettedSurface.positions);
-				circlesWS.draw();
-
-				glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-				circles0.createCircles({ polygon.positions[0],polygon.positions[1] });
-				circles0.draw();
-			}
-
-			else /*if (!newFormat)*/  // New format
-			{
-
-				
-				//newWettedSurface.calculatePositions();
-
-				glUniform4f(colorLocation, 195.0f / 255.0f, 130.0f / 255.0f, 49.0f / 255.0f, 1.0f);
-				newPolygon.dlines.clear();
-				newPolygon.dlines.addSet(model);
-				newPolygon.dlines.draw();
-
-				
-				
-				newFourier.createPositions();
-				newWettedSurface.calculatePositions();
-
-				/*for (auto i : newWettedSurface.intersections)
-				{
-					newWettedSurface.positions.insert(newWettedSurface.positions.end(), { i.point.x,i.point.y });
-				}*/
-
-				glUniform4f(colorLocation, 115.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 1.0f);
+			glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
+			//circlesDEBUG.draw();
 
 
-				glUniform4f(colorLocation, 40.0f / 255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
-				newFourier.draw();
 
 
-				glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
 
 
-				/*cout << "newWettedSurface.intersections" << endl;
-				for (const auto& item : newWettedSurface.intersections)
-				{
-					cout << "{{" << item.point.x << "," << item.point.y << "},"
-						<< item.segment << "," << item.imm << "}" << endl;
-				}cout << endl;*/
 
-				newCirclesWS.addSet(newWettedSurface.positions);
-				newCirclesWS.draw();
-
-				glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-				newcirclesFourier.addSet(newFourier.dlines.positions);
-				newcirclesFourier.draw();
-
-				glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-				newcircles0.addSet({ newPolygon.positions[0]});
-				newcircles0.draw();
-
-			}
 
 
 		}

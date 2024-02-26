@@ -456,25 +456,10 @@
     <ClInclude Include="Sources\glm\vector_relational.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\FourierMesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Sources\Text.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Sources\Data.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Sources\Lines.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Sources\Circles.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Sources\Polygons.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Sources\Wetted_Surface.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Sources\BinariesManager.h">
@@ -483,22 +468,22 @@
     <ClInclude Include="Sources\KeyMouseInputs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\newWetted_Surface.hpp">
+    <ClInclude Include="Sources\Wetted_Surface.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Sources\Common.cpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\newLines.hpp">
+    <ClInclude Include="Sources\Lines.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\newPolygons.h">
+    <ClInclude Include="Sources\Polygons.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\newFourier.hpp">
+    <ClInclude Include="Sources\Fourier.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\newCircles.hpp">
+    <ClInclude Include="Sources\Circles.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

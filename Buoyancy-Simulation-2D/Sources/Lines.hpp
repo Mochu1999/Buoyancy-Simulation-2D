@@ -1,60 +1,50 @@
 #pragma once
 
-struct DLines {	//D for dynamic, constanly updated
-	//draw lines defined in sets, this sets creates indices for their components
+#include "Common.cpp"
 
-	vector<float> positions;
+
+//draw lines defined in batches, these batches creates indices for their components
+struct Lines {
+
+	GLenum usageHint = GL_DYNAMIC_DRAW; //Pass this into the constructor for the final version
+
+	bool isBufferUpdated = false;
+
+	bool cadMode = false;
+	bool isHovering = false;
+
+	vector<p> positions;
+
+	//indices must be given in a flat array bc opengl expects it as so. If I need to use the indices at any moment for any othe reason
+	// have it in the ui2 format and have a conversion function to flatten it for the gpu
 	vector <unsigned int> indices;
+
 	unsigned int vertexBuffer;
 	unsigned int vertexArray;
 	unsigned int indexBuffer;
 
-	size_t currentBufferSize = 1000 * sizeof(float);	//simplifying the value for positions as well as indices as it is always the bigger
+	//Setting initial buffer size
+	size_t currentBufferSize = 0;
+	size_t currentDataSize = 0;
 
-	//method for reserve?
 
-	DLines() {
+	Lines() {
 		genBuffers();
 	}
 
 	void clear() {
-		positions.clear(); indices.clear(); setOffset = 0; setCount = 0;
+		positions.clear(); indices.clear(); setOffset = 0;
 	}
 
-
-	int setOffset = 0;	//the offset that let multiple indices be over the past ones
-	int setCount = 0;	//to avoid the fact that the last index of each set is not being counted
-	void addSet(vector<float> items) {
-		int setOffset = 0;
-		int setCount = 0;
-
-		positions.insert(positions.end(), items.begin(), items.end());
-		
-		indices.clear();
-		
-		for (unsigned int i = 0; i < positions.size() / 2 - 1; i++) {
-			indices.insert(indices.end(), { i + setOffset,i + setOffset + 1 });
-		}
-		
-		/*for (unsigned int i = 0; i < items.size() / 2 - 1; i++) {
-			indices.insert(indices.end(), { i + setOffset,i + setOffset + 1 });
-		}*/
-		setCount++;
-		setOffset = indices.size() / 2 + setCount;
-
-	}
 
 	void genBuffers() {
 		glGenVertexArrays(1, &vertexArray);
 		glBindVertexArray(vertexArray);
 
 		glGenBuffers(1, &vertexBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-		glBufferData(GL_ARRAY_BUFFER, currentBufferSize, /*positions.data()*/ nullptr, GL_DYNAMIC_DRAW);
-
 		glGenBuffers(1, &indexBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, currentBufferSize, nullptr, GL_DYNAMIC_DRAW);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
 
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -63,123 +53,138 @@ struct DLines {	//D for dynamic, constanly updated
 	}
 
 
+
 	void draw() {
 
 		glBindVertexArray(vertexArray);
 
-		if (positions.size() * sizeof(float) > currentBufferSize) {
+		//flag activates only when an addSet is Called, otherwise the buffer remains the same
+		if (isBufferUpdated)
+		{
+			currentDataSize = positions.size() * sizeof(p);
 
-			currentBufferSize += positions.size() * sizeof(float);
+			//resizes both buffers. In this specific case both have the same size
+			// positions.size() * sizeof(p) == indices.size() * sizeof(unsigned int)
+			if (currentDataSize > currentBufferSize)
+			{
+				//In the future cap this so it is being multiplied by 2 for small buffers but if it is bigger than some number then only by a 
+				// smaller factor 
+				currentBufferSize = currentDataSize*2;
+
+				glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+				glBufferData(GL_ARRAY_BUFFER, currentBufferSize, nullptr, usageHint);
+
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+				glBufferData(GL_ELEMENT_ARRAY_BUFFER, currentBufferSize, nullptr, usageHint);
+			}
+
+			//glBufferData creates a bigger buffer than necessary but glBufferSubData sends the exact amount of memory
 			glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-			glBufferData(GL_ARRAY_BUFFER, currentBufferSize, positions.data(), GL_DYNAMIC_DRAW);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, currentDataSize, positions.data());
 
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, currentBufferSize, nullptr, GL_DYNAMIC_DRAW);
+			glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, currentDataSize, indices.data());
+
+
+			isBufferUpdated = false;
 		}
-
-
-
-		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, positions.size() * sizeof(float), positions.data());
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indices.size() * sizeof(unsigned int), indices.data());
-
-		glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0);
-
-
 		
+		glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0);
 	}
 
-	
-	~DLines() {
-		
+
+	~Lines() {
 		glDeleteVertexArrays(1, &vertexArray);
 		glDeleteBuffers(1, &vertexBuffer);
 		glDeleteBuffers(1, &indexBuffer);
 
 		positions.clear(); indices.clear();
 	}
-};
 
 
 
 
 
+	unsigned int setOffset = 0;	//the offset that lets multiple indices be over the past ones
 
-
-
-
-
-
-
-
-
-struct SLines {	//Static, if you want to change its values you must create bufferData again
-	//draw lines defined in sets, this sets creates indices for their components
-
-	vector<float> positions;
-	vector <unsigned int> indices;
-	unsigned int vertexBuffer;
-	unsigned int vertexArray;
-	unsigned int indexBuffer;
-
-
-	void clear() {
-		positions.clear();
-		indices.clear();
-		setOffset = 0; setCount = 0;
-	}
-
-	int setOffset = 0;	//the offset that let multiple indices be over the past ones
-	int setCount = 0;	//to avoid the fact that the last index of each set is not being counted
-
-	void addSet(vector<float> items) {
+	//It doesn't reset indices each time, items are expected to be full models, can't be a single pair
+	void addSet(const vector<p>& items) {
+		positions.reserve(items.size() + positions.size());
+		indices.reserve(items.size() * 2 + indices.size());
 
 		positions.insert(positions.end(), items.begin(), items.end());
 
-		for (unsigned int i = 0; i < items.size() / 2 - 1; i++) {
-			indices.insert(indices.end(), { i + setOffset,i + setOffset + 1 });
+		for (unsigned int i = 0; i < items.size() - 1; i++)
+		{
+			indices.emplace_back(i + setOffset);
+			indices.emplace_back(i + setOffset + 1);
 		}
-		setCount++;
-		setOffset = indices.size() / 2 + setCount;
+		
+		setOffset += items.size();
 
+		isBufferUpdated = true;
 	}
 
-	void genBuffers() {
-		glGenVertexArrays(1, &vertexArray);
-		glBindVertexArray(vertexArray);
+	void batchAddSet(const vector<p>& items,const vector<unsigned int>& batchIndices) {
+		positions.reserve(items.size() + positions.size());
+		indices.reserve(items.size() * 2 + indices.size());
 
-		glGenBuffers(1, &vertexBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-		glBufferData(GL_ARRAY_BUFFER, positions.size()*sizeof(float), positions.data(), GL_STATIC_DRAW);
+		positions.insert(positions.end(), items.begin(), items.end());
 
-		glGenBuffers(1, &indexBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(float), indices.data(), GL_STATIC_DRAW);
+		cout << endl << endl << endl;
 
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		setOffset = 0;
+		unsigned int starting = 0;
+		while(true)
+		{
+			if (starting >= (batchIndices.size() - 1))
+				break;
 
-		glBindVertexArray(0);
+			unsigned int start = batchIndices[starting];
+			unsigned int end = batchIndices[starting+1];
+
+			cout << "start: " << start << ", end: " << end << endl;
+			cout << "setOffset: " << setOffset << endl;
+
+			for (unsigned int i = start; i < end-1; i++)
+			{
+				indices.emplace_back(i);
+				indices.emplace_back(i+ 1);
+			}
+			cout << "*interm" << endl;
+			printflat2(indices); cout << endl;
+			setOffset += end-start;
+			starting++;
+		}
+		isBufferUpdated = true;
 	}
 
+//está sin terminar
+	void cadAddSet(const p& item) {
+		indices.clear();
 
-	void draw() {
+		positions.emplace_back(item);
 
-		glBindVertexArray(vertexArray);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+		setOffset = 0;
 
+		for (unsigned int i = 0; i < positions.size() - 1; i++)
+		{
+			indices.emplace_back(i + setOffset);
+			indices.emplace_back(i + setOffset + 1);
+		}
 
-		glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0);
-
+		isBufferUpdated = true;
 	}
 
+	void cadHover() {
 
-	~SLines() {
-		glDeleteVertexArrays(1, &vertexArray);
-		glDeleteBuffers(1, &vertexBuffer);
-		glDeleteBuffers(1, &indexBuffer);
+		if (abs(cursor.x - positions[0].x) <= 20 && abs(cursor.y - positions[0].y) <= 20) {
+			cursor.x = positions[0].x;
+			cursor.y = positions[0].y;
+		}
+		positions.back() = cursor;
+
 	}
 };
+
+

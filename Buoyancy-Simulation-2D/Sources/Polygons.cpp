@@ -1,6 +1,6 @@
-#include "newPolygons.h"
+#include "Polygons.hpp"
 
-void NewPolygons::genBuffers() {
+void Polygons::genBuffers() {
 	glGenVertexArrays(1, &vertexArray);
 	glBindVertexArray(vertexArray);
 
@@ -19,8 +19,8 @@ void NewPolygons::genBuffers() {
 	glBindVertexArray(0);
 }
 
-void NewPolygons::draw() {
-	dlines.draw();
+void Polygons::draw() {
+	lines.draw();
 
 
 	glBindVertexArray(vertexArray);
@@ -57,20 +57,68 @@ void NewPolygons::draw() {
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
 }
 
-NewPolygons::~NewPolygons() {
+Polygons::~Polygons() {
 	glDeleteVertexArrays(1, &vertexArray);
 	glDeleteBuffers(1, &vertexBuffer);
 	glDeleteBuffers(1, &indexBuffer);
 }
 
+void  Polygons::interm() {
+	indices.clear();
 
+	/*unsigned int index0 = 0;
+	for (unsigned int i = 0; i < positions.size(); i++)
+	{
+
+		if (positions[i] == positions[index0] && i != index0)
+		{
+			index0 = i + 1;
+
+		}
+		else
+			Points.insert(Points.end(), { positions[i],i });
+	}*/
+
+	for (unsigned int i = 0; i < positions.size() - 1; i++)
+	{
+		Points.insert(Points.end(), { positions[i],i });
+	}
+
+
+	sortedIndices.resize(Points.size());
+	std::iota(sortedIndices.begin(), sortedIndices.end(), 0); //initializing it as 0,1,2,3...
+
+	//I could have only used [this] but I would be capturing the entire class
+	std::sort(sortedIndices.begin(), sortedIndices.end(), [&Points = this->Points](unsigned int i1, unsigned int i2)
+		{
+			if (Points[i1].point.x == Points[i2].point.x)
+				return Points[i1].point.y > Points[i2].point.y;
+			return Points[i1].point.x < Points[i2].point.x;
+		});
+
+
+
+
+
+	//cout << "Points:" << endl;
+	//for (const auto& entry : Points) {
+	//	cout << entry.index << " " << entry.point.x << " " << entry.point.y << endl;
+	//}std::cout << std::endl;
+
+	//cout << "sortedIndices:" << endl;
+	//for (auto entry : sortedIndices) {
+	//	cout << entry << " ";
+	//}cout << endl;
+}
 
 //triangulates with a sweep algorithm from left to right. It assigns to each point an state and creates and triangulates sequentially chains
-void  NewPolygons::sweepTriangulation(/*int i*/) {
+void  Polygons::sweepTriangulation(/*int i*/) {
 	///It can produce triangles of 0 area (collinear points), it may be important in the future
 
+	isBufferUpdated = true;
+	
 
-	isBufferUpdated = true; //borrar
+
 
 	for (size_t i = 0; i < sortedIndices.size(); ++i)
 	{
@@ -147,7 +195,7 @@ void  NewPolygons::sweepTriangulation(/*int i*/) {
 			{
 				bool isProper = true;
 
-				
+
 				//looking if it is proper or improper (depending on where do you insert the new edges)
 				//It passes through all edges and sees if currentIndex is above, in between or below its current edges
 				for (int e = 0; e < edges.size(); e += 2)
@@ -243,8 +291,8 @@ void  NewPolygons::sweepTriangulation(/*int i*/) {
 					trChainBack(currentChain);
 
 					//trChainBack(currentChain);
-					
-					
+
+
 					//bottom chain
 					trChainFront(nextChain);
 				}
@@ -258,7 +306,7 @@ void  NewPolygons::sweepTriangulation(/*int i*/) {
 				//theorem, it is a proper end if currentIndex belongs to both elements of a pair of edges. Improper 
 				// if they belong to two (different) pairs of edges
 
-				
+
 				//Con ui2 estarías comparando edges[e].x y edges[e].y y sabrias directamente si hay nextChain o no según donde salga
 				for (int e = 0; e < edges.size(); e++)
 				{
@@ -296,7 +344,7 @@ void  NewPolygons::sweepTriangulation(/*int i*/) {
 					}
 
 					//erase the entire chain and the pair of edges
-					chain.erase(chain.begin() + currentChain); 
+					chain.erase(chain.begin() + currentChain);
 					edges.erase(edges.begin() + currentEdge, edges.begin() + currentEdge + 2);
 				}
 
@@ -306,13 +354,13 @@ void  NewPolygons::sweepTriangulation(/*int i*/) {
 
 					//top chain
 					chain[currentChain].emplace_back(currentIndex);
-					
+
 					trChainBack(currentChain);
 
 
 					//bottom chain
-					chain[possibleNextChain].emplace_front( bContainer.back() );
-					
+					chain[possibleNextChain].emplace_front(bContainer.back());
+
 					trChainFront(possibleNextChain);
 
 
@@ -363,12 +411,12 @@ void  NewPolygons::sweepTriangulation(/*int i*/) {
 					chain[currentChain].emplace_front(bContainer.back());
 					trChainFront(currentChain);
 
-					if(bContainer.size()>1)
+					if (bContainer.size() > 1)
 					{
 						//It adds the collinear but only triangulates if the collinear is bellow b
 						chain[currentChain].emplace_front(bContainer.front());
 
-						if (Points[bContainer.front()].point.y< Points[bContainer.back()].point.y)
+						if (Points[bContainer.front()].point.y < Points[bContainer.back()].point.y)
 							trChainFront(currentChain);
 					}
 				}
@@ -418,5 +466,64 @@ void  NewPolygons::sweepTriangulation(/*int i*/) {
 			//cout << endl;
 
 		}
+	}
+}
+
+//the new point is added at the back and we are triangulation from that one to till the start of the chain
+void Polygons::trChainBack(const unsigned int& currentChain) {
+
+	auto backIndex = chain[currentChain].back();
+	auto PenultimateIndex = chain[currentChain][chain[currentChain].size() - 2];
+
+	for (int k = chain[currentChain].size() - 3; k >= 0; k--)
+	{
+		if (newcrossProduct(Points[backIndex].point,
+			Points[PenultimateIndex].point,
+			Points[chain[currentChain][k]].point) <= 0)
+			//<0 because order is clockwise (result still cc), =0 bc the area can be 0 in collinear and need to erase
+		{
+			indices.insert(indices.end(), { chain[currentChain][k],PenultimateIndex,backIndex });
+
+			chain[currentChain].erase(chain[currentChain].begin() + k + 1);
+			//I don't need elementsToErase if the order is from end to start in the for loop
+
+			PenultimateIndex = chain[currentChain][k];
+		}
+
+	}
+}
+
+//the new point is added at the front and we are triangulation from that one to till the end of the chain
+void Polygons::trChainFront(const unsigned int& currentChain) {
+
+	if (chain[currentChain].size() > 2)
+	{
+		vector<int> elementsToErase; //separating them to remove them from in a backwards motion
+		elementsToErase.reserve(5);
+
+		auto frontIndex = chain[currentChain].front();
+		auto secondIndex = chain[currentChain][1];
+
+		for (size_t k = 2; k < chain[currentChain].size(); k++)
+		{
+			if (newcrossProduct(Points[frontIndex].point,
+				Points[secondIndex].point,
+				Points[chain[currentChain][k]].point) > 0)
+			{
+				indices.insert(indices.end()
+					, { frontIndex,secondIndex,chain[currentChain][k] });
+
+				elementsToErase.emplace_back(k - 1);
+
+				secondIndex = chain[currentChain][k];
+			}
+
+		}
+
+		for (int k = elementsToErase.size() - 1; k >= 0; k--)
+		{
+			chain[currentChain].erase(chain[currentChain].begin() + elementsToErase[k]);
+		}
+
 	}
 }

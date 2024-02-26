@@ -93,6 +93,23 @@ void printv2_without_macro(const string& name, const vector<vec2<T>>& items) {
     cout << ss.str() << endl << endl;
 }
 
+#define printflat(var) printflat_without_macro(#var, var)
+template<typename T>
+void printflat_without_macro(const string& name, const vector<T>& items) {
+    stringstream ss;
+    ss << name << endl;
+    ss << "{";
+    for (size_t i = 0; i < items.size(); i ++) {
+        ss << items[i] ;
+
+        if (i != items.size()-1) { // Check if it's not the last element
+            ss << ",";
+        }
+    }
+    ss << "}";
+    cout << ss.str() << endl << endl;
+}
+
 #define printflat2(var) printflat2_without_macro(#var, var)
 template<typename T>
 void printflat2_without_macro(const string& name, const vector<T>& items) {
@@ -100,7 +117,6 @@ void printflat2_without_macro(const string& name, const vector<T>& items) {
     ss << name << endl;
     for (size_t i = 0; i < items.size(); i+=2) {
         ss << "{" << items[i] << "," << items[i+1] << "}";
-        //ss << items[i];
 
         if (i != items.size() - 2) { // Check if it's not the last element
             ss << ",";
@@ -116,7 +132,6 @@ void printflat3_without_macro(const string& name, const vector<T>& items) {
     ss << name << endl;
     for (size_t i = 0; i < items.size(); i += 3) {
         ss << "{" << items[i] << "," << items[i + 1]<<"," << items[i + 2] << "}";
-        //ss << items[i];
 
         if (i != items.size() - 3) { // Check if it's not the last element
             ss << ",";

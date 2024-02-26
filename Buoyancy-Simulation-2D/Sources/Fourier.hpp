@@ -1,16 +1,16 @@
 #pragma once
 
 #include "Common.cpp"
-#include "newLines.hpp"
+#include "Lines.hpp"
 
 
-struct NewFourier {
+struct Fourier {
 
-	newDLines dlines;
+	Lines lines;
 
 	vector<p> intermVector;
 
-	int xn = 20;
+	int xn = 30;
 	int segments = xn - 1;
 	float endXPosition = 1000;
 	float interval = (endXPosition - 0) / segments;
@@ -18,9 +18,9 @@ struct NewFourier {
 
 	float period = 300;
 	float frecuency = 2 * PI / period;
-	float amplitude = 200;
-	float offset = 300;
-	float phase = 0;
+	float amplitude = 250;
+	float offset = 400;
+	float phase = 1.28;
 	float phaseSpeed = 0.01;
 
 
@@ -28,7 +28,7 @@ struct NewFourier {
 		float segmentsLength = endXPosition / segments;
 		float x = 0;
 
-		dlines.clear();
+		lines.clear();
 		intermVector.clear();
 
 		intermVector.reserve( xn);
@@ -40,10 +40,10 @@ struct NewFourier {
 		}
 
 
-		dlines.addSet(intermVector);
+		lines.addSet(intermVector);
 
 		phase += phaseSpeed;
-		cout << "phase: "<<phase << endl;
+		//cout << "phase: "<<phase << endl;
 		//offset--;
 		//cout << offset << endl;
 
@@ -53,7 +53,7 @@ struct NewFourier {
 
 	void draw() {
 
-		dlines.draw();
+		lines.draw();
 
 
 	}
