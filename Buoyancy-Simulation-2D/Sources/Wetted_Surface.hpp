@@ -55,14 +55,12 @@ struct WettedSurface
 			interm.insert(interm.end(), positions.begin() + batchIndices[i], positions.begin() + batchIndices[i + 1]);
 
 			//No puedo meter iteradores directamente en addset?
-			outputPolygon[i].lines.addSet(interm);
+			outputPolygon[i].addSet(interm);
 			outputPolygon[i].lines.draw();
-
-			outputPolygon[i].interm();
-			outputPolygon[i].sweepTriangulation();
+			outputPolygon[i].draw();
 			//Mira indices en catamarán que creo que está duplicandolos
 
-			outputPolygon[i].draw();
+			
 
 			//printv2(outputPolygon[i].positions); cout << endl;
 
@@ -89,4 +87,3 @@ struct WettedSurface
 
 };
 
-/////////////A las funciones les faltan consts!!

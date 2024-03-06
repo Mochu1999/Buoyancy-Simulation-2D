@@ -1,7 +1,6 @@
 #pragma once
 
-//This is created because wettedSurfaces.hpp doesn't let me include utilities, so till I know how to resolve that I am creating common that doesn't
-//depend on other project files
+//common file that does not depend on other files
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -28,9 +27,9 @@ using namespace std;
 using namespace std::chrono;
 
 
-#include <cstdlib> // For std::abort
 
-inline bool continueRunning = true;
+
+
 
 template<typename T>
 struct vec2 {
@@ -41,17 +40,42 @@ struct vec2 {
 	vec2(T x, T y) : x(x), y(y) {} //normal constructor
 
 	// operator overloads
-    bool operator == (const vec2& other) const {
-        return x == other.x && y == other.y;
-    }
+	bool operator == (const vec2& other) const {
+		return x == other.x && y == other.y;
+	}
 
-    bool operator!=(const vec2& other) const {
-        return !(*this == other);
-    }
+	bool operator!=(const vec2& other) const {
+		return !(*this == other);
+	}
 };
 
 using p = vec2<float>;
 using ui2 = vec2<unsigned int>;
+
+
+
+template<typename T>
+struct vec3 {
+	T x, y, z;
+
+	vec3() : x(0), y(0), z(0) {} //initializing paramenters to 0 if not specified 
+
+	vec3(T x_, T y_, T z_) : x(x_), y(y_), z(z_) {} //normal constructor
+
+	// operator overloads
+	bool operator == (const vec3& other) const {
+		return x == other.x && y == other.y && z == other.z;
+	}
+
+	bool operator!=(const vec3& other) const {
+		return !(*this == other);
+	}
+};
+
+using p3 = vec3<float>;
+using ui3 = vec3<unsigned int>;
+
+
 
 
 
@@ -62,6 +86,7 @@ inline p cursor = { 0,0 };
 inline float windowHeight = 1080;
 inline float windowWidth = 1920;
 
+inline bool isRunning = true;
 
 
 
@@ -69,11 +94,11 @@ inline float windowWidth = 1920;
 
 inline void getCursorPos(GLFWwindow* window) {
 
-    double intermX, intermY;
+	double intermX, intermY;
 
-    glfwGetCursorPos(window, &intermX, &intermY);
+	glfwGetCursorPos(window, &intermX, &intermY);
 
-    cursor = { static_cast<float>(intermX), static_cast<float>(windowHeight - intermY) };
+	cursor = { static_cast<float>(intermX), static_cast<float>(windowHeight - intermY) };
 
 }
 
@@ -81,88 +106,98 @@ inline void getCursorPos(GLFWwindow* window) {
 #define printv2(var) printv2_without_macro(#var, var)
 template<typename T>
 void printv2_without_macro(const string& name, const vector<vec2<T>>& items) {
-    stringstream ss;
-    ss << name << endl;
-    for (size_t i = 0; i < items.size(); ++i) {
-        ss << "{" << items[i].x << "," << items[i].y << "}";
+	stringstream ss;
+	ss << name << endl;
+	for (size_t i = 0; i < items.size(); ++i) {
+		ss << "{" << items[i].x << "," << items[i].y << "}";
 
-        if (i != items.size() - 1) { // Check if it's not the last element
-            ss << ",";
-        }
-    }
-    cout << ss.str() << endl << endl;
+		if (i != items.size() - 1) { // Check if it's not the last element
+			ss << ",";
+		}
+	}
+	cout << ss.str() << endl << endl;
 }
 
 #define printflat(var) printflat_without_macro(#var, var)
 template<typename T>
 void printflat_without_macro(const string& name, const vector<T>& items) {
-    stringstream ss;
-    ss << name << endl;
-    ss << "{";
-    for (size_t i = 0; i < items.size(); i ++) {
-        ss << items[i] ;
+	stringstream ss;
+	ss << name << endl;
+	ss << "{";
+	for (size_t i = 0; i < items.size(); i++) {
+		ss << items[i];
 
-        if (i != items.size()-1) { // Check if it's not the last element
-            ss << ",";
-        }
-    }
-    ss << "}";
-    cout << ss.str() << endl << endl;
+		if (i != items.size() - 1) { // Check if it's not the last element
+			ss << ",";
+		}
+	}
+	ss << "}";
+	cout << ss.str() << endl << endl;
 }
 
 #define printflat2(var) printflat2_without_macro(#var, var)
 template<typename T>
 void printflat2_without_macro(const string& name, const vector<T>& items) {
-    stringstream ss;
-    ss << name << endl;
-    for (size_t i = 0; i < items.size(); i+=2) {
-        ss << "{" << items[i] << "," << items[i+1] << "}";
+	stringstream ss;
+	ss << name << endl;
+	for (size_t i = 0; i < items.size(); i += 2) {
+		ss << "{" << items[i] << "," << items[i + 1] << "}";
 
-        if (i != items.size() - 2) { // Check if it's not the last element
-            ss << ",";
-        }
-    }
-    cout << ss.str() << endl << endl;
+		if (i != items.size() - 2) { // Check if it's not the last element
+			ss << ",";
+		}
+	}
+	cout << ss.str() << endl << endl;
 }
 
 #define printflat3(var) printflat3_without_macro(#var, var)
 template<typename T>
 void printflat3_without_macro(const string& name, const vector<T>& items) {
-    stringstream ss;
-    ss << name << endl;
-    for (size_t i = 0; i < items.size(); i += 3) {
-        ss << "{" << items[i] << "," << items[i + 1]<<"," << items[i + 2] << "}";
+	stringstream ss;
+	ss << name << endl;
+	for (size_t i = 0; i < items.size(); i += 3) {
+		ss << "{" << items[i] << "," << items[i + 1] << "," << items[i + 2] << "}";
 
-        if (i != items.size() - 3) { // Check if it's not the last element
-            ss << ",";
-        }
-    }
-    cout << ss.str() << endl << endl;
+		if (i != items.size() - 3) { // Check if it's not the last element
+			ss << ",";
+		}
+	}
+	cout << ss.str() << endl << endl;
 }
 
 
 #define printp(var) printp_without_macro(#var, var)
 template<typename T>
 void printp_without_macro(const string& name, const T& items) {
-    stringstream ss;
-    ss << name << endl;
-    ss << "{" << items.x << "," << items.y << "}";
+	stringstream ss;
+	ss << name << endl;
+	ss << "{" << items.x << "," << items.y << "}";
 
-    cout << ss.str() << endl << endl;
+	cout << ss.str() << endl << endl;
 }
 
 //consts, cambiale el nombre y deja el nombre "is" para bools
-inline float newisRightOfLine(p& A, p& B, p& P) {		 //is P to the right of AB?
-    p AB = { B.x - A.x,  B.y - A.y };
-    p AP = { P.x - A.x, P.y - A.y };
+inline float isRightOfLine(p& A, p& B, p& P) {		 //is P to the right of AB?
+	p AB = { B.x - A.x,  B.y - A.y };
+	p AP = { P.x - A.x, P.y - A.y };
 
-    return AB.x * AP.y - AB.y * AP.x;	//if negative it is to its right, if 0, P is on the infinite line of AB
+	return AB.x * AP.y - AB.y * AP.x;	//if negative it is to its right, if 0, P is on the infinite line of AB
 }
 
 //aun con p chatgpt sigue diciendo que referencia podría no ser lo mejor. También sigue diciendo que un valor positivo es que p2 está a la derecha
-inline float newcrossProduct(const p& p0, const p& p1, const p& p2) {
-    p v01 = { p1.x - p0.x, p1.y - p0.y };
-    p v12 = { p2.x - p1.x, p2.y - p1.y };
+template<typename T>
+inline float crossProduct(const vec2<T>& p0, const vec2<T>& p1, const vec2<T>& p2) {
+	vec2<T> v01 = { p1.x - p0.x, p1.y - p0.y };
+	vec2<T> v12 = { p2.x - p1.x, p2.y - p1.y };
 
-    return v01.x * v12.y - v01.y * v12.x;
+	return v01.x * v12.y - v01.y * v12.x;
+}
+
+template<typename T>
+vec3<T> crossProduct3(const vec3<T>& v1, const vec3<T>& v2) {
+	return vec3<T>(
+		v1.y * v2.z - v1.z * v2.y,
+		v1.z * v2.x - v1.x * v2.z,
+		v1.x * v2.y - v1.y * v2.x 
+	);
 }

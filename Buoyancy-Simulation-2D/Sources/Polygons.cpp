@@ -63,21 +63,16 @@ Polygons::~Polygons() {
 	glDeleteBuffers(1, &indexBuffer);
 }
 
-void  Polygons::interm() {
+
+
+//triangulates with a sweep algorithm from left to right. It assigns to each point an state and creates and triangulates sequentially chains
+void  Polygons::sweepTriangulation(/*int i*/) {
+	///It can produce triangles of 0 area (collinear points), it may be important in the future
+
+	isBufferUpdated = true;
+	
 	indices.clear();
 
-	/*unsigned int index0 = 0;
-	for (unsigned int i = 0; i < positions.size(); i++)
-	{
-
-		if (positions[i] == positions[index0] && i != index0)
-		{
-			index0 = i + 1;
-
-		}
-		else
-			Points.insert(Points.end(), { positions[i],i });
-	}*/
 
 	for (unsigned int i = 0; i < positions.size() - 1; i++)
 	{
@@ -109,15 +104,6 @@ void  Polygons::interm() {
 	//for (auto entry : sortedIndices) {
 	//	cout << entry << " ";
 	//}cout << endl;
-}
-
-//triangulates with a sweep algorithm from left to right. It assigns to each point an state and creates and triangulates sequentially chains
-void  Polygons::sweepTriangulation(/*int i*/) {
-	///It can produce triangles of 0 area (collinear points), it may be important in the future
-
-	isBufferUpdated = true;
-	
-
 
 
 	for (size_t i = 0; i < sortedIndices.size(); ++i)
@@ -202,9 +188,9 @@ void  Polygons::sweepTriangulation(/*int i*/) {
 				{
 					//The top check is taking the top point of the chain linked with its edge and the bottom check takes the bottom point of
 					//the chain linked with its edge
-					float topCheck = newisRightOfLine(Points[chain[e / 2].front()].point, Points[edges[e]].point, Points[currentIndex].point);
+					float topCheck = isRightOfLine(Points[chain[e / 2].front()].point, Points[edges[e]].point, Points[currentIndex].point);
 
-					float bottomCheck = newisRightOfLine(Points[chain[e / 2].back()].point, Points[edges[e + 1]].point, Points[currentIndex].point);
+					float bottomCheck = isRightOfLine(Points[chain[e / 2].back()].point, Points[edges[e + 1]].point, Points[currentIndex].point);
 
 
 					//above, proper in e
@@ -477,7 +463,7 @@ void Polygons::trChainBack(const unsigned int& currentChain) {
 
 	for (int k = chain[currentChain].size() - 3; k >= 0; k--)
 	{
-		if (newcrossProduct(Points[backIndex].point,
+		if (crossProduct(Points[backIndex].point,
 			Points[PenultimateIndex].point,
 			Points[chain[currentChain][k]].point) <= 0)
 			//<0 because order is clockwise (result still cc), =0 bc the area can be 0 in collinear and need to erase
@@ -506,7 +492,7 @@ void Polygons::trChainFront(const unsigned int& currentChain) {
 
 		for (size_t k = 2; k < chain[currentChain].size(); k++)
 		{
-			if (newcrossProduct(Points[frontIndex].point,
+			if (crossProduct(Points[frontIndex].point,
 				Points[secondIndex].point,
 				Points[chain[currentChain][k]].point) > 0)
 			{

@@ -65,7 +65,7 @@ void WettedSurface::calculateIntersections() {
 				//we do not add it directly into intersections because it may be an invalid point (when crossProduct == 0)
 				Intersections possibleIntersection = { point,j,j };
 
-				float crossProductJ = newisRightOfLine(fourierPositions[i], fourierPositions[i + 1], polygonPositions[j]);
+				float crossProductJ = isRightOfLine(fourierPositions[i], fourierPositions[i + 1], polygonPositions[j]);
 
 
 				//If crossProductJ > 0, j is above the water, then the immediate is j++, else j is the immediate
@@ -92,9 +92,9 @@ void WettedSurface::calculateIntersections() {
 					nextIndex = (j + 1) % size;
 
 
-					float crossProductPrevIndex = newisRightOfLine(fourierPositions[i], fourierPositions[i + 1], polygonPositions[prevIndex]);
+					float crossProductPrevIndex = isRightOfLine(fourierPositions[i], fourierPositions[i + 1], polygonPositions[prevIndex]);
 
-					float crossProductNextIndex = newisRightOfLine(fourierPositions[i], fourierPositions[i + 1], polygonPositions[nextIndex]);
+					float crossProductNextIndex = isRightOfLine(fourierPositions[i], fourierPositions[i + 1], polygonPositions[nextIndex]);
 
 					if (crossProductNextIndex < 0 && crossProductPrevIndex >= 0)
 					{
@@ -227,7 +227,7 @@ void WettedSurface::calculatePositions() {
 				//cout << "whileCounter " << whileCounter << endl;
 				if (whileCounter > 20)
 				{
-					continueRunning = false;
+					isRunning = false;
 					cout << "aborting wetted surface: high whileCounter" << endl;
 					return;
 					//std::exit(EXIT_FAILURE);
@@ -308,7 +308,7 @@ void WettedSurface::calculatePositions() {
 
 		//int secondIndex = firstIndex + 2;
 
-		//if (newisRightOfLine(fourierPositions[firstIndex], fourierPositions[firstIndex + 1]
+		//if (isRightOfLine(fourierPositions[firstIndex], fourierPositions[firstIndex + 1]
 		//	, fourierPositions[secondIndex], fourierPositions[secondIndex + 1], centroidX, centroidY) < 0)
 		//{
 		//	positions.reserve(polygonPositions.size());

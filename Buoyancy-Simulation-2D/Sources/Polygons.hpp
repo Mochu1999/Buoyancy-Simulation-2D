@@ -37,8 +37,6 @@ struct Polygons {
 
 
 		/*oldPositions = positions_;*/
-
-
 	}
 
 	void genBuffers();
@@ -75,7 +73,6 @@ struct Polygons {
 	std::vector<SuperPoints> Points;
 	std::vector<unsigned int> sortedIndices;
 
-	void interm();
 
 	//A ver, que hace addSet exactamente? Porque el modelo ya está en positions, y no hace falta hacer sweep todo el rato
 	void addSet(vector<p> items) {
@@ -83,14 +80,12 @@ struct Polygons {
 		isBufferUpdated = true;
 		lines.addSet(items);
 		
-		//sweepTriangulation();
+		sweepTriangulation();
 
-		//printflat3(indices);
 		
 
 
 
-		//createIndices();
 
 		//areaCalculation();
 

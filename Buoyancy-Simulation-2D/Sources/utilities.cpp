@@ -5,42 +5,6 @@
 
 
 
-
-
-
-
-/*
-cout << "triangleIndices:" << endl;
-		for (int i = 0; i < triangleIndices.size(); i += 3) {
-			cout << triangleIndices[i] << " ";
-			cout << triangleIndices[i + 1] << " ";
-			cout << triangleIndices[i + 2] << endl;
-		}
-		cout << endl;
-
-cout << "positions: " << endl;
-for (int i = 0; i < positions.size(); i += 2) {
-	cout << positions[i] << ", " << positions[i + 1] << "," << endl;
-}cout << endl;
-
-cout << "indices" << endl;
-for (unsigned int i = 0; i < indices.size(); i++) {
-	cout << indices[i] << ", ";
-}cout << endl;
-*/
-
-//the advantage of not returning a bool is that you can compare if it is 0 (right on the line)
-//NO dijimos que para floats era mejor pasar sin referencia?
-inline float isRightOfLine(float& Ax, float& Ay, float& Bx, float& By, float& Px, float& Py) {		 //is P to the right of AB?
-	float AB[2] = { Bx - Ax,  By - Ay };
-	float AP[2] = { Px - Ax, Py - Ay };
-
-	float crossProductZ = AB[0] * AP[1] - AB[1] * AP[0]; //mete esto en return, no?
-
-	return crossProductZ;	//if negative it is to its right, if 0, P is on the infinite line of AB
-}
-
-
 //Esto es de old polygons
 float absoluteAngle(float x, float y) {
 	/*if (x == 0 && y == 0) {
@@ -59,16 +23,7 @@ float absoluteAngle(float x, float y) {
 	return angleInDegrees;
 }
 
-inline float crossProduct(float p0x, float p0y, float p1x, float p1y, float p2x, float p2y) {
-	//avoiding arrays because of the small overhead and chatgpt says that for floats it is more efficient to pass 
-	// the value instead of the reference bc of the overhead, good luck benchmarking
-	float v01x = p1x - p0x;
-	float v01y = p1y - p0y;
-	float v12x = p2x - p1x;
-	float v12y = p2y - p1y;
 
-	return v01x * v12y - v01y * v12x;
-}
 
 //A ver, donde necesitas esto? Porque si no necesitas estrictamente angulos hazlo con el producto vectorial
 bool isConcave(float angle1, float angle2) {
@@ -95,47 +50,7 @@ bool checkBarycentric(float x, float y, float x1, float y1, float x2, float y2, 
 		return false;
 
 }
-//bool checkBarycentric(float x, float y, float x1, float y1, float x2, float y2, float x3, float y3) {
-//	float epsilon = 1e-2; // Tolerance value, can be adjusted based on your precision requirements
-//
-//	float denominator = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
-//	if (std::abs(denominator) < epsilon) {
-//		return false; // The triangle is degenerate (points are collinear or too close)
-//	}
-//
-//	float alpha = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / denominator;
-//	float beta = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / denominator;
-//	float gamma = 1 - alpha - beta;
-//
-//	return (alpha >= -epsilon && alpha <= 1 + epsilon) &&
-//		(beta >= -epsilon && beta <= 1 + epsilon) &&
-//		(gamma >= -epsilon && gamma <= 1 + epsilon);
-//}
 
-//bool checkBarycentric(float x, float y, float x1, float y1, float x2, float y2, float x3, float y3) {		//suposed to be faster but not checked
-//	// Inline cross product calculation and check for each edge
-//	// Edge 1 (v0: x1->x2, y1->y2)
-//	float c1 = (x2 - x1) * (y - y1) - (y2 - y1) * (x - x1);
-//	// Edge 2 (v1: x1->x3, y1->y3)
-//	float c2 = (x3 - x1) * (y - y1) - (y3 - y1) * (x - x1);
-//	// If c1 and c2 are not on the same side, return false early
-//	if ((c1 < 0 || c2 < 0) && (c1 > 0 || c2 > 0)) return false;
-//	// Edge 3 (v2: x3->x2, y3->y2)
-//	float c3 = (x2 - x3) * (y - y3) - (y2 - y3) * (x - x3);
-//	// Final check
-//	return (c1 >= 0 && c2 >= 0 && c3 >= 0) || (c1 <= 0 && c2 <= 0 && c3 <= 0);
-//}
-
-
-//void hop(float& xpos, float& ypos) {
-//
-//	if (abs(xpos - positions[0]) <= 20 && abs(ypos - positions[1]) <= 20) {
-//		xpos = positions[0];
-//		ypos = positions[1];
-//	}
-//	positions[positions.size() - 2] = xpos;
-//	positions.back() = ypos;
-//
 //}
 
 
@@ -237,13 +152,6 @@ int binarySearchX(float& indexToFind, vector<float>&range) {
 	return output;
 }
 
-void timeMeThis()
-{
-	high_resolution_clock::time_point time0 = high_resolution_clock::now();
-	high_resolution_clock::time_point time1 = high_resolution_clock::now();
-	float deltaTime = duration_cast<duration<float>>(time1 - time0).count();
-	cout << "deltaTime: " << deltaTime << " s" << endl;
-}
 
 
 	

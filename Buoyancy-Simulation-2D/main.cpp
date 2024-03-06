@@ -34,14 +34,10 @@ struct AllPointers {
 
 
 
-//Preincremented for loops?
 //que pasa con los const macho
-//un único lines?
-//switch statements are much faster than if statements
 //Hola, vas a tener que testear de una vez si insert es comparable a emplace_back
 //Mirar triangulation hierarchy para un locate más rápido O(sqrtN) en vez de O(n) https://doc.cgal.org/latest/Triangulation_2/index.html#Section_2D_Triangulations_Hierarchy
-
-//cambiar i++ a ++i, date una vuelta por todos lados buscando ++ y cambiandolos
+//cambiar i++ a ++i en for loops, date una vuelta por todos lados buscando ++ y cambiandolos
 
 
 //Para parar wetted surface? Vaya nombre de mierda
@@ -72,7 +68,7 @@ std::vector<p> convertPositions(const std::vector<float>& modelPositions) {
 
 
 
-
+//deltatime se calcula con el tiempo del frame anterior y el anterior a ese
 
 int main(void)
 {
@@ -100,21 +96,15 @@ int main(void)
 
 	Polygons polygon;
 	model = convertPositions(modelPositions);
-	//model = { {300,600},{300,300},{450,300}, {600,300},{600,600},{300,600} };
 
 	printv2(model);
 
-	//switchOnePosition(model);
-	//switchOnePosition(model);
-	//switchOnePosition(model);
 
-	//printv2(model);
 
-	//bcontainer inicial: 8,9
+
 
 	if (binariesManager.currentProgramType == binariesManager.RUNNING)
 	{
-
 
 	}
 	else
@@ -123,16 +113,14 @@ int main(void)
 	}
 
 
-	//polygon.draw();
 
 
 
 
 
 
-	//Polygons background;
-	//background.addSet({ 0,0,windowWidth,0,windowWidth,windowHeight,0,windowHeight,0,0 }); //is outside the while because is static
-
+	Polygons background;
+	background.addSet({ { 0,0 }, {windowWidth, 0}, {windowWidth, windowHeight}, {0, windowHeight}, {0, 0}});
 
 
 
@@ -142,7 +130,7 @@ int main(void)
 
 	Circles circlesFourier(2);
 	Circles circlesWS(5);
-	Circles circles0(3);
+	Circles circles0(2);
 	Circles circlesDEBUG(5);
 
 	WettedSurface wettedSurface(polygon, fourier);
@@ -192,7 +180,6 @@ int main(void)
 	Shader shader("resources/shaders/shader1.shader");
 	shader.Bind();
 
-	//shader.SetUniform4f("u_Color", 0.8f, 0.3f, 0.8f, 1.0f);
 
 
 	glm::mat4 proj = glm::ortho(0.0f, windowWidth, 0.0f, windowHeight, -1.0f, 1.0f);
@@ -251,15 +238,14 @@ int main(void)
 
 
 
-		if (continueRunning)
+		if (isRunning)
 		{
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glUniform1i(renderTypeLocation, 0); //0 for geometry
 
 
-			//glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0);
-			//background.draw();
+			
 
 
 
@@ -300,12 +286,9 @@ int main(void)
 
 
 			polygon.clear();
-			polygon.lines.clear();
-			polygon.lines.addSet(model);
+			polygon.addSet(model);
 
 
-			polygon.interm();
-			polygon.sweepTriangulation();
 
 			fourier.createPositions();
 			wettedSurface.calculatePositions();
@@ -317,6 +300,8 @@ int main(void)
 			//circlesDEBUG.addSet({ { 413.793,275.415 } });
 
 
+			glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0);
+			//background.draw();
 
 			glUniform4f(colorLocation, 195.0f / 255.0f, 130.0f / 255.0f, 49.0f / 255.0f, 1.0f);
 			polygon.lines.draw();
@@ -350,7 +335,7 @@ int main(void)
 
 		}
 
-		//continueRunning = false;
+		//isRunning = false;
 
 
 		deltaTime = 0.0167629;
