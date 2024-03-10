@@ -295,6 +295,7 @@
     <ClInclude Include="Sources\Fourier.hpp" />
     <ClInclude Include="Sources\Lines.hpp" />
     <ClInclude Include="Sources\Polygons.hpp" />
+    <ClInclude Include="Sources\Time.hpp" />
     <ClInclude Include="Sources\Wetted_Surface.hpp" />
     <ClInclude Include="Sources\shader.h" />
     <ClInclude Include="Sources\Text.h" />

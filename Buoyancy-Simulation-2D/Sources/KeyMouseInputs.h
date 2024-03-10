@@ -56,7 +56,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 			break;
 
 		case GLFW_KEY_C:
-			if (counterI < polygon->Points.size()) {
+			if (counterI < polygon->sPoints.size()) {
 				polygon->sweepTriangulation();
 				counterI++;
 			}
@@ -67,7 +67,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 			break;
 
 		case GLFW_KEY_SPACE:
-			for (size_t i = 0; i < polygon->Points.size(); ++i) {
+			for (size_t i = 0; i < polygon->sPoints.size(); ++i) {
 				polygon->sweepTriangulation();
 			}
 			printv2(polygon->positions);

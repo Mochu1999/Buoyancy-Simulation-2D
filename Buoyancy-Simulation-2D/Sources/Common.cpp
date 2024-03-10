@@ -29,7 +29,17 @@ using namespace std::chrono;
 
 
 
-
+inline float fastInverseSqrt(float number) {
+	long i;
+	float x2, y;
+	x2 = number * 0.5F;
+	y = number;
+	std::memcpy(&i, &y, sizeof(i)); // Safer type-punning
+	i = 0x5f3759df - (i >> 1);
+	std::memcpy(&y, &i, sizeof(y)); // Safer type-punning
+	y = y * (1.5f - (x2 * y * y));
+	return y;
+}
 
 template<typename T>
 struct vec2 {
@@ -39,7 +49,7 @@ struct vec2 {
 
 	vec2(T x, T y) : x(x), y(y) {} //normal constructor
 
-	// operator overloads
+	// Operator overloads for comparison
 	bool operator == (const vec2& other) const {
 		return x == other.x && y == other.y;
 	}
@@ -47,10 +57,67 @@ struct vec2 {
 	bool operator!=(const vec2& other) const {
 		return !(*this == other);
 	}
+
+	// Operator overloads for arithmetic
+	vec2 operator + (const vec2& other) const {
+		return { x + other.x, y + other.y };
+	}
+
+	vec2 operator - (const vec2& other) const {
+		return { x - other.x, y - other.y };
+	}
+
+	vec2 operator *(T scalar) const {
+		return { x * scalar, y * scalar };
+	}
+
+	vec2 operator /(T scalar) const {
+		return { x / scalar, y / scalar };
+	}
+
+	// Compound assignment operators
+	vec2& operator += (const vec2& other) {
+		x += other.x;
+		y += other.y;
+		return *this;
+	}
+
+	vec2& operator -= (const vec2& other) {
+		x -= other.x;
+		y -= other.y;
+		return *this;
+	}
+
+	vec2& operator *= (T scalar) {
+		x *= scalar;
+		y *= scalar;
+		return *this;
+	}
+
+	vec2& operator /= (T scalar) {
+		x /= scalar;
+		y /= scalar;
+		return *this;
+	}
 };
 
 using p = vec2<float>;
 using ui2 = vec2<unsigned int>;
+
+
+//sum of products, is also equal to v1*v2*cos(theta)
+template<typename T>
+T dot2(const vec2<T>& v1, const vec2<T>& v2) {
+	return v1.x * v2.x + v1.y * v2.y;
+}
+
+
+template<typename T>
+T cross2(const vec2<T>& v1, const vec2<T>& v2) {
+	return v1.x * v2.y - v1.y * v2.x;
+}
+
+
 
 
 
@@ -88,7 +155,7 @@ inline float windowWidth = 1920;
 
 inline bool isRunning = true;
 
-
+inline float inv36 = 1.0f / 36;
 
 
 

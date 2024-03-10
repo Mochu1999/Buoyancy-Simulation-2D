@@ -20,7 +20,6 @@ void Polygons::genBuffers() {
 }
 
 void Polygons::draw() {
-	lines.draw();
 
 
 	glBindVertexArray(vertexArray);
@@ -67,36 +66,43 @@ Polygons::~Polygons() {
 
 //triangulates with a sweep algorithm from left to right. It assigns to each point an state and creates and triangulates sequentially chains
 void  Polygons::sweepTriangulation(/*int i*/) {
-	///It can produce triangles of 0 area (collinear points), it may be important in the future
+	///It can produce triangles of 0 area (collinear sPoints), it may be important in the future
 
 	isBufferUpdated = true;
+
+	std::vector<unsigned int> edges;
+	std::unordered_set<int> elementsToAvoid;
+	std::vector<unsigned int> sortedIndices;
+
+	sPoints.clear();
+	chain.clear();
 	
 	indices.clear();
 
 
 	for (unsigned int i = 0; i < positions.size() - 1; i++)
 	{
-		Points.insert(Points.end(), { positions[i],i });
+		sPoints.insert(sPoints.end(), { positions[i],i });
 	}
 
 
-	sortedIndices.resize(Points.size());
+	sortedIndices.resize(sPoints.size());
 	std::iota(sortedIndices.begin(), sortedIndices.end(), 0); //initializing it as 0,1,2,3...
 
 	//I could have only used [this] but I would be capturing the entire class
-	std::sort(sortedIndices.begin(), sortedIndices.end(), [&Points = this->Points](unsigned int i1, unsigned int i2)
+	std::sort(sortedIndices.begin(), sortedIndices.end(), [&sPoints = this->sPoints](unsigned int i1, unsigned int i2)
 		{
-			if (Points[i1].point.x == Points[i2].point.x)
-				return Points[i1].point.y > Points[i2].point.y;
-			return Points[i1].point.x < Points[i2].point.x;
+			if (sPoints[i1].point.x == sPoints[i2].point.x)
+				return sPoints[i1].point.y > sPoints[i2].point.y;
+			return sPoints[i1].point.x < sPoints[i2].point.x;
 		});
 
 
 
 
 
-	//cout << "Points:" << endl;
-	//for (const auto& entry : Points) {
+	//cout << "sPoints:" << endl;
+	//for (const auto& entry : sPoints) {
 	//	cout << entry.index << " " << entry.point.x << " " << entry.point.y << endl;
 	//}std::cout << std::endl;
 
@@ -114,22 +120,22 @@ void  Polygons::sweepTriangulation(/*int i*/) {
 		{
 
 
-			int size = Points.size();
+			int size = sPoints.size();
 
 			//b is the current point. a is the one that is before b and c the one that is after in cc
-			SuperPoints b = Points[currentIndex];
-			SuperPoints a;
-			SuperPoints c;
+			StructuredPoints b = sPoints[currentIndex];
+			StructuredPoints a;
+			StructuredPoints c;
 
-			//it stores, apart from b, the points are collinear with b for the same x. All are processed at the same iteration
+			//it stores, apart from b, the sPoints are collinear with b for the same x. All are processed at the same iteration
 			std::deque<unsigned int> bContainer;
 
 
-			int bcounter = 1; //a and c will usually be 1 unit away from b but could be farther if there are more colliner points
+			int bcounter = 1; //a and c will usually be 1 unit away from b but could be farther if there are more colliner sPoints
 			while (true)
 			{
-				//a = Points[(currentIndex - bcounter) % size];    //for i=0, a=size-1 (.back), size-1 % size = size-1
-				a = Points[(currentIndex - bcounter + size) % size]; //It had to be modified bc C++ doesn't deal with negative modulus
+				//a = sPoints[(currentIndex - bcounter) % size];    //for i=0, a=size-1 (.back), size-1 % size = size-1
+				a = sPoints[(currentIndex - bcounter + size) % size]; //It had to be modified bc C++ doesn't deal with negative modulus
 
 				if (a.point.x == b.point.x)
 				{
@@ -145,7 +151,7 @@ void  Polygons::sweepTriangulation(/*int i*/) {
 			bcounter = 1;
 			while (true)
 			{
-				c = Points[(currentIndex + bcounter) % size];        //for i=size-1 (.back), size % size = 0
+				c = sPoints[(currentIndex + bcounter) % size];        //for i=size-1 (.back), size % size = 0
 
 				if (c.point.x == b.point.x)
 				{
@@ -188,9 +194,9 @@ void  Polygons::sweepTriangulation(/*int i*/) {
 				{
 					//The top check is taking the top point of the chain linked with its edge and the bottom check takes the bottom point of
 					//the chain linked with its edge
-					float topCheck = isRightOfLine(Points[chain[e / 2].front()].point, Points[edges[e]].point, Points[currentIndex].point);
+					float topCheck = isRightOfLine(sPoints[chain[e / 2].front()].point, sPoints[edges[e]].point, sPoints[currentIndex].point);
 
-					float bottomCheck = isRightOfLine(Points[chain[e / 2].back()].point, Points[edges[e + 1]].point, Points[currentIndex].point);
+					float bottomCheck = isRightOfLine(sPoints[chain[e / 2].back()].point, sPoints[edges[e + 1]].point, sPoints[currentIndex].point);
 
 
 					//above, proper in e
@@ -251,9 +257,9 @@ void  Polygons::sweepTriangulation(/*int i*/) {
 					int maxValue = numeric_limits<int>::min();
 					for (int i = 0; i < chain[nextChain].size(); i++) //you end with the rightmost point
 					{
-						if (Points[chain[nextChain][i]].point.x >= maxValue)
+						if (sPoints[chain[nextChain][i]].point.x >= maxValue)
 						{
-							maxValue = Points[chain[nextChain][i]].point.x;
+							maxValue = sPoints[chain[nextChain][i]].point.x;
 							breakingPoint = i;
 						}
 					}
@@ -319,7 +325,7 @@ void  Polygons::sweepTriangulation(/*int i*/) {
 
 						trChainBack(currentChain);
 					}
-					//Deliverately ignoring possible points between bContainer.front and back
+					//Deliverately ignoring possible sPoints between bContainer.front and back
 					chain[currentChain].emplace_back(bContainer.back());
 
 
@@ -402,7 +408,7 @@ void  Polygons::sweepTriangulation(/*int i*/) {
 						//It adds the collinear but only triangulates if the collinear is bellow b
 						chain[currentChain].emplace_front(bContainer.front());
 
-						if (Points[bContainer.front()].point.y < Points[bContainer.back()].point.y)
+						if (sPoints[bContainer.front()].point.y < sPoints[bContainer.back()].point.y)
 							trChainFront(currentChain);
 					}
 				}
@@ -418,7 +424,7 @@ void  Polygons::sweepTriangulation(/*int i*/) {
 						//It adds the collinear but only triangulates if the collinear is above b
 						chain[currentChain].emplace_back(bContainer.back());
 
-						if (Points[bContainer.front()].point.y < Points[bContainer.back()].point.y)
+						if (sPoints[bContainer.front()].point.y < sPoints[bContainer.back()].point.y)
 							trChainBack(currentChain);
 					}
 				}
@@ -463,9 +469,9 @@ void Polygons::trChainBack(const unsigned int& currentChain) {
 
 	for (int k = chain[currentChain].size() - 3; k >= 0; k--)
 	{
-		if (crossProduct(Points[backIndex].point,
-			Points[PenultimateIndex].point,
-			Points[chain[currentChain][k]].point) <= 0)
+		if (crossProduct(sPoints[backIndex].point,
+			sPoints[PenultimateIndex].point,
+			sPoints[chain[currentChain][k]].point) <= 0)
 			//<0 because order is clockwise (result still cc), =0 bc the area can be 0 in collinear and need to erase
 		{
 			indices.insert(indices.end(), { chain[currentChain][k],PenultimateIndex,backIndex });
@@ -492,9 +498,9 @@ void Polygons::trChainFront(const unsigned int& currentChain) {
 
 		for (size_t k = 2; k < chain[currentChain].size(); k++)
 		{
-			if (crossProduct(Points[frontIndex].point,
-				Points[secondIndex].point,
-				Points[chain[currentChain][k]].point) > 0)
+			if (crossProduct(sPoints[frontIndex].point,
+				sPoints[secondIndex].point,
+				sPoints[chain[currentChain][k]].point) > 0)
 			{
 				indices.insert(indices.end()
 					, { frontIndex,secondIndex,chain[currentChain][k] });
@@ -513,3 +519,49 @@ void Polygons::trChainFront(const unsigned int& currentChain) {
 
 	}
 }
+
+
+void Polygons::ConvexTriangulation() {
+
+	for (unsigned int i = 1; i < positions.size() - 2; i++) {
+		indices.insert(indices.end(), { 0, i, i + 1 });
+	}
+
+}
+
+void Polygons::addSet(vector<p> items) {
+
+	isBufferUpdated = true;
+	lines.addSet(items);
+	model = positions;
+
+	sweepTriangulation();
+
+	
+
+
+
+
+	areaCalculation();
+
+	cout << "area: " << area << endl;
+
+	/*if (area < 0) {
+		for (int i = 0; i < positions.size() / 2; i += 2) {
+			std::swap(positions[i], positions[positions.size() - 2 - i]);
+			std::swap(positions[i + 1], positions[positions.size() - 1 - i]);
+		}
+		areaCalculation();
+	}*/
+
+	centroidCalculation();
+	printp(centroid);
+	polarAreaMomentOfInertia();
+}
+
+
+void Polygons::clear() {
+
+	indices.clear();
+}
+

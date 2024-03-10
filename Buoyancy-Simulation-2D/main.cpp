@@ -24,6 +24,7 @@
 #include "Data.hpp"
 #include "BinariesManager.h"
 
+#include "Time.hpp"
 
 
 
@@ -97,6 +98,8 @@ int main(void)
 	Polygons polygon;
 	model = convertPositions(modelPositions);
 
+	model = { {0,400},{200,400},{200,600},{0,600},{0,400} };
+
 	printv2(model);
 
 
@@ -107,20 +110,19 @@ int main(void)
 	{
 
 	}
-	else
+	else 
 	{
 		polygon.lines.cadMode = true;
 	}
 
 
-
-
+	polygon.addSet(model);
 
 
 
 
 	Polygons background;
-	background.addSet({ { 0,0 }, {windowWidth, 0}, {windowWidth, windowHeight}, {0, windowHeight}, {0, 0}});
+	//background.addSet({ { 0,0 }, {windowWidth, 0}, {windowWidth, windowHeight}, {0, windowHeight}, {0, 0}});
 
 
 
@@ -197,8 +199,8 @@ int main(void)
 
 
 
-	//make a struct for time
-	float elapsedTimeFloat = 0, fps = 0;
+	
+	
 
 	//Es un coñazo que esto dependa todo el rato de wettersurface o lo que sea, haz que el constructor solo meta colorLocation, renderTypeLocation
 	// y lo demás que se meta con funciones a parte
@@ -208,34 +210,16 @@ int main(void)
 
 
 
-	high_resolution_clock::time_point lastFrameTime = high_resolution_clock::now();	//overkill, depends on the pc clock and it might be nanoseconds
-	high_resolution_clock::time_point startElapsedTime = lastFrameTime;
-	float frameCount = 0;
-	float timeAccumulator = 0.0f;
+	Time time;
 	while (!glfwWindowShouldClose(window))
 	{
+		time.update();
+
+
+
+
 		//system("cls");
 		getCursorPos(window);
-
-
-		high_resolution_clock::time_point currentFrameTime = high_resolution_clock::now();
-
-		elapsedTimeFloat = duration_cast<duration<float>>(currentFrameTime - startElapsedTime).count();
-		//cout << elapsedTimeFloat << endl;
-
-		float deltaTime = duration_cast<duration<float>>(currentFrameTime - lastFrameTime).count(); // Time elapsed in seconds between while's iterations //converting from clock units to seconds
-		lastFrameTime = currentFrameTime;
-
-		frameCount++;
-		timeAccumulator += deltaTime;
-
-		if (timeAccumulator >= 1.0f) {
-			fps = frameCount / timeAccumulator;
-			frameCount = 0;
-			timeAccumulator -= 1.0f;
-		}
-
-
 
 
 		if (isRunning)
@@ -245,89 +229,52 @@ int main(void)
 			glUniform1i(renderTypeLocation, 0); //0 for geometry
 
 
+
+
 			
 
 
 
-
-
-
-
-			//fourier.createWavePositions();
 			//fourier.createPositions();
-			//
-			//
-			//high_resolution_clock::time_point currentTime;
-			//high_resolution_clock::time_point lastTime;
-			//float elapsedTime;
-			//for (size_t i = 0; i < static_cast<size_t>(1); i++)
-			//{
-			//	wettedSurface.calculatePositions();
-			//}
-			//currentTime = high_resolution_clock::now();
-			//for (size_t i = 0; i < static_cast<size_t>(1); i++)
-			//{
-			//	wettedSurface.createWettedPositions();
-			//}
-			//lastTime = high_resolution_clock::now();
-			//elapsedTime = duration_cast<duration<float>>(lastTime - currentTime).count();
-			//cout << "old format, time: " << elapsedTime << endl;
-			//currentTime = high_resolution_clock::now();
-			//for (size_t i = 0; i < static_cast<size_t>(1); i++)
-			//{
-			//	wettedSurface.calculatePositions();
-			//}
-			//lastTime = high_resolution_clock::now();
-			//elapsedTime = duration_cast<duration<float>>(lastTime - currentTime).count();
-			//cout << "new format, time: " << elapsedTime << endl;
+			//wettedSurface.calculatePositions();
 
 
-
-
-
-			polygon.clear();
-			polygon.addSet(model);
-
-
-
-			fourier.createPositions();
-			wettedSurface.calculatePositions();
-
-
-			circlesWS.addSet(wettedSurface.positions);
-			circlesFourier.addSet(fourier.lines.positions);
-			circles0.addSet({ polygon.positions[0] });
-			//circlesDEBUG.addSet({ { 413.793,275.415 } });
+			//circlesWS.addSet(wettedSurface.positions);
+			//circlesFourier.addSet(fourier.lines.positions);
+			//circles0.addSet({ polygon.positions[0] });
+			////circlesDEBUG.addSet({ { 413.793,275.415 } });
 
 
 			glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0);
 			//background.draw();
 
 			glUniform4f(colorLocation, 195.0f / 255.0f, 130.0f / 255.0f, 49.0f / 255.0f, 1.0f);
-			polygon.lines.draw();
+			//polygon.lines.draw();
 			polygon.draw();
 
 			glUniform4f(colorLocation, 115.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 1.0f);
-			wettedSurface.draw();
+			//wettedSurface.draw();
 
 			glUniform4f(colorLocation, 40.0f / 255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
-			fourier.draw();
+			//fourier.draw();
 
-			glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-			circlesWS.draw();
+			//glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+			//circlesWS.draw();
 
-			glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-			circlesFourier.draw();
+			//glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
+			//circlesFourier.draw();
 
-			glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
-			circles0.draw();
+			//glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
+			//circles0.draw();
 
 			glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
 			//circlesDEBUG.draw();
 
+			polygon.updateTranslation(p{ 10,0 }*deltaTime);
+			polygon.translate();
 
-
-
+			printv2(polygon.model);
+			printv2(polygon.positions);
 
 
 
@@ -338,11 +285,11 @@ int main(void)
 		//isRunning = false;
 
 
-		deltaTime = 0.0167629;
+		//deltaTime = 0.0167629;
 
 		{
-			//polygon.getDownwardForce();
-			//wettedSurface.getUpwardForce();
+			polygon.getDownwardForce();
+			wettedSurface.getUpwardForce();
 
 			//float totalForce[2];
 			//totalForce[0] = wettedSurface.force[0] + polygon.force[0];

@@ -109,8 +109,11 @@ struct Lines {
 
 	//It doesn't reset indices each time, items are expected to be full models, can't be a single pair
 	void addSet(const vector<p>& items) {
-		positions.reserve(items.size() + positions.size());
-		indices.reserve(items.size() * 2 + indices.size());
+
+		positions.clear(); indices.clear();
+		
+		positions.reserve(items.size());
+		indices.reserve(items.size() * 2);
 
 		positions.insert(positions.end(), items.begin(), items.end());
 
@@ -125,7 +128,7 @@ struct Lines {
 		isBufferUpdated = true;
 	}
 
-	void batchAddSet(const vector<p>& items,const vector<unsigned int>& batchIndices) {
+	/*void batchAddSet(const vector<p>& items,const vector<unsigned int>& batchIndices) {
 		positions.reserve(items.size() + positions.size());
 		indices.reserve(items.size() * 2 + indices.size());
 
@@ -157,7 +160,7 @@ struct Lines {
 			starting++;
 		}
 		isBufferUpdated = true;
-	}
+	}*/
 
 //está sin terminar
 	void cadAddSet(const p& item) {
