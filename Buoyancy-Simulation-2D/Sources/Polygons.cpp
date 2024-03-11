@@ -544,7 +544,6 @@ void Polygons::addSet(vector<p> items) {
 
 	areaCalculation();
 
-	cout << "area: " << area << endl;
 
 	/*if (area < 0) {
 		for (int i = 0; i < positions.size() / 2; i += 2) {
@@ -555,7 +554,6 @@ void Polygons::addSet(vector<p> items) {
 	}*/
 
 	centroidCalculation();
-	printp(centroid);
 	polarAreaMomentOfInertia();
 }
 

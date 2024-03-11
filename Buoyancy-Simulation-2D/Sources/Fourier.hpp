@@ -10,7 +10,7 @@ struct Fourier {
 
 	vector<p> intermVector;
 
-	int xn = 30;
+	int xn = 2;
 	int segments = xn - 1;
 	float endXPosition = 1000;
 	float interval = (endXPosition - 0) / segments;
@@ -18,7 +18,7 @@ struct Fourier {
 
 	float period = 300;
 	float frecuency = 2 * PI / period;
-	float amplitude = 250;
+	float amplitude = 0;
 	float offset = 400;
 	float phase = 1.28;
 	float phaseSpeed = 0.01;

@@ -16,7 +16,7 @@ struct Polygons {
 	vector<p>& positions = lines.positions;
 	vector <unsigned int> indices; //triangle indices, do not mistake with the lines indices
 
-
+	vector<p> oldPositions;
 
 	unsigned int vertexBuffer;
 	unsigned int vertexArray;
@@ -90,7 +90,8 @@ struct Polygons {
 	p acceleration; //m/s^2
 	float totalPolarInertia; //centroids
 
-	p totalTranslation;
+	p newTotalTranslation;
+	p oldTotalTranslation = { 0,1 };
 
 	/*float angle = 0;
 	float oldAngle = 0;*/
@@ -100,17 +101,23 @@ struct Polygons {
 		force.y = -9.81 * mass;
 	}
 
+	void getUpwardForce() {
+		mass = area * 1025; //mass of the displaced water
+		force.y = 9.81 * mass; 
+	}
+
 	void updateTranslation(p updateValue) {
-		totalTranslation += updateValue;
+		newTotalTranslation += updateValue;
 	}
 
 	//LINES no está cambiando, no sé si hará falta
 	void translate() {
-		for (int i = 0; i < model.size();i++) {
-			positions[i] = model[i] + totalTranslation;
+		for (int i = 0; i < model.size(); i++) {
+			positions[i] = model[i] + newTotalTranslation;
 		}
 		isBufferUpdated = true;
 	}
+
 
 	/*void rotate(float centerX, float centerY, float angle) {
 
@@ -156,7 +163,8 @@ struct Polygons {
 	//final inertias https://www.efunda.com/math/areas/triangle.cfm
 	//calculator https://calcresource.com/moment-of-inertia-rect.html
 	//breaks the polygon into triangles.Calculates the inertia of each and adds to the overall totalPolarInertia
-	void polarAreaMomentOfInertia() {
+	//Calculated with respect of the model. Should not change
+	void polarAreaMomentOfInertia() { 
 
 		totalPolarInertia = 0;
 
@@ -165,17 +173,17 @@ struct Polygons {
 		for (int i = 0; i < indices.size(); i += 3) {
 
 			//centroid tr= (x1+x2+x3)/3
-			centroidTriangle = (p{ positions[indices[i]].x + positions[indices[i + 1]].x + positions[indices[i + 2]].x,
-								  positions[indices[i]].y + positions[indices[i + 1]].y + positions[indices[i + 2]].y } / 3) * 1e-3;
+			centroidTriangle = (p{ model[indices[i]].x + model[indices[i + 1]].x + model[indices[i + 2]].x,
+								  model[indices[i]].y + model[indices[i + 1]].y + model[indices[i + 2]].y } / 3) * 1e-3;
 
 
 
 
-			p v1 = { positions[indices[i + 1]].x - positions[indices[i]].x,
-					 positions[indices[i + 1]].y - positions[indices[i]].y };
+			p v1 = { model[indices[i + 1]].x - model[indices[i]].x,
+					 model[indices[i + 1]].y - model[indices[i]].y };
 
-			p v2 = { positions[indices[i + 2]].x - positions[indices[i]].x,
-					 positions[indices[i + 2]].y - positions[indices[i]].y };
+			p v2 = { model[indices[i + 2]].x - model[indices[i]].x,
+					 model[indices[i + 2]].y - model[indices[i]].y };
 
 			//magnitude  of v1, base
 			float b = sqrt(dot2(v1,v1));

@@ -98,7 +98,7 @@ int main(void)
 	Polygons polygon;
 	model = convertPositions(modelPositions);
 
-	model = { {0,400},{200,400},{200,600},{0,600},{0,400} };
+	//model = { {0,400},{200,400},{200,600},{0,600},{0,400} };
 
 	printv2(model);
 
@@ -235,51 +235,129 @@ int main(void)
 
 
 
-			//fourier.createPositions();
-			//wettedSurface.calculatePositions();
+			fourier.createPositions();
+			wettedSurface.calculatePositions();
 
 
-			//circlesWS.addSet(wettedSurface.positions);
-			//circlesFourier.addSet(fourier.lines.positions);
-			//circles0.addSet({ polygon.positions[0] });
-			////circlesDEBUG.addSet({ { 413.793,275.415 } });
+			circlesWS.addSet(wettedSurface.positions);
+			circlesFourier.addSet(fourier.lines.positions);
+			circles0.addSet({ polygon.positions[0] });
+			//circlesDEBUG.addSet({ { 413.793,275.415 } });
 
 
 			glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0);
-			//background.draw();
+			background.draw();
 
 			glUniform4f(colorLocation, 195.0f / 255.0f, 130.0f / 255.0f, 49.0f / 255.0f, 1.0f);
 			//polygon.lines.draw();
 			polygon.draw();
 
 			glUniform4f(colorLocation, 115.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 1.0f);
-			//wettedSurface.draw();
+			wettedSurface.draw();
 
 			glUniform4f(colorLocation, 40.0f / 255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
-			//fourier.draw();
+			fourier.draw();
 
-			//glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-			//circlesWS.draw();
+			glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+			circlesWS.draw();
 
-			//glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-			//circlesFourier.draw();
+			glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
+			circlesFourier.draw();
 
-			//glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
-			//circles0.draw();
+			glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
+			circles0.draw();
 
 			glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
 			//circlesDEBUG.draw();
 
-			polygon.updateTranslation(p{ 10,0 }*deltaTime);
+			/*polygon.updateTranslation(p{ 10,0 }*deltaTime);
 			polygon.translate();
 
 			printv2(polygon.model);
-			printv2(polygon.positions);
+			printv2(polygon.positions);*/
+
+
+			deltaTime = 0.0167629;
+
+
+
+
+			polygon.getDownwardForce();
+			for (int i = 0; i < wettedSurface.outputPolygon.size(); i++)
+			{
+				wettedSurface.outputPolygon[i].getUpwardForce();
+				polygon.force += wettedSurface.outputPolygon[i].force;
+			}
+
+			
+
+			polygon.acceleration = polygon.force / polygon.mass;
+
+			float deltaTimeSq = deltaTime * deltaTime;
+
+			p interm = polygon.newTotalTranslation * 2 - polygon.oldTotalTranslation + polygon.acceleration * deltaTimeSq;
+			polygon.oldTotalTranslation = polygon.newTotalTranslation;
+			polygon.newTotalTranslation = interm;
+
+			printp(polygon.force);
+			printp(interm);
+
+			polygon.translate();
 
 
 
 
 
+
+
+
+			//p totalForce;
+			//polygon.getDownwardForce();
+			//totalForce += polygon.force;
+
+			//for (int i = 0; i < wettedSurface.outputPolygon.size(); i++)
+			//{
+			//	wettedSurface.outputPolygon[i].getUpwardForce();
+			//	//printp(wettedSurface.outputPolygon[i].force);
+			//	totalForce += wettedSurface.outputPolygon[i].force;
+			//}
+			//
+
+			//polygon.acceleration = totalForce / polygon.mass;
+
+
+			//float deltaTimeSq = deltaTime * deltaTime;
+			//
+			//p newPositions;
+			//for (int i = 0; i < polygon.positions.size(); i ++) 
+			//{
+			//	cout << "Hola?" << endl;
+			//	newPositions =  polygon.positions[i]*2 - polygon.oldPositions[i] + polygon.acceleration * deltaTimeSq;
+			//	polygon.oldPositions[i] = polygon.positions[i];
+			//	polygon.positions[i] = newPositions;
+
+			//}
+			//cout << "Hola?" << endl;
+
+			
+			////should be measured from the CG//////////////////////////////////////////////
+			//polygon.velocity[0] = (polygon.positions[0] - polygon.oldPositions[0]) / deltaTime;
+			//polygon.velocity[1] = (polygon.positions[1] - polygon.oldPositions[1]) / deltaTime;// +polygon.acceleration[1] * deltaTime;	//??? which one it is
+
+
+			//float torque = (wettedSurface.centroid[1] - polygon.centroid[1]) * wettedSurface.force[0] -
+			//	(wettedSurface.centroid[0] - polygon.centroid[0]) * wettedSurface.force[1]; //check
+			//
+			////cout << torque << endl;
+
+			//float angularAcceleration = torque / polygon.totalPolarInertia;
+
+			//float newAngle = 2 * polygon.angle - polygon.oldAngle + 0.5f * angularAcceleration * deltaTimeSq;
+
+			//polygon.oldAngle = polygon.angle;
+			//polygon.angle = newAngle;
+
+			//polygon.rotate(polygon.centroid[0]*1e3+ newPositionX, polygon.centroid[1] * 1e3+ newPositionY, 0.01);
 		}
 
 		//isRunning = false;
@@ -288,8 +366,8 @@ int main(void)
 		//deltaTime = 0.0167629;
 
 		{
-			polygon.getDownwardForce();
-			wettedSurface.getUpwardForce();
+			//polygon.getDownwardForce();
+			//wettedSurface.getUpwardForce();
 
 			//float totalForce[2];
 			//totalForce[0] = wettedSurface.force[0] + polygon.force[0];
@@ -332,7 +410,6 @@ int main(void)
 			//polygon.oldAngle = polygon.angle;
 			//polygon.angle = newAngle;
 
-			////debug centroid position with arrows ///////////////
 			//polygon.rotate(polygon.centroid[0]*1e3+ newPositionX, polygon.centroid[1] * 1e3+ newPositionY, 0.01);
 
 			//data.draw();

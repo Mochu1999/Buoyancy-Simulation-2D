@@ -156,9 +156,8 @@ void WettedSurface::calculateIntersections() {
 
 
 
-////////Tio, donde en sweep triangulation creabamos una struct para guardar las distancias, aquí lo estoy haciendo con iteradores, son equivalentes
-// ninguno es mejor, yo lo dejaba en iteradores
-// 
+//In sweepTriangulation I use structuredPoints, here I use iterators and distances. They are doing the same
+
 //It links interesection points in pairs, jumping from a first one into a second one till all surfaces are closed
 void WettedSurface::calculatePositions() {
 	//cout << "inputPolygon.positions.size() " << inputPolygon.positions.size() << endl;
@@ -297,6 +296,19 @@ void WettedSurface::calculatePositions() {
 	}
 	else //no intersections, we will check if a random index is under or over the water
 	{
+		int firstIndex = static_cast<int>((polygonPositions[0].x - fourierPositions[0].x) * fourier.intervalInverse);
+
+		if (isRightOfLine(fourierPositions[firstIndex], fourierPositions[firstIndex + 1], polygonPositions[0]) < 0)
+		{
+			positions.reserve(polygonPositions.size());
+			positions = polygonPositions;
+			batchIndices.insert(batchIndices.end(),{ 0,static_cast<unsigned int>(polygonPositions.size())});
+		}
+		cout << "Socorro "<< (isRightOfLine(fourierPositions[firstIndex], fourierPositions[firstIndex + 1], polygonPositions[0]) < 0) << endl;
+
+
+		
+		
 		//float centroidX = inputPolygon.centroid[0] * 1000;
 		//float centroidY = inputPolygon.centroid[1] * 1000;
 
@@ -313,7 +325,6 @@ void WettedSurface::calculatePositions() {
 		//{
 		//	positions.reserve(polygonPositions.size());
 		//	positions = polygonPositions;
-
 		//}
 
 	}

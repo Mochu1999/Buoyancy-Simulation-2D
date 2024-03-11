@@ -46,27 +46,32 @@ struct WettedSurface
 		//reserves, creo que hay algo que no pasa el soak test
 		outputPolygon.clear();
 
-		outputPolygon.resize(batchIndices.size() - 1);
 
-		for (unsigned int i = 0; i < batchIndices.size()-1; i++)
+		if (!batchIndices.empty()) 
 		{
-			vector<p>interm;
+			outputPolygon.resize(batchIndices.size() - 1);
 
-			interm.insert(interm.end(), positions.begin() + batchIndices[i], positions.begin() + batchIndices[i + 1]);
+			for (unsigned int i = 0; i < batchIndices.size() - 1; i++)
+			{
+				vector<p>interm;
 
-			//No puedo meter iteradores directamente en addset?
-			outputPolygon[i].addSet(interm);
-			outputPolygon[i].lines.draw();
-			outputPolygon[i].draw();
-			//Mira indices en catamarán que creo que está duplicandolos
+				interm.insert(interm.end(), positions.begin() + batchIndices[i], positions.begin() + batchIndices[i + 1]);
 
-			
 
-			//printv2(outputPolygon[i].positions); cout << endl;
+				//No puedo meter iteradores directamente en addset?
+				outputPolygon[i].addSet(interm);
+				//outputPolygon[i].lines.draw();
+				outputPolygon[i].draw();
+				//Mira indices en catamarán que creo que está duplicandolos
 
+
+				//printv2(outputPolygon[i].positions); cout << endl;
+			}
 		}
 
 		
+
+
 	}
 
 	//single intersections points. The bool tells you if a intersection has happened and if so it will be stored in i
@@ -84,6 +89,6 @@ struct WettedSurface
 
 	unsigned int calculateDistanceSecondIt(bool isInitial, auto& firstIt, unsigned int& distanceInitialIt, unsigned int& distancefirstIt);
 	
-
+	
 };
 

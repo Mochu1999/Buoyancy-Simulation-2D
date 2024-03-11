@@ -43,3 +43,28 @@ struct Time {
         return fps;
     }
 };
+
+
+//high_resolution_clock::time_point currentTime;
+//high_resolution_clock::time_point lastTime;
+//float elapsedTime;
+//for (size_t i = 0; i < static_cast<size_t>(1); i++)
+//{
+//	wettedSurface.calculatePositions();
+//}
+//currentTime = high_resolution_clock::now();
+//for (size_t i = 0; i < static_cast<size_t>(1); i++)
+//{
+//	wettedSurface.createWettedPositions();
+//}
+//lastTime = high_resolution_clock::now();
+//elapsedTime = duration_cast<duration<float>>(lastTime - currentTime).count();
+//cout << "old format, time: " << elapsedTime << endl;
+//currentTime = high_resolution_clock::now();
+//for (size_t i = 0; i < static_cast<size_t>(1); i++)
+//{
+//	wettedSurface.calculatePositions();
+//}
+//lastTime = high_resolution_clock::now();
+//elapsedTime = duration_cast<duration<float>>(lastTime - currentTime).count();
+//cout << "new format, time: " << elapsedTime << endl;
