@@ -89,7 +89,7 @@ void  Polygons::sweepTriangulation(/*int i*/) {
 	sortedIndices.resize(sPoints.size());
 	std::iota(sortedIndices.begin(), sortedIndices.end(), 0); //initializing it as 0,1,2,3...
 
-	//I could have only used [this] but I would be capturing the entire class
+	//sorting sortedIndices by x //I could have only used [this] but I would be capturing the entire class
 	std::sort(sortedIndices.begin(), sortedIndices.end(), [&sPoints = this->sPoints](unsigned int i1, unsigned int i2)
 		{
 			if (sPoints[i1].point.x == sPoints[i2].point.x)
@@ -98,7 +98,7 @@ void  Polygons::sweepTriangulation(/*int i*/) {
 		});
 
 
-
+	//printflat(sortedIndices);
 
 
 	//cout << "sPoints:" << endl;
@@ -106,10 +106,7 @@ void  Polygons::sweepTriangulation(/*int i*/) {
 	//	cout << entry.index << " " << entry.point.x << " " << entry.point.y << endl;
 	//}std::cout << std::endl;
 
-	//cout << "sortedIndices:" << endl;
-	//for (auto entry : sortedIndices) {
-	//	cout << entry << " ";
-	//}cout << endl;
+
 
 
 	for (size_t i = 0; i < sortedIndices.size(); ++i)
@@ -534,14 +531,10 @@ void Polygons::addSet(vector<p> items) {
 	isBufferUpdated = true;
 	lines.addSet(items);
 	model = positions;
-
+	oldPositions = positions;
 	sweepTriangulation();
 
 	
-
-
-
-
 	areaCalculation();
 
 

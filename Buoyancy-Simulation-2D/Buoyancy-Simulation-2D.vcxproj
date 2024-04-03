@@ -143,6 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Sources\Aux.hpp" />
     <ClInclude Include="Sources\BinariesManager.h" />
     <ClInclude Include="Sources\Common.cpp" />
     <ClInclude Include="Sources\Data.hpp" />

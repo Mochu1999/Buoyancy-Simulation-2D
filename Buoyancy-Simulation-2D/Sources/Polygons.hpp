@@ -90,30 +90,39 @@ struct Polygons {
 	p acceleration; //m/s^2
 	float totalPolarInertia; //centroids
 
-	p newTotalTranslation;
-	p oldTotalTranslation = { 0,1 };
+	//cambiar a translation 
+	p totalTranslation;
+	p oldTotalTranslation;
 
-	/*float angle = 0;
-	float oldAngle = 0;*/
+	float torque=0;
+
+	float angle = 0;
+	float oldAngle = 0;
+
+
 
 	void getDownwardForce() {
+		centroidCalculation(); //for the torques, but maybe they are being calculated elsewhere
 		mass = area * densityArea;
 		force.y = -9.81 * mass;
 	}
 
 	void getUpwardForce() {
-		mass = area * 1025; //mass of the displaced water
+		areaCalculation();//area is variable for thrust
+		centroidCalculation(); //for the torques, but maybe they are being calculated elsewhere
+		
+		mass = area * 1000; //mass of the displaced water
 		force.y = 9.81 * mass; 
 	}
 
 	void updateTranslation(p updateValue) {
-		newTotalTranslation += updateValue;
+		totalTranslation += updateValue;
 	}
 
 	//LINES no está cambiando, no sé si hará falta
 	void translate() {
 		for (int i = 0; i < model.size(); i++) {
-			positions[i] = model[i] + newTotalTranslation;
+			positions[i] = model[i] + totalTranslation;
 		}
 		isBufferUpdated = true;
 	}
@@ -133,6 +142,23 @@ struct Polygons {
 		}
 	}*/
 
+	void rotateAndTranslate() {
+
+		for (int i = 0; i < model.size(); i++) 
+		{
+			p correctedPosition = model[i]  - centroid;
+
+
+			positions[i].x = correctedPosition.x * cos(angle) - correctedPosition.y * sin(angle);
+			positions[i].y = correctedPosition.x * sin(angle) + correctedPosition.y * cos(angle);
+
+			positions[i] += centroid + totalTranslation;
+		}
+		isBufferUpdated = true;
+	}
+
+
+
 	void areaCalculation() {	//surveyor's formula
 		area = 0;
 
@@ -146,6 +172,12 @@ struct Polygons {
 	}
 
 	void centroidCalculation() {
+		if (area == 0)
+		{
+			centroid = positions[0];
+			return;
+		}
+
 		centroid = { 0,0 };
 
 

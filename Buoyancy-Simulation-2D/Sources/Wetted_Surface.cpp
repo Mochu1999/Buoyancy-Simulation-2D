@@ -57,11 +57,11 @@ void WettedSurface::calculateIntersections() {
 		// j = current polygon index
 		for (unsigned int j = 0; j < polygonPositions.size() - 1; j++)
 		{
-
 			if (calculateIntersectionPoints(fourierPositions[i], fourierPositions[i + 1]
 				, polygonPositions[j], polygonPositions[(j + 1)]
 				, point))
 			{
+				
 				//we do not add it directly into intersections because it may be an invalid point (when crossProduct == 0)
 				Intersections possibleIntersection = { point,j,j };
 
@@ -143,7 +143,7 @@ void WettedSurface::calculateIntersections() {
 
 
 
-	/*cout << "intersections" << endl;
+	/*cout << "intersections " << endl;
 	for (const auto& item : intersections)
 	{
 		cout << "{{" << item.point.x << "," << item.point.y << "},"
@@ -304,7 +304,6 @@ void WettedSurface::calculatePositions() {
 			positions = polygonPositions;
 			batchIndices.insert(batchIndices.end(),{ 0,static_cast<unsigned int>(polygonPositions.size())});
 		}
-		cout << "Socorro "<< (isRightOfLine(fourierPositions[firstIndex], fourierPositions[firstIndex + 1], polygonPositions[0]) < 0) << endl;
 
 
 		

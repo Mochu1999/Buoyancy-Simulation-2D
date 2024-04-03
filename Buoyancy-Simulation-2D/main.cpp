@@ -26,6 +26,7 @@
 
 #include "Time.hpp"
 
+#include "Aux.hpp"
 
 
 struct AllPointers {
@@ -82,8 +83,9 @@ int main(void)
 	BinariesManager binariesManager;
 
 
-	/*vector<float> polygonPositions = { 150,200,200,150,250,200,150,200, 750,200,800,150,850,200,750,200 };
-	binariesManager.writeModel(polygonPositions);*/
+	//vector<float> polygonPositions = { 200,300,700,300,700,600,200,600,200,300 };
+
+	//binariesManager.writeModel(polygonPositions);
 
 	//binariesManager.writeConfig();
 
@@ -92,13 +94,12 @@ int main(void)
 	modelPositions = binariesManager.readModel();
 
 
-
+	//modelPositions = { 200,300,700,300,700,600,200,600,200,300 };
 
 
 	Polygons polygon;
 	model = convertPositions(modelPositions);
 
-	//model = { {0,400},{200,400},{200,600},{0,600},{0,400} };
 
 	printv2(model);
 
@@ -110,7 +111,7 @@ int main(void)
 	{
 
 	}
-	else 
+	else
 	{
 		polygon.lines.cadMode = true;
 	}
@@ -118,7 +119,8 @@ int main(void)
 
 	polygon.addSet(model);
 
-
+	Lines centroidLine;
+	centroidLine.addSet({ {polygon.centroid.x,0},{ polygon.centroid.x,1000 } });
 
 
 	Polygons background;
@@ -137,7 +139,8 @@ int main(void)
 
 	WettedSurface wettedSurface(polygon, fourier);
 
-
+	Aux aux(polygon);
+	
 	AllPointers allpointers;
 	allpointers.binariesManager = &binariesManager;
 	allpointers.polygon = &polygon;
@@ -173,10 +176,13 @@ int main(void)
 	//cout << "old format, time: " << elapsedTime << endl;
 
 
-
-
-
-
+	/*polygon.totalTranslation = { 0,-10.773 };
+	polygon.oldTotalTranslation = polygon.totalTranslation;
+	
+	fourier.phase = 39.4794;*/
+	polygon.angle = PI/4;
+	polygon.oldAngle = polygon.angle;
+	
 
 
 	Shader shader("resources/shaders/shader1.shader");
@@ -193,21 +199,21 @@ int main(void)
 
 
 
-	
 
 
 
 
 
-	
-	
+
+
+
 
 	//Es un coñazo que esto dependa todo el rato de wettersurface o lo que sea, haz que el constructor solo meta colorLocation, renderTypeLocation
 	// y lo demás que se meta con funciones a parte
 	//Data data(colorLocation, renderTypeLocation, elapsedTimeFloat, fps, polygon, wettedSurface);
 
 
-
+	
 
 
 	Time time;
@@ -225,18 +231,24 @@ int main(void)
 		if (isRunning)
 		{
 
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glClear(GL_COLOR_BUFFER_BIT);
 			glUniform1i(renderTypeLocation, 0); //0 for geometry
 
 
-
-
+			
 			
 
 
 
 			fourier.createPositions();
-			wettedSurface.calculatePositions();
+
+			vector<p> interPoints;
+			wettedSurface.calculateIntersections();
+			for (auto intersection : wettedSurface.intersections)
+			{
+				interPoints.emplace_back(intersection.point);
+			}
+			//wettedSurface.calculatePositions();
 
 
 			circlesWS.addSet(wettedSurface.positions);
@@ -244,16 +256,14 @@ int main(void)
 			circles0.addSet({ polygon.positions[0] });
 			//circlesDEBUG.addSet({ { 413.793,275.415 } });
 
-
 			glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0);
 			background.draw();
 
 			glUniform4f(colorLocation, 195.0f / 255.0f, 130.0f / 255.0f, 49.0f / 255.0f, 1.0f);
 			//polygon.lines.draw();
 			polygon.draw();
-
 			glUniform4f(colorLocation, 115.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 1.0f);
-			wettedSurface.draw();
+			//wettedSurface.draw();
 
 			glUniform4f(colorLocation, 40.0f / 255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
 			fourier.draw();
@@ -267,9 +277,14 @@ int main(void)
 			glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
 			circles0.draw();
 
-			glUniform4f(colorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
-			//circlesDEBUG.draw();
+			glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+			//aux.updateAux();
+			glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+			//circlesDEBUG.addSet({ polygon.centroid+polygon.totalTranslation });
+			circlesDEBUG.addSet(interPoints);
 
+			circlesDEBUG.draw();
+			//centroidLine.draw();
 			/*polygon.updateTranslation(p{ 10,0 }*deltaTime);
 			polygon.translate();
 
@@ -278,144 +293,84 @@ int main(void)
 
 
 			deltaTime = 0.0167629;
-
-
-
-
-			polygon.getDownwardForce();
-			for (int i = 0; i < wettedSurface.outputPolygon.size(); i++)
-			{
-				wettedSurface.outputPolygon[i].getUpwardForce();
-				polygon.force += wettedSurface.outputPolygon[i].force;
-			}
-
 			
-
-			polygon.acceleration = polygon.force / polygon.mass;
-
-			float deltaTimeSq = deltaTime * deltaTime;
-
-			p interm = polygon.newTotalTranslation * 2 - polygon.oldTotalTranslation + polygon.acceleration * deltaTimeSq;
-			polygon.oldTotalTranslation = polygon.newTotalTranslation;
-			polygon.newTotalTranslation = interm;
-
-			printp(polygon.force);
-			printp(interm);
-
-			polygon.translate();
-
-
-
-
-
-
-
-
-			//p totalForce;
+			
+			//printv(polygon.area);
 			//polygon.getDownwardForce();
-			//totalForce += polygon.force;
-
 			//for (int i = 0; i < wettedSurface.outputPolygon.size(); i++)
 			//{
+			//	printv(wettedSurface.outputPolygon[i].area);
+			//	printv(fourier.offset);
+			//	//if (wettedSurface.outputPolygon[i].area > polygon.area/2) isRunning = 0;
+			//	
 			//	wettedSurface.outputPolygon[i].getUpwardForce();
-			//	//printp(wettedSurface.outputPolygon[i].force);
-			//	totalForce += wettedSurface.outputPolygon[i].force;
+			//	polygon.force += wettedSurface.outputPolygon[i].force;
+
+			//	/*glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
+			//	Aux arrow2(wettedSurface.outputPolygon[i]);
+			//	arrow2.updateAux();
+
+			//	glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
+			//	circlesDEBUG.addSet({ wettedSurface.outputPolygon[i].centroid });
+			//	circlesDEBUG.draw();*/
 			//}
+
+
 			//
 
-			//polygon.acceleration = totalForce / polygon.mass;
+
+			//polygon.acceleration = polygon.force / polygon.mass;
 
 
 			//float deltaTimeSq = deltaTime * deltaTime;
+
+			//p interm = (polygon.totalTranslation * 2 - polygon.oldTotalTranslation + polygon.acceleration * deltaTimeSq);
+			//polygon.oldTotalTranslation = polygon.totalTranslation;
+			//polygon.totalTranslation = interm;
+
+			//printp(interm);
+
+			//polygon.translate();
+
 			//
-			//p newPositions;
-			//for (int i = 0; i < polygon.positions.size(); i ++) 
+
+			//////No es centroid es centroid+ totalTranslation! y centroid está en mm, no?
+			//polygon.torque = 0;
+			//for (int i = 0; i < wettedSurface.outputPolygon.size(); i++)
 			//{
-			//	cout << "Hola?" << endl;
-			//	newPositions =  polygon.positions[i]*2 - polygon.oldPositions[i] + polygon.acceleration * deltaTimeSq;
-			//	polygon.oldPositions[i] = polygon.positions[i];
-			//	polygon.positions[i] = newPositions;
+			//	//cout << "	i: " << i << endl;
+			//	polygon.torque += (wettedSurface.outputPolygon[i].centroid.x - polygon.centroid.x)*1e-3f * wettedSurface.outputPolygon[i].force.y;
 
+			//	/*cout << "wettedSurface.outputPolygon[i].area " << wettedSurface.outputPolygon[i].area << endl;
+			//	cout << "wettedSurface.outputPolygon[i].centroid.x " << wettedSurface.outputPolygon[i].centroid.x << endl;
+			//	cout << "wettedSurface.outputPolygon[i].force.y " << wettedSurface.outputPolygon[i].force.y << endl;*/
 			//}
-			//cout << "Hola?" << endl;
 
-			
-			////should be measured from the CG//////////////////////////////////////////////
-			//polygon.velocity[0] = (polygon.positions[0] - polygon.oldPositions[0]) / deltaTime;
-			//polygon.velocity[1] = (polygon.positions[1] - polygon.oldPositions[1]) / deltaTime;// +polygon.acceleration[1] * deltaTime;	//??? which one it is
-
-
-			//float torque = (wettedSurface.centroid[1] - polygon.centroid[1]) * wettedSurface.force[0] -
-			//	(wettedSurface.centroid[0] - polygon.centroid[0]) * wettedSurface.force[1]; //check
+			//float angularAcceleration = polygon.torque / polygon.totalPolarInertia;
 			//
-			////cout << torque << endl;
+			//float interm2 = (polygon.angle * 2 - polygon.oldAngle + angularAcceleration * deltaTimeSq);
+			//
+			////polygon.oldAngle = polygon.angle;
+			////polygon.angle = interm2;
 
-			//float angularAcceleration = torque / polygon.totalPolarInertia;
 
-			//float newAngle = 2 * polygon.angle - polygon.oldAngle + 0.5f * angularAcceleration * deltaTimeSq;
+			////polygon.rotateAndTranslate();
 
-			//polygon.oldAngle = polygon.angle;
-			//polygon.angle = newAngle;
-
-			//polygon.rotate(polygon.centroid[0]*1e3+ newPositionX, polygon.centroid[1] * 1e3+ newPositionY, 0.01);
+			//
+			//printp(polygon.centroid + polygon.totalTranslation);
+			//printp(polygon.totalTranslation);
+			//cout << "polygon.angle " << polygon.angle << endl;
 		}
 
-		//isRunning = false;
-
-
-		//deltaTime = 0.0167629;
-
-		{
-			//polygon.getDownwardForce();
-			//wettedSurface.getUpwardForce();
-
-			//float totalForce[2];
-			//totalForce[0] = wettedSurface.force[0] + polygon.force[0];
-			//totalForce[1] = wettedSurface.force[1] + polygon.force[1];
+		////isRunning = false;
 
 
 
-			//polygon.acceleration[0] = totalForce[0] / polygon.mass;
-			//polygon.acceleration[1] = totalForce[1] / polygon.mass;
+		//printp(polygon.totalTranslation);
+		//cout << "polygon.angle " << polygon.angle << endl;
 
-
-			//float deltaTimeSq = deltaTime * deltaTime;
-
-			//float newPositionX, newPositionY;
-			//for (int i = 0; i < polygon.positions.size(); i += 2) {
-			//	// Horizontal Movement
-			//	newPositionX = 2 * polygon.positions[i] - polygon.oldPositions[i] + polygon.acceleration[0] * deltaTimeSq;
-			//	polygon.oldPositions[i] = polygon.positions[i];
-			//	polygon.positions[i] = newPositionX;
-
-			//	// Vertical Movement
-			//	newPositionY = 2 * polygon.positions[i + 1] - polygon.oldPositions[i + 1] + polygon.acceleration[1] * deltaTimeSq;
-			//	polygon.oldPositions[i + 1] = polygon.positions[i + 1];
-			//	polygon.positions[i + 1] = newPositionY;
-			//}
-			////should be measured from the CG//////////////////////////////////////////////
-			//polygon.velocity[0] = (polygon.positions[0] - polygon.oldPositions[0]) / deltaTime;
-			//polygon.velocity[1] = (polygon.positions[1] - polygon.oldPositions[1]) / deltaTime;// +polygon.acceleration[1] * deltaTime;	//??? which one it is
-
-
-			//float torque = (wettedSurface.centroid[1] - polygon.centroid[1]) * wettedSurface.force[0] -
-			//	(wettedSurface.centroid[0] - polygon.centroid[0]) * wettedSurface.force[1]; //check
-			//
-			////cout << torque << endl;
-
-			//float angularAcceleration = torque / polygon.totalPolarInertia;
-
-			//float newAngle = 2 * polygon.angle - polygon.oldAngle + 0.5f * angularAcceleration * deltaTimeSq;
-
-			//polygon.oldAngle = polygon.angle;
-			//polygon.angle = newAngle;
-
-			//polygon.rotate(polygon.centroid[0]*1e3+ newPositionX, polygon.centroid[1] * 1e3+ newPositionY, 0.01);
-
-			//data.draw();
-		}
-
-
+		//cout << "*******end" << endl;
+		//printv2(polygon.positions);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

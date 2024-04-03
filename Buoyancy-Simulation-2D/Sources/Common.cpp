@@ -243,6 +243,15 @@ void printp_without_macro(const string& name, const T& items) {
 	cout << ss.str() << endl << endl;
 }
 
+#define printv(var) printv_without_macro(#var, var)
+template<typename T>
+void printv_without_macro(const string& name, const T& item) {
+	stringstream ss;
+	ss << name <<": " << item << endl;;
+
+	cout << ss.str() << endl << endl;
+}
+
 //consts, cambiale el nombre y deja el nombre "is" para bools
 inline float isRightOfLine(p& A, p& B, p& P) {		 //is P to the right of AB?
 	p AB = { B.x - A.x,  B.y - A.y };

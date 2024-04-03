@@ -10,18 +10,18 @@ struct Fourier {
 
 	vector<p> intermVector;
 
-	int xn = 2;
+	int xn = 20;
 	int segments = xn - 1;
 	float endXPosition = 1000;
 	float interval = (endXPosition - 0) / segments;
 	float intervalInverse = 1 / interval;
 
-	float period = 300;
+	float period = 3000;
 	float frecuency = 2 * PI / period;
-	float amplitude = 0;
-	float offset = 400;
+	float amplitude = 100;
+	float offset = 450;// 612.599;
 	float phase = 1.28;
-	float phaseSpeed = 0.01;
+	float phaseSpeed = 0.001;
 
 
 	void createPositions() {
@@ -42,7 +42,7 @@ struct Fourier {
 
 		lines.addSet(intermVector);
 
-		phase += phaseSpeed;
+		//phase += phaseSpeed;
 		//cout << "phase: "<<phase << endl;
 		//offset--;
 		//cout << offset << endl;
