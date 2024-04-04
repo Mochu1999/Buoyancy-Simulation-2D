@@ -96,12 +96,15 @@ int main(void)
 
 	//modelPositions = { 200,300,700,300,700,600,200,600,200,300 };
 
-
-	Polygons polygon;
 	model = convertPositions(modelPositions);
-
-
 	printv2(model);
+
+	for (auto& i : model) {
+		i.y += 300;
+	}
+	printv2(model);
+	Polygons polygon;
+	
 
 
 
@@ -140,7 +143,7 @@ int main(void)
 	WettedSurface wettedSurface(polygon, fourier);
 
 	Aux aux(polygon);
-	
+
 	AllPointers allpointers;
 	allpointers.binariesManager = &binariesManager;
 	allpointers.polygon = &polygon;
@@ -178,11 +181,11 @@ int main(void)
 
 	/*polygon.totalTranslation = { 0,-10.773 };
 	polygon.oldTotalTranslation = polygon.totalTranslation;
-	
+
 	fourier.phase = 39.4794;*/
-	polygon.angle = PI/4;
+	polygon.angle = PI / 4;
 	polygon.oldAngle = polygon.angle;
-	
+
 
 
 	Shader shader("resources/shaders/shader1.shader");
@@ -213,7 +216,7 @@ int main(void)
 	//Data data(colorLocation, renderTypeLocation, elapsedTimeFloat, fps, polygon, wettedSurface);
 
 
-	
+
 
 
 	Time time;
@@ -235,20 +238,38 @@ int main(void)
 			glUniform1i(renderTypeLocation, 0); //0 for geometry
 
 
-			
-			
+
+
 
 
 
 			fourier.createPositions();
 
-			vector<p> interPoints;
-			wettedSurface.calculateIntersections();
+			vector<p> interPoints; //debug points
+			/*wettedSurface.calculateIntersections();
 			for (auto intersection : wettedSurface.intersections)
 			{
 				interPoints.emplace_back(intersection.point);
+			}*/
+
+			wettedSurface.calculatePositions();
+
+			for (int i = 0; i < wettedSurface.validIndices.size(); i++)
+			{
+				cout << "**i: " << i << endl<<"  ";
+				for (auto x : wettedSurface.validIndices[i])
+				{
+					cout << x << " ";
+				}
+				cout << endl;
 			}
-			//wettedSurface.calculatePositions();
+
+
+
+
+
+
+			
 
 
 			circlesWS.addSet(wettedSurface.positions);
@@ -263,7 +284,7 @@ int main(void)
 			//polygon.lines.draw();
 			polygon.draw();
 			glUniform4f(colorLocation, 115.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 1.0f);
-			//wettedSurface.draw();
+			wettedSurface.draw();
 
 			glUniform4f(colorLocation, 40.0f / 255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
 			fourier.draw();
@@ -281,9 +302,9 @@ int main(void)
 			//aux.updateAux();
 			glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
 			//circlesDEBUG.addSet({ polygon.centroid+polygon.totalTranslation });
-			circlesDEBUG.addSet(interPoints);
+			//circlesDEBUG.addSet(interPoints);
 
-			circlesDEBUG.draw();
+			//circlesDEBUG.draw();
 			//centroidLine.draw();
 			/*polygon.updateTranslation(p{ 10,0 }*deltaTime);
 			polygon.translate();
@@ -293,68 +314,68 @@ int main(void)
 
 
 			deltaTime = 0.0167629;
+
+
+			printv(polygon.area);
+			polygon.getDownwardForce();
+			for (int i = 0; i < wettedSurface.outputPolygon.size(); i++)
+			{
+				printv(wettedSurface.outputPolygon[i].area);
+				printv(fourier.offset);
+				//if (wettedSurface.outputPolygon[i].area > polygon.area/2) isRunning = 0;
+				
+				wettedSurface.outputPolygon[i].getUpwardForce();
+				polygon.force += wettedSurface.outputPolygon[i].force;
+
+				/*glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
+				Aux arrow2(wettedSurface.outputPolygon[i]);
+				arrow2.updateAux();
+
+				glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
+				circlesDEBUG.addSet({ wettedSurface.outputPolygon[i].centroid });
+				circlesDEBUG.draw();*/
+			}
+
+
 			
+
+
+			polygon.acceleration = polygon.force / polygon.mass;
+
+
+			float deltaTimeSq = deltaTime * deltaTime;
+
+			p interm = (polygon.totalTranslation * 2 - polygon.oldTotalTranslation + polygon.acceleration * deltaTimeSq);
+			polygon.oldTotalTranslation = polygon.totalTranslation;
+			polygon.totalTranslation = interm;
+
+			printp(interm);
+
+			polygon.translate();
+
 			
-			//printv(polygon.area);
-			//polygon.getDownwardForce();
-			//for (int i = 0; i < wettedSurface.outputPolygon.size(); i++)
-			//{
-			//	printv(wettedSurface.outputPolygon[i].area);
-			//	printv(fourier.offset);
-			//	//if (wettedSurface.outputPolygon[i].area > polygon.area/2) isRunning = 0;
-			//	
-			//	wettedSurface.outputPolygon[i].getUpwardForce();
-			//	polygon.force += wettedSurface.outputPolygon[i].force;
 
-			//	/*glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-			//	Aux arrow2(wettedSurface.outputPolygon[i]);
-			//	arrow2.updateAux();
+			////No es centroid es centroid+ totalTranslation! y centroid está en mm, no?
+			polygon.torque = 0;
+			for (int i = 0; i < wettedSurface.outputPolygon.size(); i++)
+			{
+				//cout << "	i: " << i << endl;
+				polygon.torque += (wettedSurface.outputPolygon[i].centroid.x - polygon.centroid.x)*1e-3f * wettedSurface.outputPolygon[i].force.y;
 
-			//	glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
-			//	circlesDEBUG.addSet({ wettedSurface.outputPolygon[i].centroid });
-			//	circlesDEBUG.draw();*/
-			//}
+				/*cout << "wettedSurface.outputPolygon[i].area " << wettedSurface.outputPolygon[i].area << endl;
+				cout << "wettedSurface.outputPolygon[i].centroid.x " << wettedSurface.outputPolygon[i].centroid.x << endl;
+				cout << "wettedSurface.outputPolygon[i].force.y " << wettedSurface.outputPolygon[i].force.y << endl;*/
+			}
 
-
-			//
+			float angularAcceleration = polygon.torque / polygon.totalPolarInertia;
+			
+			float interm2 = (polygon.angle * 2 - polygon.oldAngle + angularAcceleration * deltaTimeSq);
+			
+			//polygon.oldAngle = polygon.angle;
+			//polygon.angle = interm2;
 
 
-			//polygon.acceleration = polygon.force / polygon.mass;
-
-
-			//float deltaTimeSq = deltaTime * deltaTime;
-
-			//p interm = (polygon.totalTranslation * 2 - polygon.oldTotalTranslation + polygon.acceleration * deltaTimeSq);
-			//polygon.oldTotalTranslation = polygon.totalTranslation;
-			//polygon.totalTranslation = interm;
-
-			//printp(interm);
-
-			//polygon.translate();
-
-			//
-
-			//////No es centroid es centroid+ totalTranslation! y centroid está en mm, no?
-			//polygon.torque = 0;
-			//for (int i = 0; i < wettedSurface.outputPolygon.size(); i++)
-			//{
-			//	//cout << "	i: " << i << endl;
-			//	polygon.torque += (wettedSurface.outputPolygon[i].centroid.x - polygon.centroid.x)*1e-3f * wettedSurface.outputPolygon[i].force.y;
-
-			//	/*cout << "wettedSurface.outputPolygon[i].area " << wettedSurface.outputPolygon[i].area << endl;
-			//	cout << "wettedSurface.outputPolygon[i].centroid.x " << wettedSurface.outputPolygon[i].centroid.x << endl;
-			//	cout << "wettedSurface.outputPolygon[i].force.y " << wettedSurface.outputPolygon[i].force.y << endl;*/
-			//}
-
-			//float angularAcceleration = polygon.torque / polygon.totalPolarInertia;
-			//
-			//float interm2 = (polygon.angle * 2 - polygon.oldAngle + angularAcceleration * deltaTimeSq);
-			//
-			////polygon.oldAngle = polygon.angle;
-			////polygon.angle = interm2;
-
-
-			////polygon.rotateAndTranslate();
+			//polygon.rotateAndTranslate();
 
 			//
 			//printp(polygon.centroid + polygon.totalTranslation);
@@ -362,7 +383,7 @@ int main(void)
 			//cout << "polygon.angle " << polygon.angle << endl;
 		}
 
-		////isRunning = false;
+		//isRunning = false;
 
 
 

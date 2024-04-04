@@ -31,6 +31,7 @@ struct WettedSurface
 
 	
 
+	vector<vector<unsigned int>> validIndices;
 
 	
 	vector<unsigned int> batchIndices;

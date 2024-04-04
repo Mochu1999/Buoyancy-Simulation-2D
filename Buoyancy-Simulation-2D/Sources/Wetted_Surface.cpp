@@ -45,23 +45,51 @@ bool WettedSurface::calculateIntersectionPoints(const p& A, const p& B, const p&
 	return false;
 }
 
-
 //hay que evitar el nested loop solo mirando si positions está en las condiciones de tener intersección
 void WettedSurface::calculateIntersections() {
 	p point;
 	intersections.clear();
 	intersections.reserve(30);
 
-	for (int i = 0; i < fourierPositions.size() - 1; i++)
+	validIndices.clear();
+
+	// j = current polygon index
+	for (unsigned int j = 0; j < polygonPositions.size() - 1; j++)
 	{
-		// j = current polygon index
-		for (unsigned int j = 0; j < polygonPositions.size() - 1; j++)
+		p startPolygonSegment = polygonPositions[j];
+		p endPolygonSegment = polygonPositions[(j + 1)];
+
+		int firstIndex = static_cast<int>((startPolygonSegment.x - fourierPositions[0].x) * fourier.intervalInverse);
+		int secondIndex = static_cast<int>((endPolygonSegment.x - fourierPositions[0].x) * fourier.intervalInverse);
+
+		int minV = min(firstIndex, secondIndex);
+		int maxV = max(firstIndex, secondIndex);
+		vector<unsigned int> interm;
+
+		float minYPolygon=min(polygonPositions[j].y, polygonPositions[j+1].y);
+		float maxYPolygon = max(polygonPositions[j].y, polygonPositions[j + 1].y);
+
+		for (int i = minV; i <= maxV; i++) 
+		{
+			//Proceeds if the highest point of the fourierPositions segment is not below the lowest point of the polygonPositions segment and the 
+			// lowest point of the fourierPositions segment 1 is not above the highest point of the polygonPositions segment
+			if (!(max(fourierPositions[i].y, fourierPositions[i + 1].y) < minYPolygon ||
+				min(fourierPositions[i].y, fourierPositions[i + 1].y) > maxYPolygon))
+			{
+				interm.emplace_back(i);
+			}
+		}
+		validIndices.emplace_back(interm);
+
+
+
+		for (auto& i: interm)
 		{
 			if (calculateIntersectionPoints(fourierPositions[i], fourierPositions[i + 1]
 				, polygonPositions[j], polygonPositions[(j + 1)]
 				, point))
 			{
-				
+
 				//we do not add it directly into intersections because it may be an invalid point (when crossProduct == 0)
 				Intersections possibleIntersection = { point,j,j };
 
@@ -302,12 +330,12 @@ void WettedSurface::calculatePositions() {
 		{
 			positions.reserve(polygonPositions.size());
 			positions = polygonPositions;
-			batchIndices.insert(batchIndices.end(),{ 0,static_cast<unsigned int>(polygonPositions.size())});
+			batchIndices.insert(batchIndices.end(), { 0,static_cast<unsigned int>(polygonPositions.size()) });
 		}
 
 
-		
-		
+
+
 		//float centroidX = inputPolygon.centroid[0] * 1000;
 		//float centroidY = inputPolygon.centroid[1] * 1000;
 
@@ -342,8 +370,8 @@ unsigned int WettedSurface::calculateDistanceSecondIt(bool isInitial, auto& firs
 	int start, end, step;
 	if (isInitial) {
 		start = distanceInitialIt + 1;
-		end = intersections.size(); 
-		step = 1; 
+		end = intersections.size();
+		step = 1;
 	}
 	else {
 		start = distanceFirstIt - 1;
