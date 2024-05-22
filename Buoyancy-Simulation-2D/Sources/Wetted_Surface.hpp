@@ -79,7 +79,7 @@ struct WettedSurface
 	bool calculateIntersectionPoints(const p& A, const p& B, const p& C, const p& D, p& i);
 
 
-	//Finds all intersections and fills it with intersections, segments and immediates 
+	//Finds all intersections and fills them  with intersections, segments and immediates 
 	void calculateIntersections();
 
 	void getWavePoints(float firstX, float secondX);

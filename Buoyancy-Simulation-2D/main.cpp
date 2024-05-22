@@ -36,13 +36,7 @@ struct AllPointers {
 
 
 
-//que pasa con los const macho
-//Hola, vas a tener que testear de una vez si insert es comparable a emplace_back
-//Mirar triangulation hierarchy para un locate más rápido O(sqrtN) en vez de O(n) https://doc.cgal.org/latest/Triangulation_2/index.html#Section_2D_Triangulations_Hierarchy
-//cambiar i++ a ++i en for loops, date una vuelta por todos lados buscando ++ y cambiandolos
 
-
-//Para parar wetted surface? Vaya nombre de mierda
 
 
 std::vector<float> modelPositions;
@@ -70,7 +64,7 @@ std::vector<p> convertPositions(const std::vector<float>& modelPositions) {
 
 
 
-//deltatime se calcula con el tiempo del frame anterior y el anterior a ese
+
 
 int main(void)
 {
@@ -127,7 +121,7 @@ int main(void)
 
 
 	Polygons background;
-	//background.addSet({ { 0,0 }, {windowWidth, 0}, {windowWidth, windowHeight}, {0, windowHeight}, {0, 0}});
+	background.addSet({ { 0,0 }, {windowWidth, 0}, {windowWidth, windowHeight}, {0, windowHeight}, {0, 0}});
 
 
 
@@ -277,7 +271,7 @@ int main(void)
 			circles0.addSet({ polygon.positions[0] });
 			//circlesDEBUG.addSet({ { 413.793,275.415 } });
 
-			glUniform4f(colorLocation, 0.3, 0.3, 0.3, 0);
+			glUniform4f(colorLocation, 0.3, 0.3, 0.3, 1);
 			background.draw();
 
 			glUniform4f(colorLocation, 195.0f / 255.0f, 130.0f / 255.0f, 49.0f / 255.0f, 1.0f);
@@ -351,7 +345,7 @@ int main(void)
 
 			printp(interm);
 
-			polygon.translate();
+			//polygon.translate();
 
 			
 
@@ -375,7 +369,7 @@ int main(void)
 			//polygon.angle = interm2;
 
 
-			//polygon.rotateAndTranslate();
+			polygon.rotateAndTranslate();
 
 			//
 			//printp(polygon.centroid + polygon.totalTranslation);

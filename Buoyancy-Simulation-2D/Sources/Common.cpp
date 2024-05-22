@@ -277,3 +277,13 @@ vec3<T> crossProduct3(const vec3<T>& v1, const vec3<T>& v2) {
 		v1.x * v2.y - v1.y * v2.x 
 	);
 }
+
+
+
+//que pasa con los const macho
+//Hola, vas a tener que testear de una vez si insert es comparable a emplace_back
+//Mirar triangulation hierarchy para un locate más rápido O(sqrtN) en vez de O(n) https://doc.cgal.org/latest/Triangulation_2/index.html#Section_2D_Triangulations_Hierarchy
+//cambiar i++ a ++i en for loops, date una vuelta por todos lados buscando ++ y cambiandolos
+
+
+//Para parar wetted surface? Vaya nombre de mierda

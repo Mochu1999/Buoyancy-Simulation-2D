@@ -19,9 +19,9 @@ struct Fourier {
 	float period = 3000;
 	float frecuency = 2 * PI / period;
 	float amplitude = 100;
-	float offset = 450;// 612.599;
+	float offset = 650;// 612.599;
 	float phase = 1.28;
-	float phaseSpeed = 0.001;
+	float phaseSpeed = 0.01;
 
 
 	void createPositions() {
@@ -42,7 +42,7 @@ struct Fourier {
 
 		lines.addSet(intermVector);
 
-		//phase += phaseSpeed;
+		phase += phaseSpeed;
 		//cout << "phase: "<<phase << endl;
 		//offset--;
 		//cout << offset << endl;

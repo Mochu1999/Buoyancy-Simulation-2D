@@ -45,7 +45,7 @@ bool WettedSurface::calculateIntersectionPoints(const p& A, const p& B, const p&
 	return false;
 }
 
-//hay que evitar el nested loop solo mirando si positions está en las condiciones de tener intersección
+
 void WettedSurface::calculateIntersections() {
 	p point;
 	intersections.clear();
