@@ -27,7 +27,8 @@
 #include "Time.hpp"
 
 #include "Aux.hpp"
-
+#include "Random_Mesh.hpp"
+#include "Delaunay.hpp"
 
 struct AllPointers {
 	BinariesManager* binariesManager;
@@ -177,7 +178,7 @@ int main(void)
 	polygon.oldTotalTranslation = polygon.totalTranslation;
 
 	fourier.phase = 39.4794;*/
-	polygon.angle = PI / 4;
+	polygon.angle = PI / 8;
 	polygon.oldAngle = polygon.angle;
 
 
@@ -197,12 +198,20 @@ int main(void)
 
 
 
+	Circles circles(5);
+	vector<p> positions = generateRandomPoints(10);
+	vector<Triangle> triangles = bowyerWatson(positions);
+	vector<p> triangleLines = trToLines(triangles);
+	Lines trLines;
+	trLines.addSet(triangleLines);
 
+	vector<Triangle> finalMesh = bowyerWatson(positions);
 
-
-
-
-
+	for (auto& triangle : finalMesh)
+	{
+		cout << "p1: {" << triangle.p1.x << ", " << triangle.p1.y << "}, p2: {" << triangle.p2.x << ", " << triangle.p2.y
+			<< "}, p3:  {" << triangle.p3.x << ", " << triangle.p3.y << endl;
+	}
 
 
 	//Es un coñazo que esto dependa todo el rato de wettersurface o lo que sea, haz que el constructor solo meta colorLocation, renderTypeLocation
@@ -237,144 +246,152 @@ int main(void)
 
 
 
-			fourier.createPositions();
+			//fourier.createPositions();
 
-			vector<p> interPoints; //debug points
-			/*wettedSurface.calculateIntersections();
-			for (auto intersection : wettedSurface.intersections)
-			{
-				interPoints.emplace_back(intersection.point);
-			}*/
+			//vector<p> interPoints; //debug points
+			///*wettedSurface.calculateIntersections();
+			//for (auto intersection : wettedSurface.intersections)
+			//{
+			//	interPoints.emplace_back(intersection.point);
+			//}*/
 
-			wettedSurface.calculatePositions();
+			//wettedSurface.calculatePositions();
 
-			for (int i = 0; i < wettedSurface.validIndices.size(); i++)
-			{
-				cout << "**i: " << i << endl<<"  ";
-				for (auto x : wettedSurface.validIndices[i])
-				{
-					cout << x << " ";
-				}
-				cout << endl;
-			}
+			//for (int i = 0; i < wettedSurface.validIndices.size(); i++)
+			//{
+			//	cout << "**i: " << i << endl<<"  ";
+			//	for (auto x : wettedSurface.validIndices[i])
+			//	{
+			//		cout << x << " ";
+			//	}
+			//	cout << endl;
+			//}
 
-
-
-
-
-
-			
+			//circlesWS.addSet(wettedSurface.positions);
+			//circlesFourier.addSet(fourier.lines.positions);
+			//circles0.addSet({ polygon.positions[0] });
+			////circlesDEBUG.addSet({ { 413.793,275.415 } });
 
 
-			circlesWS.addSet(wettedSurface.positions);
-			circlesFourier.addSet(fourier.lines.positions);
-			circles0.addSet({ polygon.positions[0] });
-			//circlesDEBUG.addSet({ { 413.793,275.415 } });
+
+
 
 			glUniform4f(colorLocation, 0.3, 0.3, 0.3, 1);
 			background.draw();
 
 			glUniform4f(colorLocation, 195.0f / 255.0f, 130.0f / 255.0f, 49.0f / 255.0f, 1.0f);
+
+
+			circles.addSet(positions);
+			circles.draw();
+			trLines.draw();
+
+
+
+
+
+
+
 			//polygon.lines.draw();
-			polygon.draw();
-			glUniform4f(colorLocation, 115.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 1.0f);
-			wettedSurface.draw();
+			//polygon.draw();
+			//glUniform4f(colorLocation, 115.0f / 255.0f, 0.0f / 255.0f, 0.0f / 255.0f, 1.0f);
+			//wettedSurface.draw();
 
-			glUniform4f(colorLocation, 40.0f / 255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
-			fourier.draw();
+			//glUniform4f(colorLocation, 40.0f / 255.0f, 239.9f / 255.0f, 239.0f / 255.0f, 1.0f);
+			//fourier.draw();
 
-			glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-			circlesWS.draw();
+			//glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+			//circlesWS.draw();
 
-			glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-			circlesFourier.draw();
+			//glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
+			//circlesFourier.draw();
 
-			glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
-			circles0.draw();
+			//glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
+			//circles0.draw();
 
-			glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-			//aux.updateAux();
-			glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-			//circlesDEBUG.addSet({ polygon.centroid+polygon.totalTranslation });
-			//circlesDEBUG.addSet(interPoints);
+			//glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+			////aux.updateAux();
+			//glUniform4f(colorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+			////circlesDEBUG.addSet({ polygon.centroid+polygon.totalTranslation });
+			////circlesDEBUG.addSet(interPoints);
 
-			//circlesDEBUG.draw();
-			//centroidLine.draw();
-			/*polygon.updateTranslation(p{ 10,0 }*deltaTime);
-			polygon.translate();
-
-			printv2(polygon.model);
-			printv2(polygon.positions);*/
-
-
-			deltaTime = 0.0167629;
-
-
-			printv(polygon.area);
-			polygon.getDownwardForce();
-			for (int i = 0; i < wettedSurface.outputPolygon.size(); i++)
-			{
-				printv(wettedSurface.outputPolygon[i].area);
-				printv(fourier.offset);
-				//if (wettedSurface.outputPolygon[i].area > polygon.area/2) isRunning = 0;
-				
-				wettedSurface.outputPolygon[i].getUpwardForce();
-				polygon.force += wettedSurface.outputPolygon[i].force;
-
-				/*glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
-				Aux arrow2(wettedSurface.outputPolygon[i]);
-				arrow2.updateAux();
-
-				glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
-				circlesDEBUG.addSet({ wettedSurface.outputPolygon[i].centroid });
-				circlesDEBUG.draw();*/
-			}
-
-
-			
-
-
-			polygon.acceleration = polygon.force / polygon.mass;
-
-
-			float deltaTimeSq = deltaTime * deltaTime;
-
-			p interm = (polygon.totalTranslation * 2 - polygon.oldTotalTranslation + polygon.acceleration * deltaTimeSq);
-			polygon.oldTotalTranslation = polygon.totalTranslation;
-			polygon.totalTranslation = interm;
-
-			printp(interm);
-
+			////circlesDEBUG.draw();
+			////centroidLine.draw();
+			///*polygon.updateTranslation(p{ 10,0 }*deltaTime);
 			//polygon.translate();
 
-			
-
-			////No es centroid es centroid+ totalTranslation! y centroid está en mm, no?
-			polygon.torque = 0;
-			for (int i = 0; i < wettedSurface.outputPolygon.size(); i++)
-			{
-				//cout << "	i: " << i << endl;
-				polygon.torque += (wettedSurface.outputPolygon[i].centroid.x - polygon.centroid.x)*1e-3f * wettedSurface.outputPolygon[i].force.y;
-
-				/*cout << "wettedSurface.outputPolygon[i].area " << wettedSurface.outputPolygon[i].area << endl;
-				cout << "wettedSurface.outputPolygon[i].centroid.x " << wettedSurface.outputPolygon[i].centroid.x << endl;
-				cout << "wettedSurface.outputPolygon[i].force.y " << wettedSurface.outputPolygon[i].force.y << endl;*/
-			}
-
-			float angularAcceleration = polygon.torque / polygon.totalPolarInertia;
-			
-			float interm2 = (polygon.angle * 2 - polygon.oldAngle + angularAcceleration * deltaTimeSq);
-			
-			//polygon.oldAngle = polygon.angle;
-			//polygon.angle = interm2;
+			//printv2(polygon.model);
+			//printv2(polygon.positions);*/
 
 
-			polygon.rotateAndTranslate();
+			//deltaTime = 0.0167629;
+
+
+			//printv(polygon.area);
+			//polygon.getDownwardForce();
+			//for (int i = 0; i < wettedSurface.outputPolygon.size(); i++)
+			//{
+			//	printv(wettedSurface.outputPolygon[i].area);
+			//	printv(fourier.offset);
+			//	//if (wettedSurface.outputPolygon[i].area > polygon.area/2) isRunning = 0;
+			//	
+			//	wettedSurface.outputPolygon[i].getUpwardForce();
+			//	polygon.force += wettedSurface.outputPolygon[i].force;
+
+			//	/*glUniform4f(colorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
+			//	Aux arrow2(wettedSurface.outputPolygon[i]);
+			//	arrow2.updateAux();
+
+			//	glUniform4f(colorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
+			//	circlesDEBUG.addSet({ wettedSurface.outputPolygon[i].centroid });
+			//	circlesDEBUG.draw();*/
+			//}
+
 
 			//
-			//printp(polygon.centroid + polygon.totalTranslation);
-			//printp(polygon.totalTranslation);
-			//cout << "polygon.angle " << polygon.angle << endl;
+
+
+			//polygon.acceleration = polygon.force / polygon.mass;
+
+
+			//float deltaTimeSq = deltaTime * deltaTime;
+
+			//p interm = (polygon.totalTranslation * 2 - polygon.oldTotalTranslation + polygon.acceleration * deltaTimeSq);
+			//polygon.oldTotalTranslation = polygon.totalTranslation;
+			//polygon.totalTranslation = interm;
+
+			//printp(interm);
+
+			////polygon.translate();
+
+			//
+
+			//////No es centroid es centroid+ totalTranslation! y centroid está en mm, no?
+			//polygon.torque = 0;
+			//for (int i = 0; i < wettedSurface.outputPolygon.size(); i++)
+			//{
+			//	//cout << "	i: " << i << endl;
+			//	polygon.torque += (wettedSurface.outputPolygon[i].centroid.x - polygon.centroid.x)*1e-3f * wettedSurface.outputPolygon[i].force.y;
+
+			//	/*cout << "wettedSurface.outputPolygon[i].area " << wettedSurface.outputPolygon[i].area << endl;
+			//	cout << "wettedSurface.outputPolygon[i].centroid.x " << wettedSurface.outputPolygon[i].centroid.x << endl;
+			//	cout << "wettedSurface.outputPolygon[i].force.y " << wettedSurface.outputPolygon[i].force.y << endl;*/
+			//}
+
+			//float angularAcceleration = polygon.torque / polygon.totalPolarInertia;
+			//
+			//float interm2 = (polygon.angle * 2 - polygon.oldAngle + angularAcceleration * deltaTimeSq);
+			//
+			////polygon.oldAngle = polygon.angle;
+			////polygon.angle = interm2;
+
+
+			//polygon.rotateAndTranslate();
+
+			////
+			////printp(polygon.centroid + polygon.totalTranslation);
+			////printp(polygon.totalTranslation);
+			////cout << "polygon.angle " << polygon.angle << endl;
 		}
 
 		//isRunning = false;
