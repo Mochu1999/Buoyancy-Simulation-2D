@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Common.cpp"
-
+#include "Lines.hpp"
 //instance rendering for the future
 
 struct Circles {
@@ -27,7 +27,7 @@ struct Circles {
 
 	float fraction_circle; //theta increased by each segments
 
-
+	Lines circunference;
 
 	Circles(int r_) :r(r_) {
 
@@ -63,6 +63,14 @@ struct Circles {
 		}
 
 		isBufferUpdated = true;
+	
+		vector<p> circunferencePositions = positions;
+		circunferencePositions.erase(circunferencePositions.begin());
+		circunferencePositions.emplace_back(circunferencePositions[0]);
+
+		circunference.addSet(circunferencePositions);
+		//printv2(positions);
+		
 	}
 
 	void createCircle(const p& center) {
@@ -119,7 +127,10 @@ struct Circles {
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
 
 	}
-
+	void drawCircunference() {
+		circunference.draw();
+		
+	}
 
 	void genBuffers() {
 		glGenVertexArrays(1, &vertexArray);
